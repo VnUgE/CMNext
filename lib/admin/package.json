@@ -1,0 +1,58 @@
+{
+  "name": "@vnuge/cmnext-admin",
+  "version": "0.1.0",
+  "author": "Vaughn Nugent",
+  "description": "A browser client library for CMNext admin UI development",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
+
+  "scripts": {
+    "lint": "eslint --ext .js,.ts --ignore-path .gitignore src",
+    "build": "tsc",
+    "clean": "if exist dist ( rd /S /Q lib)"
+  },
+
+  "license": "agpl3",
+
+  "devDependencies": {
+    "@types/lodash": "^4.14.194",
+    "@babel/types":"^7.x",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
+    "eslint": "^8.39.0",
+    "axios": "^1.x",
+    "jose": "^4.13.x",
+    "universal-cookie": "^4.0.4"
+  },
+
+  "peerDependencies": {
+    "@vueuse/core": "^10.x",
+    "@vueuse/router": "^10.x",
+    "lodash": "^4.x",
+    "vue": "^3.x",
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.5.tgz"
+  },
+
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": []
+    },
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "rules": {},
+    "ignorePatterns": [
+      "src/**/*.test.ts",
+      "src/frontend/generated/*"
+    ],
+    "env": {
+      "browser": true
+    }
+  }
+}

@@ -1,0 +1,67 @@
+#header-mobile-nav a:hover,
+#header-desktop-nav a:hover,
+#header-mobile-nav .router-link-active,
+#header-desktop-nav .router-link-active,
+footer .footer-content .router-link-active {
+    @apply text-primary-500 dark:text-primary-600;
+}
+
+#header-mobile-nav a {
+    @apply text-2xl;
+}
+
+#site-title h3 {
+    @apply mb-0 text-xl;
+}
+
+
+.env-bg {
+    font-family: "Nunito";
+    background: #f7f7f7;
+    @apply dark:bg-dark-900;
+    @apply text-gray-700 dark:text-gray-300;
+}
+
+.env-bg-gradient {
+    background: #98E4C8;
+    background: -webkit-linear-gradient(bottom right, #98E4C8, #2C6BC3);
+    background: -moz-linear-gradient(bottom right, #98E4C8, #2C6BC3);
+    background: linear-gradient(to top left, #98E4C8, #2C6BC3);
+    @apply text-gray-700;
+}
+
+.app-component-entry {
+    @apply flex flex-col flex-auto mb-10;
+
+    @screen sm {
+        & {
+            min-height: 640px;
+        }
+    }
+}
+
+.vue-notification-group.general-toast {
+    @apply right-5;
+}
+
+.float-label {
+    @apply mt-5 relative;
+
+    &>label {
+        @apply absolute top-0 left-0 bottom-0 block pl-3 ease-linear duration-75 opacity-0;
+    }
+
+    &>input:focus+label {
+        @apply opacity-100 -mt-6;
+    }
+}
+
+.default-page-template {
+    min-height: 400px;
+    @apply container w-full max-w-4xl px-4 pt-3 mx-auto sm:pt-6 md:px-0;
+}
+
+a.link {
+    @apply duration-150 ease-in-out;
+    @apply text-primary-500 hover:text-primary-600;
+}

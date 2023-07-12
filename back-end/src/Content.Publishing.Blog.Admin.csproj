@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RootNamespace>Content.Publishing.Blog.Admin</RootNamespace>
+    <AssemblyName>CMNext</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Vaughn Nugent</Authors>
+    <Company>Vaughn Nugent</Company>
+    <Product>CMNext.Admin</Product>
+    <Description>A VNLib.Plugins.Essentials administration plugin for the CMNext content publishing platform.</Description>
+    <Copyright>Copyright © 2023 Vaughn Nugent</Copyright>
+    <PackageProjectUrl>https://www.vaughnnugent.com/resources/software/modules/CMNext.Admin</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/VnUgE/CMNext/tree/master/</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentFTP" Version="46.0.2" />
+    <PackageReference Include="Minio" Version="5.0.0" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0028" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0028" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CMNExt.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Validation\" />
+  </ItemGroup>
+  
+  <Target Condition="'$(BuildingInsideVisualStudio)' == true" Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="start xcopy &quot;$(TargetDir)&quot; &quot;f:\Programming\vnlib\devplugins\$(TargetName)&quot; /E /Y /R" />
+  </Target>
+
+</Project>

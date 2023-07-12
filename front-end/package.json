@@ -1,0 +1,58 @@
+{
+  "name": "@vnuge/cmnext-front-end",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.html",
+  "description": "The CMNext admin web UI, built with Tailwindcss and Vuejs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chenfengyuan/vue-qrcode": "^2.0.0",
+    "@fontsource/nunito": "^5.0.3",
+    "@fortawesome/fontawesome-svg-core": "^6.4.0",
+    "@fortawesome/free-brands-svg-icons": "^6.4.0",
+    "@fortawesome/free-solid-svg-icons": "^6.4.0",
+    "@fortawesome/vue-fontawesome": "^3.0.3",
+    "@headlessui/vue": "^1.7.12",
+    "@kyvg/vue3-notification": "^2.9.0",
+    "@vnuge/cmnext-admin": "../lib/admin",
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.5.tgz",
+    "@vuelidate/core": "^2.0.2",
+    "@vuelidate/validators": "^2.0.2",
+    "@vueuse/core": "^10.1.2",
+    "@vueuse/router": "^10.1.2",
+    "axios": "^1.4.0",
+    "base32-encode": "^2.0.0",
+    "jose": "^4.14.4",
+    "json-editor-vue": "^0.10.6",
+    "lodash": "^4.17.21",
+    "otpauth": "^9.1.2",
+    "showdown": "^2.1.0",
+    "universal-cookie": "^4.0.4",
+    "vanilla-jsoneditor": "^0.17.8",
+    "vue": "^3.2.47",
+    "vue3-otp-input": "^0.4.1"
+  },
+
+  "devDependencies": {
+    "@types/showdown": "^2.0.1",
+    "@types/lodash": "^4.14.194",
+    "@vitejs/plugin-vue": "^4.1.0",
+    "@volar-plugins/vetur": "latest",
+    "autoprefixer": "^10.4.14",
+    "dotenv": "^16.0.3",
+    "postcss": "^8.4.23",
+    "sass": "^1.62.1",
+    "tailwindcss": "^3.3.2",
+    "typescript": "^5.0.2",
+    "vite": "^4.3.5",
+    "vite-plugin-pages": "^0.31.0",
+    "vue-eslint-parser": "^9.3.0",
+    "vue-router": "^4.2.0",
+    "vue-tsc": "^1.4.2"
+  }
+}
