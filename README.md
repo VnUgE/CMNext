@@ -1,4 +1,4 @@
-﻿# CM*Next*
+﻿# CMNext  
 
 *A modern, dead simple, mulit-channel, content publishing platform (CMS) built with the VNLib.Plugins.Essentials framework, using S3 or FTP storage.*
 
@@ -26,9 +26,9 @@ The user-interface interacts with the back-end plugin to store your entire blog'
 Simple - you get a CMS on your own equipment, without the headache of running another production application and trusting its security. That doesn't mean I don't take security seriously, because I do, but pre-release apps vs. production apps are very different levels of security. and tech folks are (and should be) concerned with the security of a production application!
 
 ## How do I get started?  
-Head over to my website to check our the documentation and setup guides for development and management. Fun fact, the documentation is hosted on the platform itself!  
+Head over to my website to check our the documentation and setup guides for development and management. Fun fact, the documentation was published with the platform itself!  
 
-[Docs and articles](https://www.vaughnnugent.com/resources/software/articles?tags=_Content.Publishing.Blog)
+[Docs and articles](https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext)
 
 ## Developers  
 For now, feel free to clone this repo and respect the license please. The front-end is just a VueJs multi page app, with vue-router. The back end is a .NET class library designed for dynamic loading by a VNLib.Plugins.Essentials compatible runtime host. The back end will be much more complicated to provide docs on, so they may come later. The front-end is rather straightforward for node/vuejs web-devs. Further instructions will be in the readme files. 
