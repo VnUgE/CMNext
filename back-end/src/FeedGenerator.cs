@@ -112,7 +112,7 @@ namespace Content.Publishing.Blog.Admin
 
             int maxItems = context.Feed.MaxItems ?? defaultMaxItems;
             //Take only the latest max items
-            posts = posts.OrderByDescending(static p => p.Date).Take(maxItems);
+            posts = posts.OrderByDescending(static p => p.Created).Take(maxItems);
 
             //Write the posts as items but sort in order of their pub date
             foreach (PostMeta post in posts)
@@ -131,7 +131,7 @@ namespace Content.Publishing.Blog.Admin
                 writer.WriteElementString("itunes", "summary", null, post.Summary);
 
                 //Time as iso string from unix seconds timestamp
-                string pubDate = DateTimeOffset.FromUnixTimeSeconds(post.Date).ToString("R");
+                string pubDate = DateTimeOffset.FromUnixTimeSeconds(post.Created).ToString("R");
 
                 writer.WriteElementString("pubDate", pubDate);
                 writer.WriteElementString("published", pubDate);
