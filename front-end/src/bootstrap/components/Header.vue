@@ -52,16 +52,16 @@
           <div ref="userDrop" class="absolute top-0 right-0 duration-100 ease-in-out" style="z-index:-1" :style="dropStyle">
             <div class="drop-menu" @click.prevent="userMenuHovered = false">
               <span class="space-x-2" />
-              <a v-if="!loggedIn" href="#" @click="gotoRoute('/register')">
+              <a v-if="!loggedIn" href="#" data-header-dropdown="register" @click="gotoRoute('/register')">
                 Register
               </a>
-              <a v-else href="#" @click="gotoRoute('/account')">
+              <a v-else href="#" data-header-dropdown="account" @click="gotoRoute('/account')">
                 Account
               </a>
-              <a v-if="!loggedIn" href="#" @click="gotoRoute('/login')">
+              <a v-if="!loggedIn" href="#" data-header-dropdown="login" @click="gotoRoute('/login')">
                 Login
               </a>
-              <a v-else href="#" @click.prevent="OnLogout">
+              <a v-else href="#" data-header-dropdown="logout" @click.prevent="OnLogout">
                 Logout
               </a>
             </div>

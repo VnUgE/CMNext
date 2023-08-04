@@ -64,7 +64,7 @@ import { toRefs, computed } from 'vue'
 
 const props = defineProps<{
   form: any
-  disabled?: boolean
+  disabled: boolean
   validator: any
 }>()
 

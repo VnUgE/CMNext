@@ -1,19 +1,13 @@
 <template>
   <p class="nav-title">
-    Account
+    Help
   </p>
-  <router-link class="footer-link" to="/login" >
-    Login
-  </router-link>
-  <router-link class="footer-link" to="/register">
-    Regsiter
-  </router-link>
-  <router-link class="footer-link" to="/account">
-    Profile
-  </router-link>
-  <router-link class="footer-link" to="/account/settings">
-    Settings
-  </router-link>
+  <a href="https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext" target="_blank" class="footer-link">
+    Documentation
+  </a>
+  <a href="https://github.com/VnUgE/CMNext" class="footer-link" target="_blank">
+    Source Code
+  </a>
 </template>
 <script setup lang="ts">
 
