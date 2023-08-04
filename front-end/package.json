@@ -1,7 +1,7 @@
 {
   "name": "@vnuge/cmnext-front-end",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "index.html",
   "description": "The CMNext admin web UI, built with Tailwindcss and Vuejs",
@@ -20,7 +20,7 @@
     "@headlessui/vue": "^1.7.12",
     "@kyvg/vue3-notification": "^2.9.0",
     "@vnuge/cmnext-admin": "../lib/admin",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.5.tgz",
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.6.tgz",
     "@vuelidate/core": "^2.0.2",
     "@vuelidate/validators": "^2.0.2",
     "@vueuse/core": "^10.1.2",

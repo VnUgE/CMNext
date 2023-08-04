@@ -1,6 +1,6 @@
 {
   "name": "@vnuge/cmnext-admin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Vaughn Nugent",
   "description": "A browser client library for CMNext admin UI development",
   "main": "./dist/index.js",
@@ -30,7 +30,7 @@
     "@vueuse/router": "^10.x",
     "lodash": "^4.x",
     "vue": "^3.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.5.tgz"
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.6.tgz"
   },
 
   "eslintConfig": {

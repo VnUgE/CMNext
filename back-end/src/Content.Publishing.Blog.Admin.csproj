@@ -24,13 +24,17 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <None Include="..\..\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="46.0.2" />
+    <PackageReference Include="FluentFTP" Version="47.1.0" />
     <PackageReference Include="Minio" Version="5.0.0" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0028" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0028" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0030" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0030" />
   </ItemGroup>
 
   <ItemGroup>

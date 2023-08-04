@@ -3,9 +3,8 @@
     <div id="footer-content" class="footer-content" >
       <div class="footer-main-container">
         <div class="col-span-4 sm:col-span-6 lg:col-span-3">
-          <p class="my-4 text-xs leading-normal">
-            No tracking, no external dependencies, no ads. You shouldn't trust anyone with your data,
-            and I am no exception.
+          <p class="my-4 text-sm leading-normal">
+              CMNext ia a AGPL3 licensed free and open source content management system
           </p>
         </div>
         <nav>

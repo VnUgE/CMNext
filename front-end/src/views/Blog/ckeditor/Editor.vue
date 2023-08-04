@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { debounce } from 'lodash';
+import { debounce, defer } from 'lodash';
 import { ref } from 'vue';
 import { useSessionStorage } from '@vueuse/core';
 import { tryOnMounted } from '@vueuse/shared';
@@ -140,7 +140,7 @@ tryOnMounted(() =>
         editor.model.document.on('change:data', debounce(() => onChange(editor.getData())), 500)
 
         //Call initial load hook
-        emit('load', editor);
+        defer(() => emit('load', editor));
     })
 )
 

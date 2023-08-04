@@ -2,7 +2,7 @@
 
 Contact information
     Name: Vaughn Nugent
-    Email: public[at]vaughnnugent[dot]com
+    Email: vnpublic@proton.me
 	Website: https://www.vaughnnugent.com
 
 The software in this repository is licensed under the GNU Affero GPL version 3.0 (or any later version). 
