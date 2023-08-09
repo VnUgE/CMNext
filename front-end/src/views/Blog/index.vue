@@ -112,8 +112,9 @@ import { computed } from 'vue';
 import { useScriptTag } from '@vueuse/core';
 import { useRouteQuery } from '@vueuse/router';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
-import { first } from 'lodash';
-import { usePageGuard, useUser, useTitle } from '@vnuge/vnlib.browser';
+import { first } from 'lodash-es';
+import { useRoute, useRouter } from 'vue-router';
+import { usePageGuard, useUser, useTitle, useAxios } from '@vnuge/vnlib.browser';
 import { createBlogContext, useComputedChannels, useComputedPosts, useComputedContent, SortType } from '@vnuge/cmnext-admin';
 import { BlogState } from './blog-api';
 import Channels from './components/Channels.vue';
@@ -141,6 +142,9 @@ const firstLetter = computed(() => first(userName.value))
 const tabIdQ = useRouteQuery<string>('tabid', '', { mode: 'push' })
 
 const context = createBlogContext({
+    route: useRoute(),
+    router: useRouter(),
+    axios: useAxios(null),
     channelUrl: '/blog/channels',
     postUrl: '/blog/posts',
     contentUrl: '/blog/content'

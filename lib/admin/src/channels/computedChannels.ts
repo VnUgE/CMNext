@@ -15,7 +15,7 @@
 
 import { apiCall } from '@vnuge/vnlib.browser';
 import { Ref, computed, ref, watch } from 'vue'
-import { find, isEmpty, isEqual } from 'lodash';
+import { find, isEmpty, isEqual } from 'lodash-es';
 import { BlogChannel, ChannelApi, ComputedBlogApi, BlogAdminContext } from '../types.js'
 import { useChannels } from './channels.js';
 

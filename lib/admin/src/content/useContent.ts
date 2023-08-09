@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { includes, isEmpty } from "lodash";
-import { WebMessage, useAxios } from "@vnuge/vnlib.browser"
+import { includes, isEmpty } from 'lodash-es';
+import { WebMessage } from "@vnuge/vnlib.browser"
 import { PostMeta, ContentMeta, ContentApi, BlogEntity, BlogAdminContext } from "../types.js";
 
 
@@ -25,7 +25,7 @@ import { PostMeta, ContentMeta, ContentApi, BlogEntity, BlogAdminContext } from 
  * @returns A content api object
  */
 export const useContent = (context : BlogAdminContext): ContentApi => {
-    const axios = useAxios(null);
+    const axios = context.getAxios();
 
     const { channel } = context.getQuery();
 

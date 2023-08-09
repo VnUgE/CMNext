@@ -100,7 +100,7 @@ import { computed, ref } from 'vue';
 import { reactiveComputed, useFileDialog } from '@vueuse/core';
 import { ContentMeta } from '@vnuge/cmnext-admin';
 import { useConfirm, useVuelidateWrapper, useFormToaster, useWait } from '@vnuge/vnlib.browser';
-import { defaultTo, first, isEmpty, round, truncate } from 'lodash';
+import { defaultTo, first, isEmpty, round, truncate } from 'lodash-es';
 import { required, helpers, maxLength } from '@vuelidate/validators'
 import useVuelidate from '@vuelidate/core';
 import { BlogState } from '../../blog-api';

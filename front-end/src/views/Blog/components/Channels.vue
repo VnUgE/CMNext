@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { BlogState } from '../blog-api';
-import { isEmpty, filter as _filter } from 'lodash';
+import { isEmpty, filter as _filter } from 'lodash-es';
 import { apiCall } from '@vnuge/vnlib.browser';
 import { BlogChannel, ChannelFeed, useFilteredPages } from '@vnuge/cmnext-admin';
 import ChannelEdit from './Channels/ChannelEdit.vue';

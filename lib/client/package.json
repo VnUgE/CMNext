@@ -14,12 +14,12 @@
   "license": "agpl3",
   "devDependencies": {
     "@babel/types": "^7.x",
-    "@types/lodash": "^4.14.194",
+    "@types/lodash-es": "^4.14.194",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "eslint": "^8.39.0"
   },
   "peerDependencies": {
-    "lodash": "^4.x"
+    "lodash-es": "^4.x"
   },
   "eslintConfig": {
     "root": true,

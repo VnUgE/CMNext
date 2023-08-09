@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { defaultTo } from 'lodash'
+import { defaultTo } from 'lodash-es'
 import useVuelidate  from '@vuelidate/core'
 import { ref, computed, watch } from 'vue'
 import { Rules, FormSchema } from './profile-schema.ts'

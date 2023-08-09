@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { startsWith } from "lodash";
+import { startsWith } from 'lodash-es';
 import { CMNextApi, CMNextAutoConfig, CMNextEntity, CMNextIndex, ContentMeta } from "./types";
 import { createScopedChannelApi } from "./channels";
 

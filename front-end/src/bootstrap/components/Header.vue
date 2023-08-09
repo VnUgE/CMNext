@@ -75,7 +75,7 @@
 
 <script setup lang="ts">
 
-import { debounce, find } from 'lodash'
+import { debounce, find } from 'lodash-es'
 import { useElementSize, onClickOutside, useElementHover } from '@vueuse/core'
 import { computed, ref, toRefs } from 'vue'
 import { useSession, useUser, useEnvSize, apiCall } from '@vnuge/vnlib.browser'

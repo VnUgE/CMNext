@@ -13,15 +13,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useAxios } from '@vnuge/vnlib.browser';
-import { isEqual, toSafeInteger } from 'lodash';
+import { isEqual, toSafeInteger } from 'lodash-es';
 import { BlogChannel, ChannelFeed, ChannelApi, BlogAdminContext } from '../types.js'
 
 /**
  * Gets the channel helper api to manage content channels
  */
 export const useChannels = (context: BlogAdminContext): ChannelApi => {
-    const axios = useAxios(null);
+    const axios = context.getAxios();
 
     const getUrl = (): string => context.getChannelUrl();
 

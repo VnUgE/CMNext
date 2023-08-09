@@ -32,11 +32,12 @@
 </template>
 
 <script setup lang="ts">
-import { isEqual } from 'lodash'
+import { isEqual } from 'lodash-es'
 import { useRouteParams, useRouteQuery } from '@vueuse/router'
 import { useSession, useWait, useUser, useTitle, configureApiCall } from '@vnuge/vnlib.browser'
 import { useRouter } from 'vue-router';
 import { ref } from 'vue'
+import { ITokenResponse } from '@vnuge/vnlib.browser/dist/session';
 
 useTitle('Social Login')
 
@@ -76,7 +77,7 @@ const run = async () => {
         loginUrl = '/login/social/auth0';
         break;
       default:
-        router.push('/login')
+        router.push({ name: 'Login' })
         break;
     }
 
@@ -84,17 +85,17 @@ const run = async () => {
     await apiCall(async ({ axios }) => {
       const preppedLogin = prepareLogin()
       // Send the login request
-      const response = await axios.post(loginUrl, { nonce: nonce.value })
-      if (response.data.success === true) {
-        // Finalize the login
-        await preppedLogin.finalize(response)
-        // If the login was successful, then we can redirect to the login page
-        router.push({ name: 'Login' })
-        return
-      }
-      // Otherwise, we can show an error
-      throw { response }
+      const { data } = await axios.post<ITokenResponse>(loginUrl, { nonce: nonce.value })
+
+      data.getResultOrThrow()
+
+      // Finalize the login
+      await preppedLogin.finalize(data)
+      
+      // If the login was successful, then we can redirect to the login page
+      router.push({ name: 'Login' })
     })
+    
   } else {
     switch (result.value) {
       case 'invalid':

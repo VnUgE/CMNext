@@ -25,31 +25,37 @@ import { MaybeRef } from "vue";
 import { get } from '@vueuse/core'
 import { useRouteQuery } from "@vueuse/router";
 import { QueryState, QueryType, SortType, BlogAdminContext } from "./types";
+import { RouteLocationNormalized, Router } from 'vue-router';
+import { AxiosInstance } from 'axios';
 
 export interface BlogAdminConfig {
+    readonly axios: AxiosInstance;
+    readonly router: Router;
+    readonly route: RouteLocationNormalized;
     readonly postUrl: MaybeRef<string>;
     readonly contentUrl: MaybeRef<string>;
     readonly channelUrl: MaybeRef<string>;
     readonly defaultPageSize?: number;
 }
 
-const createQueryState = (): QueryState => {
+const createQueryState = (router :Router , route : RouteLocationNormalized): QueryState => {
+
     //setup filter search query
-    const search = useRouteQuery<string>(QueryType.Filter, '', { mode: 'replace' });
+    const search = useRouteQuery<string>(QueryType.Filter, '', { mode: 'replace', route, router });
 
     //Get sort order query
-    const sort = useRouteQuery<SortType>(QueryType.Sort, SortType.CreatedTime, { mode: 'replace' });
+    const sort = useRouteQuery<SortType>(QueryType.Sort, SortType.CreatedTime, { mode: 'replace', route, router });
 
     //Selected channel id
-    const channel = useRouteQuery<string>(QueryType.Channel, '', { mode: 'replace' });
+    const channel = useRouteQuery<string>(QueryType.Channel, '', { mode: 'replace', route, router });
 
     //Edits are in push mode because they are used to navigate to edit pages
 
-    const channelEdit = useRouteQuery<string>(QueryType.ChannelEdit, '', { mode: 'push' });
+    const channelEdit = useRouteQuery<string>(QueryType.ChannelEdit, '', { mode: 'push', route, router });
 
-    const content = useRouteQuery<string>(QueryType.Content, '', { mode: 'push' });
+    const content = useRouteQuery<string>(QueryType.Content, '', { mode: 'push', route, router });
     //Get the selected post id from the route
-    const post = useRouteQuery<string>(QueryType.Post, '', { mode: 'push' });
+    const post = useRouteQuery<string>(QueryType.Post, '', { mode: 'push', route, router });
 
     return {
         post,
@@ -66,11 +72,13 @@ const createQueryState = (): QueryState => {
  * @param param0 The blog configuration object
  * @returns A blog context object to pass to the blog admin components
  */
-export const createBlogContext = ({ channelUrl, postUrl, contentUrl }: BlogAdminConfig): BlogAdminContext => {
+export const createBlogContext = ({ channelUrl, postUrl, contentUrl, router, route, axios }: BlogAdminConfig): BlogAdminContext => {
 
-    const queryState = createQueryState();
+    const queryState = createQueryState(router, route);
 
     const getQuery = (): QueryState => queryState;
+
+    const getAxios = () : AxiosInstance => axios;
 
     const getPostUrl = (): string => get(postUrl)
 
@@ -79,6 +87,7 @@ export const createBlogContext = ({ channelUrl, postUrl, contentUrl }: BlogAdmin
     const getChannelUrl = (): string => get(channelUrl)
 
     return{
+        getAxios,
         getQuery,
         getPostUrl,
         getChannelUrl,

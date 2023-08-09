@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { isArray, orderBy } from "lodash";
-import { WebMessage, useAxios } from "@vnuge/vnlib.browser"
+import { isArray, orderBy } from 'lodash-es';
+import { WebMessage } from "@vnuge/vnlib.browser"
 import { PostMeta, PostApi, BlogAdminContext } from "../types";
 
 /**
@@ -23,7 +23,7 @@ import { PostMeta, PostApi, BlogAdminContext } from "../types";
  * @returns The configured post api
  */
 export const usePostApi = (context : BlogAdminContext): PostApi => {
-    const axios = useAxios(null);
+    const axios = context.getAxios();
 
     const { channel } = context.getQuery();
 

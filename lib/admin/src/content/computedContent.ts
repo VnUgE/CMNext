@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Ref, computed } from "vue";
-import { find, filter, includes, isEqual, isNil, toLower } from "lodash";
+import { find, filter, includes, isEqual, isNil, toLower } from 'lodash-es';
 import { apiCall } from "@vnuge/vnlib.browser"
 import { ContentMeta, BlogEntity, ContentApi, ComputedBlogApi, BlogAdminContext } from "../types.js";
 import { watchAndCompute } from "../helpers.js";

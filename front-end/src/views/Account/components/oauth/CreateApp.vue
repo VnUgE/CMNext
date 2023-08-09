@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { indexOf, pull } from 'lodash'
+import { indexOf, pull } from 'lodash-es'
 import { ref, toRefs } from 'vue';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 import { apiCall } from '@vnuge/vnlib.browser'

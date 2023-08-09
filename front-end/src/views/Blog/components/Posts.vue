@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { PostMeta, useFilteredPages } from '@vnuge/cmnext-admin';
 import { apiCall, debugLog } from '@vnuge/vnlib.browser';
 import EditorTable from './EditorTable.vue';

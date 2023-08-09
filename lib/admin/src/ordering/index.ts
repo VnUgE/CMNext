@@ -15,7 +15,7 @@
 
 import { MaybeRefOrGetter, computed } from 'vue';
 import { useOffsetPagination } from '@vueuse/core';
-import { filter, includes, isEmpty, orderBy, slice, toLower } from 'lodash';
+import { filter, includes, isEmpty, orderBy, slice, toLower } from 'lodash-es';
 import { CanPaginate, NamedBlogEntity, SortedFilteredPaged } from '../types';
 
 /**

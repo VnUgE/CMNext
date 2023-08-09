@@ -51,7 +51,7 @@ import Social from './components/Social.vue'
 import { apiCall, useMessage, useWait, useUser, useSession, useLastPage, useTitle, debugLog } from '@vnuge/vnlib.browser'
 import { useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation, MfaMethod } from '@vnuge/vnlib.browser/dist/mfa'
 import { useTimeoutFn } from '@vueuse/shared'
-import { isNil } from 'lodash'
+import { isNil } from 'lodash-es'
 
 useTitle('Login')
 
@@ -64,9 +64,7 @@ const { logout } = useUser();
 const { loggedIn } = useSession()
 
 //Setup mfa login
-const { login } = useMfaLogin([
-  totpMfaProcessor()
-])
+const { login } = useMfaLogin([ totpMfaProcessor() ])
 
 //If logged in re-route to the last page the user 
 //was on but delayed to the session has time to be set

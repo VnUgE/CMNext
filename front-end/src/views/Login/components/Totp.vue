@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { useMessage, useWait } from '@vnuge/vnlib.browser';
-import { toSafeInteger } from 'lodash';
+import { toSafeInteger } from 'lodash-es';
 import VOtpInput from "vue3-otp-input";
 
 const emit = defineEmits(['submit'])

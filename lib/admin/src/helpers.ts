@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Ref, WatchSource, ref } from 'vue';
-import { throttle } from 'lodash';
+import { throttle } from 'lodash-es';
 import { watchArray } from '@vueuse/core';
 
 

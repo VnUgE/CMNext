@@ -52,7 +52,7 @@
 
 import { computed } from 'vue'
 import { RouteLocation, useRouter } from 'vue-router'
-import { filter, map, without, find, includes } from 'lodash'
+import { filter, map, without, find, includes } from 'lodash-es'
 import { useEnvSize, useScrollOnRouteChange, useSession, useTitle } from '@vnuge/vnlib.browser'
 import CookieWarning from './components/CookieWarning.vue'
 import PasswordPrompt from './components/PasswordPrompt.vue'

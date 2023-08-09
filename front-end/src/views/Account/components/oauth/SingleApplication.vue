@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { toUpper } from 'lodash'
+import { toUpper } from 'lodash-es'
 import { apiCall, useWait,  useConfirm, usePassConfirm } from '@vnuge/vnlib.browser'
 import { ref, computed, toRefs } from 'vue'
 import { useClipboard, useTimeAgo } from '@vueuse/core'

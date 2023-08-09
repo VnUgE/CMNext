@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { defaultTo, cloneDeep, forEach } from 'lodash'
+import { defaultTo, cloneDeep, forEach } from 'lodash-es'
 import { toRefs, computed } from 'vue'
 
 const props = defineProps<{

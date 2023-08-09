@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { toSafeInteger } from 'lodash';
+import { toSafeInteger } from 'lodash-es';
 import useVuelidate from '@vuelidate/core'
 import { required, maxLength, minLength, helpers } from '@vuelidate/validators'
 import { useUser, apiCall, useMessage, useWait, useConfirm, useVuelidateWrapper } from '@vnuge/vnlib.browser'

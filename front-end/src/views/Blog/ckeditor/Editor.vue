@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { debounce, defer } from 'lodash';
+import { debounce, defer } from 'lodash-es';
 import { ref } from 'vue';
 import { useSessionStorage } from '@vueuse/core';
 import { tryOnMounted } from '@vueuse/shared';

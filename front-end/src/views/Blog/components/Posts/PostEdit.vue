@@ -47,7 +47,7 @@
 import { computed } from 'vue';
 import { BlogState } from '../../blog-api';
 import { reactiveComputed } from '@vueuse/core';
-import { isNil, isString, split } from 'lodash';
+import { isNil, isString, split } from 'lodash-es';
 import { PostMeta, useXmlProperties } from '@vnuge/cmnext-admin';
 import { apiCall, useConfirm, useUser } from '@vnuge/vnlib.browser';
 import { getPostForm } from '../../form-helpers';

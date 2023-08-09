@@ -16,6 +16,7 @@
         <dynamic-form
             id="channel-edit-form"
             class="mx-auto"
+            :disabled="false"
             :form="channelSchema"
             :validator="channelVal.v$"
             @submit="onSubmit"
@@ -42,6 +43,7 @@
             class="mx-auto mt-4"
             :form="feedSchema"
             :validator="feedVal.v$"
+            :disabled="false"
             @submit="onSubmit"
         />
 
@@ -61,7 +63,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { BlogState } from '../../blog-api';
-import { forEach, isEmpty, cloneDeep, isNil } from 'lodash';
+import { forEach, isEmpty, cloneDeep, isNil } from 'lodash-es';
 import { reactiveComputed } from '@vueuse/core';
 import { useConfirm } from '@vnuge/vnlib.browser';
 import FeedFields from '../FeedFields.vue';

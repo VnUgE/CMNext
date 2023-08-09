@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { defaultTo, startsWith } from "lodash";
+import { defaultTo, startsWith } from 'lodash-es';
 import { ChannelApi, createScopedChannelApi } from "./channels";
 import { CMNextApi, CMNextAutoConfig, CMNextIndex, PostMeta } from "./types";
 

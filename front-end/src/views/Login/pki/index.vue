@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { apiCall, debugLog, useUser, useMessage } from '@vnuge/vnlib.browser';
 import { ITokenResponse } from '@vnuge/vnlib.browser/dist/session';
 import { ref } from 'vue'

@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { BlogState } from '../blog-api';
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { apiCall } from '@vnuge/vnlib.browser';
 import EditorTable from './EditorTable.vue';
 import ContentEditor from './Content/ContentEditor.vue';

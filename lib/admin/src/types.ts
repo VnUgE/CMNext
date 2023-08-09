@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { UseOffsetPaginationReturn } from '@vueuse/core';
+import { AxiosInstance } from 'axios';
 import { Dictionary } from 'lodash';
 import { Ref } from 'vue';
 
@@ -267,4 +268,5 @@ export interface BlogAdminContext {
     getPostUrl(): string;
     getContentUrl(): string;
     getChannelUrl(): string;
+    getAxios(): AxiosInstance;
 }

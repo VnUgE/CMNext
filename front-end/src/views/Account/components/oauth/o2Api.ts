@@ -1,4 +1,4 @@
-import { forEach } from 'lodash'
+import { forEach } from 'lodash-es'
 import { Ref } from 'vue'
 import useVuelidate from '@vuelidate/core'
 import { maxLength, helpers, required } from '@vuelidate/validators'

@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { toRefs } from 'vue';
-import { filter as _filter, truncate } from 'lodash';
+import { filter as _filter, truncate } from 'lodash-es';
 import { useClipboard } from '@vueuse/core';
 import { PostMeta } from '@vnuge/cmnext-admin';
 

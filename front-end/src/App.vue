@@ -5,7 +5,6 @@
       <router-view />
     </template>
   </Environment>
- 
 </template>
 
 <script setup lang="ts">

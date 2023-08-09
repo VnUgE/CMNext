@@ -39,6 +39,7 @@
                             id="enclosure-form"
                             :form="schema"
                             :validator="v$"
+                            :disabled="false"
                             @submit="onFormSubmit"
                             @cancel="onCancel"
                         />

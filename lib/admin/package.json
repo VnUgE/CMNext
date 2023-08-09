@@ -16,7 +16,7 @@
   "license": "agpl3",
 
   "devDependencies": {
-    "@types/lodash": "^4.14.194",
+    "@types/lodash-es": "^4.14.194",
     "@babel/types":"^7.x",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "eslint": "^8.39.0",
@@ -28,7 +28,7 @@
   "peerDependencies": {
     "@vueuse/core": "^10.x",
     "@vueuse/router": "^10.x",
-    "lodash": "^4.x",
+    "lodash-es": "^4.x",
     "vue": "^3.x",
     "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.6.tgz"
   },

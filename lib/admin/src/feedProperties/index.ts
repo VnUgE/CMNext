@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { cloneDeep, filter, forEach, isEmpty, join, map } from 'lodash';
+import { cloneDeep, filter, forEach, isEmpty, join, map } from 'lodash-es';
 import { watch, Ref, ref } from 'vue';
 import { FeedProperty, XmlPropertyContainer } from '../types';
 

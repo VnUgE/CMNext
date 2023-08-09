@@ -38,7 +38,7 @@
 import { useClipboard } from '@vueuse/core';
 import { apiCall, useWait } from '@vnuge/vnlib.browser';
 import { computed, Ref, ref } from 'vue';
-import { map, slice, truncate } from 'lodash';
+import { map, slice, truncate } from 'lodash-es';
 import { ContentMeta } from '@vnuge/cmnext-admin';
 import { BlogState } from '../blog-api';
 

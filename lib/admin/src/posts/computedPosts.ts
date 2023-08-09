@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { computed } from "vue";
-import { isEqual, find } from "lodash";
+import { isEqual, find } from 'lodash-es';
 import { apiCall } from "@vnuge/vnlib.browser";
 import { PostMeta, ComputedPosts, BlogAdminContext } from "../types";
 import { usePostApi } from "./usePost";
