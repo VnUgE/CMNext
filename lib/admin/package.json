@@ -30,7 +30,7 @@
     "@vueuse/router": "^10.x",
     "lodash-es": "^4.x",
     "vue": "^3.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.6.tgz"
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/releases/vnlib-browser/v0.1.7.tgz"
   },
 
   "eslintConfig": {
