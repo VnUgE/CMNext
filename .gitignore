@@ -362,11 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-/.task/checksum
-*[Tt]askfile.*
-
-*.sln
-
 # Logs
 logs
 *.log
@@ -392,4 +387,4 @@ dist-ssr
 *.sln
 *.sw?
 
-/back-end/*/*.json
+/back-end/*/CMNext.json

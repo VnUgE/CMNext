@@ -1,0 +1,44 @@
+{
+  //Enables debug logging
+  "debug": false,
+
+  "post_endpoint": {
+    "path": "/blog/posts"
+  },
+
+  "channel_endpoint": {
+    "path": "/blog/channels"
+  },
+
+  "content_endpoint": {
+    "path": "/blog/content",
+    "max_content_length": 50000000
+  },
+
+  "blog_channels": {
+    //The index file for storing channel configuration
+    "index_file_name": "blogs/channels.json"
+  },
+
+  //S3 setup with vault secrets
+  "disabled s3_config": {
+    "server_address": "",
+    "access_key": "",
+    "bucket": "",
+    "use_ssl": true,
+    "Region": null
+  },
+
+  "disabled ftp_config": {
+    "url": "",
+    "username": "",
+    //Base path within the ftp user's directory
+    "base_path": ""
+  },
+
+  "secrets": {
+    //Set the vault path to the s3 secret
+    "s3_secret": "",
+    "ftp_password": ""
+  }
+}

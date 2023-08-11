@@ -1,8 +1,15 @@
 {
   "name": "@vnuge/cmnext-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "type": "module",
+  "copyright": "Copyright \u00A9 2023 Vaughn Nugent",
   "author": "Vaughn Nugent",
   "description": "A browser client library to access your CMNext content from its http static storage",
+  "repository": "https://github.com/VnUgE/CMNext/tree/master/lib/client",
+  "output_dir": "bin",
+
+  "license": "agpl3",
+
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
@@ -11,7 +18,7 @@
     "build": "tsc",
     "clean": "if exist dist ( rd /S /Q lib)"
   },
-  "license": "agpl3",
+
   "devDependencies": {
     "@babel/types": "^7.x",
     "@types/lodash-es": "^4.14.194",

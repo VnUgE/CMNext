@@ -7,6 +7,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RootNamespace>Content.Publishing.Blog.Admin</RootNamespace>
     <AssemblyName>CMNext</AssemblyName>
+    <Version>0.1.1</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -38,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="CMNExt.json">
+    <None Update="CMNext.sample.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

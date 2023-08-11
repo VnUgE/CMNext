@@ -3,13 +3,21 @@
   "private": true,
   "version": "0.1.1",
   "type": "module",
-  "main": "index.html",
+  "copyright": "Copyright \u00A9 2023 Vaughn Nugent",
   "description": "The CMNext admin web UI, built with Tailwindcss and Vuejs",
+  "repository": "https://github.com/VnUgE/CMNext/tree/master/front-end",
+  "author": "Vaughn Nugent",
+  "output_dir": "bin",
+
+  "main": "index.html",
+  "license": "agpl3",
+
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
+
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "^2.0.0",
     "@fontsource/nunito": "^5.0.3",
