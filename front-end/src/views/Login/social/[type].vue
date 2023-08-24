@@ -73,9 +73,6 @@ const run = async () => {
       case 'discord':
         loginUrl = '/login/social/discord';
         break;
-      case 'auth0':
-        loginUrl = '/login/social/auth0';
-        break;
       default:
         router.push({ name: 'Login' })
         break;

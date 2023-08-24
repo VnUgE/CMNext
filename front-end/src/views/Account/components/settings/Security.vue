@@ -52,8 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAutoHeartbeat } from '@vnuge/vnlib.browser'
-import { useMfaConfig, MfaMethod, usePkiConfig } from '@vnuge/vnlib.browser/dist/mfa'
+import { useAutoHeartbeat, useMfaConfig, MfaMethod, usePkiConfig } from '@vnuge/vnlib.browser'
 import { computed } from 'vue'
 import { Switch } from '@headlessui/vue'
 import { includes } from 'lodash-es'

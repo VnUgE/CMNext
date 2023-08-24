@@ -48,8 +48,10 @@ import { computed, ref } from 'vue'
 import Totp from './components/Totp.vue'
 import UserPass from './components/UserPass.vue'
 import Social from './components/Social.vue'
-import { apiCall, useMessage, useWait, useUser, useSession, useLastPage, useTitle, debugLog } from '@vnuge/vnlib.browser'
-import { useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation, MfaMethod } from '@vnuge/vnlib.browser/dist/mfa'
+import { 
+  useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation, MfaMethod, apiCall, 
+  useMessage, useWait, useUser, useSession, useLastPage, useTitle, debugLog 
+} from '@vnuge/vnlib.browser'
 import { useTimeoutFn } from '@vueuse/shared'
 import { isNil } from 'lodash-es'
 

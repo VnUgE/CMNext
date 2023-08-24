@@ -55,10 +55,9 @@
 
 <script setup lang="ts">
 import { isEmpty, isNil } from 'lodash-es'
-import { apiCall, useConfirm, useSession, debugLog, useFormToaster } from '@vnuge/vnlib.browser'
+import { apiCall, useConfirm, useSession, debugLog, useFormToaster, PkiApi } from '@vnuge/vnlib.browser'
 import { computed, ref, watch } from 'vue'
 import { Dialog, DialogPanel } from '@headlessui/vue'
-import { PkiApi } from '@vnuge/vnlib.browser/dist/mfa';
 
 const props = defineProps<{
     pkaiApi: PkiApi
@@ -69,7 +68,7 @@ const { isLocalAccount } = useSession()
 const { error } = useFormToaster()
 
 const pkiEnabled = computed(() => isLocalAccount.value && !isNil(import.meta.env.VITE_PKI_ENDPOINT) && window.crypto.subtle)
-const { enabled } = props.pkaiApi
+const { enabled, refresh } = props.pkaiApi
 
 const isOpen = ref(false)
 const keyData = ref('')
@@ -81,7 +80,7 @@ watch(isOpen, () =>{
     pemFormat.value = false
     explicitCurve.value = ""
     //Reload status
-    props.pkaiApi.refresh()
+    refresh()
 })
 
 const setIsOpen = (value : boolean) => isOpen.value = value

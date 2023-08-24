@@ -14,20 +14,10 @@
         </button>
     </form>
 
-    <form v-if="auth0Enabled" class="mt-4" @submit.prevent="SocalLogin('/login/social/auth0')">
-        <button type="submit" class="btn social-button" :disabled="waiting">
-            <fa-icon :icon="['fa','key']" size="xl" />
-            Login with Auth0
-        </button>
-    </form>
-
 </template>
 
 <script setup lang="ts">
-import { apiCall,  useWait, useSession, useSessionUtils, WebMessage } from '@vnuge/vnlib.browser'
-
-//auth0 enabled flag from env
-const auth0Enabled = import.meta.env.VITE_ENABLE_AUTH0 == 'true';
+import { apiCall, useWait, useSession, useSessionUtils, WebMessage } from '@vnuge/vnlib.browser'
 
 const { waiting } = useWait()
 const { browserId, publicKey } = useSession()

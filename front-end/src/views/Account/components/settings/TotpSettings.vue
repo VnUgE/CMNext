@@ -102,9 +102,10 @@ import {
   useMessage,
   useConfirm,
   usePassConfirm,
-  useFormToaster
+  useFormToaster,
+  MfaApi,
+  MfaMethod
 } from '@vnuge/vnlib.browser'
-import { MfaApi, MfaMethod } from '@vnuge/vnlib.browser/dist/mfa';
 
 interface TotpConfig{
     secret: string;

@@ -14,12 +14,6 @@
 
           <Tab v-slot="{ selected }" >
             <span class="page-link" :class="{ 'active': selected }">
-             OAuth
-            </span>
-          </tab>
-
-          <Tab v-slot="{ selected }" >
-            <span class="page-link" :class="{ 'active': selected }">
              Settings
             </span>
           </tab>
@@ -31,10 +25,6 @@
         
         <TabPanel :unmount="false">
           <Profile />
-        </TabPanel>
-        
-        <TabPanel :unmount="false">
-          <OauthApps />
         </TabPanel>
         
         <TabPanel :unmount="false">
@@ -54,7 +44,6 @@ import { useRouteParams } from '@vueuse/router'
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
 import Settings from './components/settings/Settings.vue'
 import Profile from './components/profile/Profile.vue'
-import OauthApps from './components/oauth/Oauth.vue'
 
 usePageGuard()
 useTitle('Account')

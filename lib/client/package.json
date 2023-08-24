@@ -1,6 +1,6 @@
 {
   "name": "@vnuge/cmnext-client",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "copyright": "Copyright \u00A9 2023 Vaughn Nugent",
   "author": "Vaughn Nugent",
@@ -14,7 +14,7 @@
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
   "scripts": {
-    "lint": "eslint --ext .js,.ts --ignore-path .gitignore src",
+    "lint": "eslint --ext .js,.ts --ignore-path ../../.gitignore src",
     "build": "tsc",
     "clean": "if exist dist ( rd /S /Q lib)"
   },
