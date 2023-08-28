@@ -33,23 +33,20 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash-es';
-import { apiCall, debugLog, useUser, useMessage } from '@vnuge/vnlib.browser';
-import { ITokenResponse } from '@vnuge/vnlib.browser/dist/session';
+import { apiCall, debugLog, useMessage, usePkiAuth } from '@vnuge/vnlib.browser';
 import { ref } from 'vue'
 import { decodeJwt } from 'jose'
 import { useRouter } from 'vue-router';
 
 const otp = ref('')
 
-const pkiEndpoint = import.meta.env.VITE_PKI_ENDPOINT
-
-const { prepareLogin } = useUser()
 const { setMessage } = useMessage()
 const { push } = useRouter()
+const { login } = usePkiAuth(import.meta.env.VITE_PKI_ENDPOINT)
 
 const submit = () =>{
 
-    apiCall(async ({ axios }) =>{
+    apiCall(async () =>{
         if(isEmpty(otp.value)){
             setMessage('Please enter your OTP')
             return
@@ -59,18 +56,7 @@ const submit = () =>{
         const jwt = decodeJwt(otp.value)
         debugLog(jwt)
 
-        //Prepare a login message
-        const loginMessage = prepareLogin()
-
-        //Set the 'login' field to the otp
-        loginMessage.login = otp.value
-
-        const { data }  = await axios.post<ITokenResponse>(pkiEndpoint, loginMessage)
-
-        data.getResultOrThrow()
-
-        //Finalize the login
-        await loginMessage.finalize(data);
+        await login(otp.value)
 
         //Go back to login page
         push({ name: 'Login' })

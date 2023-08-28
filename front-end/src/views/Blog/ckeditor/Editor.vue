@@ -112,7 +112,7 @@ const recoverMd = () => {
     mdBuffer.value = md;
 }
 
-tryOnMounted(() =>
+tryOnMounted(() => defer(() =>
     //Load the editor once the component is mounted
    apiCall(async ({ toaster }) => {
 
@@ -142,7 +142,7 @@ tryOnMounted(() =>
         //Call initial load hook
         defer(() => emit('load', editor));
     })
-)
+))
 
 </script>
 

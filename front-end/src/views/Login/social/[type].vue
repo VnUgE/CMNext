@@ -80,7 +80,7 @@ const run = async () => {
 
     // If nonce is set, then we can proceed with finalization
     await apiCall(async ({ axios }) => {
-      const preppedLogin = prepareLogin()
+      const preppedLogin = await prepareLogin()
       // Send the login request
       const { data } = await axios.post<ITokenResponse>(loginUrl, { nonce: nonce.value })
 

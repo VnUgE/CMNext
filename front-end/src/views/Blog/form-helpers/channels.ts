@@ -16,6 +16,7 @@
 import { MaybeRef, computed, watch, Ref } from 'vue'
 import { helpers, required, maxLength, numeric } from "@vuelidate/validators"
 import { useVuelidateWrapper } from '@vnuge/vnlib.browser';
+import { defer } from 'lodash-es'
 import { BlogChannel, ChannelFeed } from '@vnuge/cmnext-admin';
 import useVuelidate from "@vuelidate/core"
 
@@ -203,7 +204,7 @@ export const getChannelForm = (editMode?: Ref<boolean>) => {
 
         watch(v$, updateExample);
 
-        updateExample();
+        defer(() => updateExample());
 
         const { validate } = useVuelidateWrapper(v$);
         return { v$, validate, reset: v$.value.$reset };

@@ -20,6 +20,9 @@
 */
 
 using System;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
 
 using VNLib.Plugins;
 using VNLib.Utils.Logging;
@@ -46,6 +49,7 @@ namespace Content.Publishing.Blog.Admin
             this.Route<ContentEndpoint>();
 
             Log.Information("Plugin loaded");
+            PrintHelloMessage();
         }
 
         protected override void OnUnLoad()
@@ -56,6 +60,42 @@ namespace Content.Publishing.Blog.Admin
         protected override void ProcessHostCommand(string cmd)
         {
             throw new NotImplementedException();
+        }
+
+        private void PrintHelloMessage()
+        {
+            const string template =
+@"
+******************************************************************************
+    CMNext - A dead-simple, multi-channel cms for your blog or podcast.
+    By Vaughn Nugent - vnpublic@proton.me
+    https://www.vaughnnugent.com/resources/software
+    License: GNU Affero General Public License v3.0
+    This application comes with ABSOLUTELY NO WARRANTY.
+
+    Your server is now running at the following locations:
+{0}
+******************************************************************************
+";
+            string[] interfaces = HostConfig.GetProperty("virtual_hosts")
+                .EnumerateArray()
+                .Select(e =>
+                {
+                    JsonElement el = e.GetProperty("interface");
+                    string ipAddress = el.GetProperty("address").GetString()!;
+                    int port = el.GetProperty("port").GetInt32();
+                    return $"{ipAddress}:{port}";
+                })
+                .ToArray();
+
+            StringBuilder sb = new();
+            foreach ( string intf in interfaces )
+            {
+                sb.Append('\t');
+                sb.AppendLine(intf);
+            }
+
+            Log.Information(template, sb);
         }
     }
 }

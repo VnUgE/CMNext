@@ -52,7 +52,7 @@ import {
   useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation, MfaMethod, apiCall, 
   useMessage, useWait, useUser, useSession, useLastPage, useTitle, debugLog 
 } from '@vnuge/vnlib.browser'
-import { useTimeoutFn } from '@vueuse/shared'
+import { useTimeoutFn } from '@vueuse/core'
 import { isNil } from 'lodash-es'
 
 useTitle('Login')
@@ -74,7 +74,13 @@ const { gotoLastPage } = useLastPage()
 useTimeoutFn(() => loggedIn.value ? gotoLastPage() : null, 500)
 
 const mfaUpgrade = ref<IMfaFlowContinuiation>();
-const mfaTimer = ref<{stop:() => void}>();
+const mfaTimeout = ref<number>(600 * 1000);
+const { start, stop } = useTimeoutFn(() => {
+   //Clear upgrade message
+  mfaUpgrade.value = undefined;
+  setMessage('Your TOTP request has expired')
+}, mfaTimeout, { immediate: false })
+
 const showTotp = computed(() => mfaUpgrade.value?.type === MfaMethod.TOTP)
 
 const submitLogout = async () => {
@@ -96,9 +102,14 @@ const submitLogin = async ({username, password} : { username: string, password:s
   // Run login in an apicall wrapper
   await apiCall(async ({ toaster }) => {
     // Attempt to login
-    const response = await login(username, password)
+    const response = await login(username, password);
 
-    debugLog('Mfa-login',response)
+    debugLog('Mfa-login', response)
+    
+    if(response.success == false){
+      setMessage(response.result)
+      return;
+    }
 
     //Try to get response as a flow continuation
     const mfa = response as IMfaFlowContinuiation
@@ -108,16 +119,9 @@ const submitLogin = async ({username, password} : { username: string, password:s
 
       //Store the upgrade message
       mfaUpgrade.value = mfa;
-
-      // Set timeout to reset the form when totp expires
-      mfaTimer.value = useTimeoutFn(() => {
-
-        //Clear upgrade message
-        mfaUpgrade.value = undefined;
-        
-        setMessage('Your TOTP request has expired')
-
-      }, mfa.expires! * 1000)
+      //Setup timeout timer
+      mfaTimeout.value = mfa.expires! * 1000;
+      start();
     }
     //If login without mfa was successful
     else if (response.success) {
@@ -126,8 +130,6 @@ const submitLogin = async ({username, password} : { username: string, password:s
           title: 'Success',
           text: 'You have been logged in',
         })
-
-        return;
       }
   })
 }
@@ -135,15 +137,16 @@ const submitLogin = async ({username, password} : { username: string, password:s
 const totpSubmit = ({ code } : {code:number}) =>{
     apiCall(async ({ toaster }) =>{
 
-        if (!mfaUpgrade.value)
+        if (!mfaUpgrade.value){
             return;
+        }
 
         //Submit totp code
         const res = await mfaUpgrade.value.submit({ code })
         res.getResultOrThrow()
 
-         //Clear timer
-        mfaTimer.value?.stop()
+        //Clear timer
+        stop();
 
         //Clear upgrade message
         mfaUpgrade.value = undefined;

@@ -125,10 +125,12 @@ import Content from './components/Content.vue';
 usePageGuard();
 useTitle('CMNext Admin')
 
-//Load scripts
-const ckEditorTag = useScriptTag("https://cdn.ckeditor.com/ckeditor5/35.4.0/super-build/ckeditor.js")
-//Store the wait result on the window for the editor script to wait
-window.editorLoadResult = ckEditorTag.load(true);
+if(!window.CKEDITOR){
+    //Load scripts
+    const ckEditorTag = useScriptTag("https://cdn.ckeditor.com/ckeditor5/35.4.0/super-build/ckeditor.js")
+    //Store the wait result on the window for the editor script to wait
+    window.editorLoadResult = ckEditorTag.load(true);
+}
 
 const { userName, getProfile } = useUser()
 
@@ -241,7 +243,7 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
                     }
                     
                     &:disabled{
-                        @apply text-rose-400 border-transparent;
+                        @apply text-rose-400;
                     }
                 }
 
@@ -257,6 +259,10 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
 
             .dynamic-form.input-label{
                 @apply col-span-2 text-right m-auto mr-2;
+            }
+
+            .dynamic-form.dynamic-input.input:disabled + .dynamic-form.field-description {
+                @apply hidden;
             }
         }
     }

@@ -17,18 +17,18 @@
 </template>
 
 <script setup lang="ts">
-import { apiCall, useWait, useSession, useSessionUtils, WebMessage } from '@vnuge/vnlib.browser'
+import { apiCall, useWait, useSessionUtils, WebMessage, useUser } from '@vnuge/vnlib.browser'
 
 const { waiting } = useWait()
-const { browserId, publicKey } = useSession()
 const { KeyStore } = useSessionUtils()
+const { prepareLogin } = useUser()
 
 const SocalLogin = async (url:string) => {
   await apiCall(async ({ axios }) => {
-    const { data } = await axios.put<WebMessage<string>>(url, {
-      browser_id: browserId.value,
-      public_key: publicKey.value
-    })
+
+    //Prepare the login claim
+    const claim = await prepareLogin()
+    const { data } = await axios.put<WebMessage<string>>(url, claim)
    
     const encDat = data.getResultOrThrow()
     // Decrypt the result which should be a redirect url
