@@ -18,7 +18,7 @@
             <div class="mt-3 text-sm">
                 Publishing to: 
             </div>
-            <div class="p-2 px-3 bg-gray-200 border border-gray-300 rounded-md dark:bg-transparent">
+            <div class="p-2 px-3 bg-gray-200 border border-gray-300 rounded-md dark:border-dark-500 dark:bg-transparent">
                 {{ selectedChannelName }}
             </div>
         </div>
@@ -43,7 +43,7 @@
                             </div>
                         </div>
                          
-                        <div v-if="uploadedFile.name" class="border border-gray-300 p-4 w-[24rem] mx-auto rounded-sm relative mt-5">
+                        <div v-if="uploadedFile.name" class="border border-gray-300 dark:border-dark-500 p-4 w-[24rem] mx-auto rounded-sm relative mt-5">
                             <div class="absolute top-0 text-right -right-12">
                                 <button class="rounded-sm btn sm red" @click.prevent="removeNewFile">
                                     <fa-icon :icon="['fas', 'trash']" />
@@ -63,7 +63,7 @@
                             </div>
                         </div>
                         <div v-else-if="editFile?.id" >
-                            <div class="border border-gray-300 p-4 min-w-[24rem] mx-auto rounded-sm relative mt-5">
+                            <div class="border border-gray-300 dark:border-dark-500 p-4 min-w-[24rem] mx-auto rounded-sm relative mt-5">
                                 <div class="">
                                     Name: {{ getFileName(editFile) }}
                                 </div>

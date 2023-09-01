@@ -28,10 +28,10 @@ using System.Threading.Tasks;
 using Content.Publishing.Blog.Admin.Storage;
 
 using VNLib.Hashing;
+using VNLib.Utils.IO;
 using VNLib.Net.Http;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
-
 
 namespace Content.Publishing.Blog.Admin.Model
 {
@@ -39,7 +39,7 @@ namespace Content.Publishing.Blog.Admin.Model
     {
         private const string ContentIndex = "content.json";
 
-        private readonly IStorageFacade Storage;
+        private readonly ISimpleFilesystem Storage;
 
         public ContentManager(PluginBase plugin)
         {

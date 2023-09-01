@@ -27,7 +27,6 @@ using VNLib.Utils.IO;
 using VNLib.Net.Http;
 
 using Content.Publishing.Blog.Admin.Model;
-using Content.Publishing.Blog.Admin.Storage;
 
 namespace Content.Publishing.Blog.Admin
 {
@@ -43,9 +42,9 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="ct">The file content type</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that completes when the file data has been written to the storage layer</returns>
-        public static Task SetObjectDataAsync(this IStorageFacade storage, IChannelContext context, Stream data, string path, ContentType ct, CancellationToken cancellation)
+        public static Task SetObjectDataAsync(this ISimpleFilesystem storage, IChannelContext context, Stream data, string path, ContentType ct, CancellationToken cancellation)
         {
-            return storage.SetFileAsync($"{context.BaseDir}/{path}", data, ct, cancellation);
+            return storage.WriteFileAsync($"{context.BaseDir}/{path}", data, HttpHelpers.GetContentTypeString(ct), cancellation);
         }
 
         /// <summary>
@@ -56,7 +55,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="path">The item path within the channel to delete</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that completes when the deletion operation has completed</returns>
-        public static Task RemoveObjectAsync(this IStorageFacade storage, IChannelContext context, string path, CancellationToken cancellation)
+        public static Task RemoveObjectAsync(this ISimpleFilesystem storage, IChannelContext context, string path, CancellationToken cancellation)
         {
             return storage.DeleteFileAsync($"{context.BaseDir}/{path}", cancellation);
         }
@@ -71,7 +70,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="fileName">The relative path inside the channel to load the database from</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that resolves the new <see cref="IRecordDb{T}"/> from file</returns>
-        public static Task<IRecordDb<T>> LoadDbAsync<T>(this IStorageFacade storage, IChannelContext context, string fileName, CancellationToken cancellation) where T : IRecord
+        public static Task<IRecordDb<T>> LoadDbAsync<T>(this ISimpleFilesystem storage, IChannelContext context, string fileName, CancellationToken cancellation) where T : IRecord
         {
             return storage.LoadDbAsync<T>($"{context.BaseDir}/{fileName}", cancellation);
         }
@@ -86,7 +85,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="store">The database to capture the file data from</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that completes when the database has been stored</returns>
-        public static Task StoreAsync<T>(this IStorageFacade storage, IChannelContext context, string fileName, IRecordDb<T> store, CancellationToken cancellation)
+        public static Task StoreAsync<T>(this ISimpleFilesystem storage, IChannelContext context, string fileName, IRecordDb<T> store, CancellationToken cancellation)
         {
             return storage.StoreAsync($"{context.BaseDir}/{fileName}", store, cancellation);
         }
@@ -101,7 +100,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="stream">The stream to write the file data to from the storage layer</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that resolves the number of bytes read into the output stream</returns>
-        public static Task<long> ReadFileAsync(this IStorageFacade storage, IChannelContext context, string fileName, Stream stream, CancellationToken cancellation)
+        public static Task<long> ReadFileAsync(this ISimpleFilesystem storage, IChannelContext context, string fileName, Stream stream, CancellationToken cancellation)
         {
             return storage.ReadFileAsync($"{context.BaseDir}/{fileName}", stream, cancellation);
         }
@@ -113,7 +112,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="context">The channel context that contains the item</param>
         /// <param name="path">The realtive path inside the channel to the item to get the path for</param>
         /// <returns>The full external path of the item</returns>
-        public static string GetExternalFilePath(this IStorageFacade storage, IChannelContext context, string path)
+        public static string GetExternalFilePath(this ISimpleFilesystem storage, IChannelContext context, string path)
         {
             return storage.GetExternalFilePath($"{context.BaseDir}/{path}");
         }
@@ -127,7 +126,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="path">The file path to store the record at</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that completes when the operation has completed</returns>
-        public static async Task StoreAsync<T>(this IStorageFacade storage, string path, IRecordDb<T> store, CancellationToken cancellation)
+        public static async Task StoreAsync<T>(this ISimpleFilesystem storage, string path, IRecordDb<T> store, CancellationToken cancellation)
         {
             //Alloc ms to write records to
             using VnMemoryStream ms = new();
@@ -135,7 +134,7 @@ namespace Content.Publishing.Blog.Admin
             //Write the records to the stream
             store.Store(ms);
 
-            await storage.SetFileAsync(path, ms, ContentType.Json, cancellation);
+            await storage.WriteFileAsync(path, ms, HttpHelpers.GetContentTypeString(ContentType.Json), cancellation);
         }
 
         /// <summary>
@@ -147,7 +146,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="objPath">The path to the stored database file</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>The populated <see cref="IRecordDb{T}"/>, if loading fails (file not found etc) the store will be returned empty</returns>
-        public static async Task<IRecordDb<T>> LoadDbAsync<T>(this IStorageFacade storage, string objPath, CancellationToken cancellation) where T : IRecord
+        public static async Task<IRecordDb<T>> LoadDbAsync<T>(this ISimpleFilesystem storage, string objPath, CancellationToken cancellation) where T : IRecord
         {
             //Create the db
             IRecordDb<T> db = JsonRecordDb<T>.Create();
@@ -166,7 +165,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="db">The record database store ready to accept the database content</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that completes when the database has been populated</returns>
-        public static async Task LoadDbAsync<T>(this IStorageFacade storage, string objPath, IRecordDb<T> db, CancellationToken cancellation) where T : IRecord
+        public static async Task LoadDbAsync<T>(this ISimpleFilesystem storage, string objPath, IRecordDb<T> db, CancellationToken cancellation) where T : IRecord
         {
             //Mem stream to read the object into
             using VnMemoryStream ms = new();

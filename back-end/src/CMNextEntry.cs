@@ -75,8 +75,8 @@ namespace Content.Publishing.Blog.Admin
 
     Your server is now running at the following locations:
 {0}
-******************************************************************************
-";
+******************************************************************************";
+
             string[] interfaces = HostConfig.GetProperty("virtual_hosts")
                 .EnumerateArray()
                 .Select(e =>

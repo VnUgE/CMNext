@@ -24,15 +24,15 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using VNLib.Net.Http;
+using VNLib.Utils.IO;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
-    internal sealed class ManagedStorage : IStorageFacade
+    internal sealed class ManagedStorage : ISimpleFilesystem
     {
-        private readonly IStorageFacade _backingStorage;
+        private readonly ISimpleFilesystem _backingStorage;
 
         public ManagedStorage(PluginBase plugin)
         {
@@ -81,7 +81,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public Task SetFileAsync(string filePath, Stream data, ContentType ct, CancellationToken cancellation)
+        public Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             //Try to reset the stream if allowed
             if (data.CanSeek)
@@ -90,7 +90,7 @@ namespace Content.Publishing.Blog.Admin.Storage
                 data.Seek(0, SeekOrigin.Begin);
             }
 
-            return _backingStorage.SetFileAsync(filePath, data, ct, cancellation);
+            return _backingStorage.WriteFileAsync(filePath, data, ct, cancellation);
         }
     }
 }

@@ -290,7 +290,7 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
 
     .ck-editor .ck-content,
     .ck-editor .ck-source-editing-area{
-        @apply min-h-[32rem] resize-y dark:bg-dark-800;
+        @apply min-h-[32rem] resize-y dark:bg-dark-800 px-4 dark:border-dark-300 leading-6;
 
         a {
             @apply text-blue-500;
@@ -301,11 +301,15 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
         }
 
         pre{
-            @apply p-2 dark:text-gray-200;
+            @apply p-2 dark:text-gray-200 my-3;
         }
 
         h1, h2{
             @apply border-b pb-3 mb-4;
+        }
+
+        ul, ol{
+            @apply pl-6 pr-3 my-3;
         }
     }
 
@@ -316,7 +320,7 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
     .ck.ck-toolbar,
     .ck.ck-reset
     {
-        @apply dark:bg-dark-800 dark:text-gray-300;
+        @apply dark:bg-dark-700 dark:text-gray-300 dark:border-dark-300;
 
         .ck-button,
         .ck-dropdown

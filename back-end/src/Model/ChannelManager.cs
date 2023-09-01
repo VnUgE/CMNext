@@ -26,11 +26,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using VNLib.Utils.IO;
 using VNLib.Hashing;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
 
 using Content.Publishing.Blog.Admin.Storage;
+
 
 namespace Content.Publishing.Blog.Admin.Model
 {
@@ -38,7 +40,7 @@ namespace Content.Publishing.Blog.Admin.Model
     [ConfigurationName("blog_channels")]
     internal sealed class ChannelManager : IChannelContextManager
     {
-        private readonly IStorageFacade Storage;
+        private readonly ISimpleFilesystem Storage;
         private readonly string _indexPath;
 
 

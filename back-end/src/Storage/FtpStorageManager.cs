@@ -29,7 +29,6 @@ using System.Collections.Generic;
 using FluentFTP;
 using FluentFTP.Exceptions;
 
-using VNLib.Net.Http;
 using VNLib.Utils.Logging;
 using VNLib.Utils.Resources;
 using VNLib.Plugins;
@@ -102,7 +101,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public override async Task SetFileAsync(string filePath, Stream data, ContentType ct, CancellationToken cancellation)
+        public override async Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             //Upload the file to the server
             FtpStatus status = await _client.UploadStream(data, GetExternalFilePath(filePath), FtpRemoteExists.Overwrite, true, token: cancellation);

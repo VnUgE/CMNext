@@ -23,13 +23,13 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using VNLib.Net.Http;
 using VNLib.Plugins;
+using VNLib.Utils.IO;
 using VNLib.Plugins.Extensions.Loading;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
-    internal abstract class StorageBase : IAsyncConfigurable, IStorageFacade
+    internal abstract class StorageBase : IAsyncConfigurable, ISimpleFilesystem
     {
         /// <summary>
         /// The base file path within the remote file system to use for external urls
@@ -46,7 +46,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         public abstract Task<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation);
 
         ///<inheritdoc/>
-        public abstract Task SetFileAsync(string filePath, Stream data, ContentType ct, CancellationToken cancellation);
+        public abstract Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation);
 
         ///<inheritdoc/>
         public virtual string GetExternalFilePath(string filePath)

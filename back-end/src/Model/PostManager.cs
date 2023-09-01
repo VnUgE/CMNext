@@ -42,7 +42,7 @@ namespace Content.Publishing.Blog.Admin.Model
 
     internal sealed class PostManager : IBlogPostManager
     {
-        private readonly IStorageFacade Storage;
+        private readonly ISimpleFilesystem Storage;
         private readonly IRssFeedGenerator FeedGenerator;
         private readonly ContentManager ContentMan;
 
@@ -166,6 +166,23 @@ namespace Content.Publishing.Blog.Admin.Model
             return true;
         }
 
+        /// <summary>
+        /// Updates the index and feed for all posts for the given channel.
+        /// </summary>
+        /// <param name="context">The channel context to update the feed for</param>
+        /// <param name="cancellation">A token to cancel the operatio</param>
+        /// <returns>A task that completes when the channel feed has been updated</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public async Task UpdateFeedForChannelAsync(IChannelContext context, CancellationToken cancellation)
+        {
+            _ = context ?? throw new ArgumentNullException(nameof(context));
+
+            //Get the index
+            IRecordDb<PostMeta> db = await GetPostIndexAsync(context, cancellation);
+
+            //Update the index and feed after post update
+            await UpdateIndexAndFeed(context, db, cancellation);
+        }
 
         private async Task UpdateIndexAndFeed(IChannelContext context, IRecordDb<PostMeta> index, CancellationToken cancellation)
         {

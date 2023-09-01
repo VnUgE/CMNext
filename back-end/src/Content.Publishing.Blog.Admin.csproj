@@ -7,7 +7,6 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RootNamespace>Content.Publishing.Blog.Admin</RootNamespace>
     <AssemblyName>CMNext</AssemblyName>
-    <Version>0.1.1</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -34,8 +33,8 @@
   <ItemGroup>
     <PackageReference Include="FluentFTP" Version="47.1.0" />
     <PackageReference Include="Minio" Version="5.0.0" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0031" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0031" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0033" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0033" />
   </ItemGroup>
 
   <ItemGroup>

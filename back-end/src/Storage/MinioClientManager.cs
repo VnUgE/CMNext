@@ -26,7 +26,6 @@ using System.Threading.Tasks;
 using Minio;
 using Minio.DataModel;
 
-using VNLib.Net.Http;
 using VNLib.Utils.Memory;
 using VNLib.Utils.Extensions;
 using VNLib.Plugins;
@@ -94,11 +93,11 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public override Task SetFileAsync(string filePath, Stream data, ContentType ct, CancellationToken cancellation)
+        public override Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             PutObjectArgs args = new();
             args.WithBucket(Config.BaseBucket)
-                .WithContentType(HttpHelpers.GetContentTypeString(ct))
+                .WithContentType(ct)
                 .WithObject(filePath)
                 .WithObjectSize(data.Length)
                 .WithStreamData(data);

@@ -23,10 +23,7 @@
   "devDependencies": {
     "@types/lodash-es": "^4.14.194",
     "@babel/types":"^7.x",
-    "@typescript-eslint/eslint-plugin": "^6.4.x",
-    "axios": "^1.x",
-    "jose": "^4.13.x",
-    "universal-cookie": "^6.x"
+    "@typescript-eslint/eslint-plugin": "^6.4.x"
   },
 
   "peerDependencies": {
@@ -34,7 +31,10 @@
     "@vueuse/router": "^10.x",
     "lodash-es": "^4.x",
     "vue": "^3.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/vnlib.browser/3c79abbe108be5d2780efdb2328c1a3ff9121d2b/@vnuge-vnlib.browser/release.tgz"
+    "axios": "^1.x",
+    "jose": "^4.13.x",
+    "universal-cookie": "^6.x",
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/vnlib.browser/00b4fcd2aebdeecabe4a2d4ced645209fbb797aa/@vnuge-vnlib.browser/release.tgz"
   },
 
   "eslintConfig": {

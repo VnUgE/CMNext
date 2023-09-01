@@ -45,6 +45,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         private static readonly IValidator<FeedMeta> FeedValidator = FeedMeta.GetValidator();
 
         private readonly IChannelContextManager ContentManager;
+        private readonly PostManager PostManager;
 
 
         public ChannelEndpoint(PluginBase plugin, IConfigScope config)
@@ -54,6 +55,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             InitPathAndLog(path, plugin.Log);
 
             ContentManager = plugin.GetOrCreateSingleton<ChannelManager>();
+            PostManager = plugin.GetOrCreateSingleton<PostManager>();
         }
 
         protected override async ValueTask<VfReturnType> GetAsync(HttpEntity entity)
@@ -171,6 +173,9 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 entity.CloseResponseJson(HttpStatusCode.Conflict, webm);
                 return VfReturnType.VirtualSkip;
             }
+
+            //Update post feeds
+            await PostManager.UpdateFeedForChannelAsync(channel, entity.EventCancellation);
 
             //Return the new blog context to the client
             entity.CloseResponse(HttpStatusCode.Created);

@@ -12,6 +12,8 @@ tasks:
      - git remote update
      - git reset --hard  
      - git pull origin {{.BRANCH_NAME}} --verify-signatures
+      #re-write semver for back-end after hard reset
+     - dotnet-gitversion.exe /updateprojectfiles
 
   build:
     cmds:
