@@ -29,32 +29,28 @@ export const getPostForm = () => {
                     type: 'text',
                     label: 'Post Title',
                     name: 'title',
-                    placeholder: 'Enter the title of the post',
-                    description: 'A simple human readable title for the post'
+                    placeholder: 'Enter the title of the post'
                 },
                 {
                     id: 'post-author',
                     type: 'text',
                     label: 'Post Author',
                     name: 'author',
-                    placeholder: 'Enter the author of the post',
-                    description: 'The author of the post'
+                    placeholder: 'The author of the post',
                 },
                 {
                     id: 'post-tags',
                     type: 'text',
                     label: 'Post Tags',
                     name: 'tags',
-                    placeholder: 'Enter the tags for the post',
-                    description: 'A comma separated list of tags for the post'
+                    placeholder: 'Ex: tag1,tag2',
                 },
                 {
                     id: 'post-image',
                     type: 'text',
                     label: 'Post Image',
                     name: 'image',
-                    placeholder: 'Enter the image url for the post',
-                    description: 'The full http url to the post image'
+                    placeholder: 'Enter the full external image url',
                 },
                 {
                     id: 'post-summary',
@@ -70,29 +66,28 @@ export const getPostForm = () => {
                     label: 'Post Id',
                     name: 'id',
                     placeholder: '',
-                    description: 'The id of the post, this cannot be changed',
                     disabled: true,
                 }
             ]
         }
     });
 
-    const alphaNumSpace = helpers.regex(/^[a-zA-Z0-9 ]*$/);
+    const alphaNumSpace = helpers.regex(/^[a-zA-Z0-9\?\\\&\|\\/\-\.\, ]*$/);
     const httpUrl = helpers.regex(/^(http|https):\/\/[^ "]+$/);
 
     const rules = {
         title: {
             required: helpers.withMessage('Post title is required', required),
-            maxlength: helpers.withMessage('Post title must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Post title must be less than 64 characters', maxLength(64)),
             alphaNumSpace: helpers.withMessage('Post title must be alphanumeric', alphaNumSpace),
         },
         summary: {
             required: helpers.withMessage('Post summary is required', required),
-            maxlength: helpers.withMessage('Post summary must be less than 50 characters', maxLength(200)),
+            maxlength: helpers.withMessage('Post summary must be less than 250 characters', maxLength(250)),
         },
         author: {
             required: helpers.withMessage('Post author is required', required),
-            maxlength: helpers.withMessage('Post author must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Post author must be less than 64 characters', maxLength(64)),
         },
         tags: {},
         image: {

@@ -21,8 +21,8 @@ import { createVnApp } from './bootstrap'
 import './bootstrap/style/all.scss'
 import './assets/main.scss'
 
-//Use the Nunito font
-import "@fontsource/nunito"
+//Import font data
+import "@fontsource/source-sans-pro"
 
 /* FONT AWESOME CONFIG */
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -69,6 +69,13 @@ createVnApp({
 
         //Add the router
         app.use(router)
+
+        //Add the home-page component
+        router.addRoute({
+            path: '/',
+            name: 'Home',
+            redirect: { path: '/' }
+        })
 
         //Configure account page redirect to profile
         router.addRoute({

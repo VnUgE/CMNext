@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { toSafeInteger } from 'lodash-es';
+import { isEmpty, toSafeInteger } from 'lodash-es';
 import useVuelidate from '@vuelidate/core'
 import { required, maxLength, minLength, helpers } from '@vuelidate/validators'
 import { useUser, apiCall, useMessage, useWait, useConfirm, useVuelidateWrapper } from '@vnuge/vnlib.browser'
@@ -130,7 +130,7 @@ const rules = computed(() =>{
       maxLength: helpers.withMessage('Repeast password must have less than 128 characters', maxLength(128))
     },
     totpCode:{
-      required: helpers.withMessage('TOTP code cannot be empty', required),
+      required: helpers.withMessage('TOTP code cannot be empty', (value:string) => showTotpCode.value ? !isEmpty(value) : true),
       minLength: helpers.withMessage('TOTP code must be at least 6 characters', minLength(6)),
       maxLength: helpers.withMessage('TOTP code must have less than 12 characters', maxLength(12))
     }

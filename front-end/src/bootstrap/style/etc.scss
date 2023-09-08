@@ -14,22 +14,6 @@ footer .footer-content .router-link-active {
     @apply mb-0 text-xl;
 }
 
-
-.env-bg {
-    font-family: "Nunito";
-    background: #f7f7f7;
-    @apply dark:bg-dark-900;
-    @apply text-gray-700 dark:text-gray-300;
-}
-
-.env-bg-gradient {
-    background: #98E4C8;
-    background: -webkit-linear-gradient(bottom right, #98E4C8, #2C6BC3);
-    background: -moz-linear-gradient(bottom right, #98E4C8, #2C6BC3);
-    background: linear-gradient(to top left, #98E4C8, #2C6BC3);
-    @apply text-gray-700;
-}
-
 .app-component-entry {
     @apply flex flex-col flex-auto mb-10;
 

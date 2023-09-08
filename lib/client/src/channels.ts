@@ -91,7 +91,7 @@ export const createScopedChannelApi = (channelFile: string, channelId: string): 
         //Await the selected channel index
         const channel = await index
         //Get the post index from the channel
-        return channel ? `${channel.path}/${channel.content}` : undefined;
+        return channel ? `${channel.path}/content.json` : undefined;
     }
 
     return{

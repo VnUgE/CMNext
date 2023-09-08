@@ -132,7 +132,7 @@ const onDelete = async () => {
 const setMeAsAuthor = () => {
     apiCall(async () => {
         const { first, last } = await getProfile<{first?:string, last?:string, email:string}>();
-        v$.value.author.$model = `${first} ${last}`
+        v$.value.author.$model = `${first ?? ''} ${last ?? ''}`
     })
 }
 

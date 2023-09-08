@@ -136,26 +136,26 @@ export const getChannelForm = (editMode?: Ref<boolean>) => {
         ]
     }
 
-    const alphaNumSpace = helpers.regex(/^[a-zA-Z0-9 ]*$/);
+    const alphaNumSpace = helpers.regex(/^[a-zA-Z0-9\&\|\.\,\? ]*$/);
     const httpUrl = helpers.regex(/^(http|https):\/\/[^ "]+$/);
 
     const channelRules = {
         name: {
             required: helpers.withMessage('Channel name is required', required),
-            maxlength: helpers.withMessage('Channel name must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Channel name must be less than 64 characters', maxLength(64)),
             alphaNumSpace: helpers.withMessage('Channel name must be alphanumeric', alphaNumSpace),
         },
         path: {
             required: helpers.withMessage('Channel path is required', required),
-            maxlength: helpers.withMessage('Channel path must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Channel path must be less than 64 characters', maxLength(64)),
         },
         index: {
             required: helpers.withMessage('Channel index is required', required),
-            maxlength: helpers.withMessage('Channel index must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Channel index must be less than 64 characters', maxLength(64)),
         },
         content: {
             required: helpers.withMessage('Channel content directory is required', required),
-            maxlength: helpers.withMessage('Channel content directory must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Channel content directory must be less than 64 characters', maxLength(64)),
         },
         example: {}
     }
@@ -168,24 +168,24 @@ export const getChannelForm = (editMode?: Ref<boolean>) => {
         },
         path: {
             required: helpers.withMessage('Channel feed path is required', required),
-            maxlength: helpers.withMessage('Channel feed path must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Channel feed path must be less than 64 characters', maxLength(64)),
         },
         image: {
             maxlength: helpers.withMessage('Channel feed image must be less than 200 characters', maxLength(200)),
         },
         contact: {
-            maxlength: helpers.withMessage('Channel feed contact must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Channel feed contact must be less than 64 characters', maxLength(64)),
         },
         description: {
             alphaNumSpace: helpers.withMessage('Channel feed description must be alphanumeric', alphaNumSpace),
-            maxlength: helpers.withMessage('Channel feed description must be less than 50 characters', maxLength(200)),
+            maxlength: helpers.withMessage('Channel feed description must be less than 250 characters', maxLength(250)),
         },
         maxItems: {
             numeric: helpers.withMessage('Channel feed max items must be a number', numeric),
         },
         author: {
             alphaNumSpace: helpers.withMessage('Channel feed author must be alphanumeric', alphaNumSpace),
-            maxlength: helpers.withMessage('Channel feed author must be less than 50 characters', maxLength(50)),
+            maxlength: helpers.withMessage('Channel feed author must be less than 64 characters', maxLength(64)),
         }
     }
 

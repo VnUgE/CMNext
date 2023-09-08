@@ -1,3 +1,18 @@
 #footer-content .footer-lower{
     @apply hidden;
 }
+
+.env-bg {
+    font-family: "Source Sans Pro", Geneva, Verdana, sans-serif;
+    background: #f7f7f7;
+    @apply dark:bg-dark-900;
+    @apply text-gray-700 dark:text-gray-300;
+}
+
+.env-bg-gradient {
+    background: #98E4C8;
+    background: -webkit-linear-gradient(bottom right, #98E4C8, #2C6BC3);
+    background: -moz-linear-gradient(bottom right, #98E4C8, #2C6BC3);
+    background: linear-gradient(to top left, #98E4C8, #2C6BC3);
+    @apply text-gray-700;
+}

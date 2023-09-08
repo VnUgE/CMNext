@@ -74,6 +74,10 @@ export interface CMNextApi<T> {
  */
 export interface ChannelMeta extends CMNextEntity {
     /**
+     * The name of the channel
+     */
+    readonly name: string;
+    /**
      * The base path of the channel
      */
     readonly path: string;
