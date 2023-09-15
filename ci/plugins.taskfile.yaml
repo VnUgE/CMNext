@@ -1,0 +1,100 @@
+
+version: "3"
+
+vars:
+
+
+tasks:
+
+  all:
+    cmds:
+    - echo "Installing and configuring plugins and UI"
+    - task: install-accounts
+    - task: install-sessions
+    - task: install-vncache
+    - task: install-router
+    - task: install-users
+    - task: build-cmnext
+
+  build-cmnext:
+    cmds:
+    #build js libraries
+    - cd ../lib/admin && npm install && npm run build
+    - cd ../front-end && npm install && npm run build
+    #move dist files to web root
+    - powershell -Command "cp -Recurse -Force ../front-end/dist {{.USER_WORKING_DIR}}"
+    #move the plugin output
+    - powershell -Command "cp -Recurse -Force ../back-end/src/bin/release/net6.0/publish/* ./plugins/CMNext"
+    #move cmnext config file
+    - powershell -Command "cp -Force config/CMNext.json ./plugins/CMNext/CMNext.json"
+
+  install-accounts:
+    cmds:
+    #install accounts plugin
+    - task: install-plugin
+      vars:
+        NAME: 'Essentials.Accounts'
+        PROJECT_NAME: 'VNLib.Plugins.Essentials.Accounts'
+        MODULE_NAME: "Plugins.Essentials"
+        FILE_NAME: "release.tgz"
+        DIR: './plugins/Essentials.Accounts'
+
+  install-router:
+    cmds:
+    #install router plugin
+    - task: install-plugin
+      vars:
+        NAME: 'PageRouter'
+        PROJECT_NAME: 'VNLib.Plugins.Essentials.Content.Routing'
+        MODULE_NAME: "Plugins.Essentials"
+        FILE_NAME: "release.tgz"
+        DIR: './plugins/PageRouter'
+
+  install-sessions:
+    cmds:
+    #install sessions plugin
+    - task: install-plugin
+      vars:
+        NAME: 'SessionProvider'
+        PROJECT_NAME: 'SessionProvider'
+        MODULE_NAME: "VNLib.Plugins.Sessions"
+        FILE_NAME: "release.tgz"
+        DIR: './plugins/SessionProvider'
+
+  install-users:
+    cmds:
+    #install users plugin
+    - task: install-plugin
+      vars:
+        NAME: 'VNLib.Plugins.Essentials.Users'
+        PROJECT_NAME: 'VNLib.Plugins.Essentials.Users'
+        MODULE_NAME: "VNLib.Plugins.Essentials.Users"
+        FILE_NAME: "release.tgz"
+        DIR: './plugins/assets/VNLib.Plugins.Essentials.Users'
+
+    #move routes xml files
+    - cmd: powershell -Command "cp -Force config/routes.xml ./plugins/routes.xml"
+
+  install-vncache:
+    cmds:
+    #install sessions plugin
+    - task: install-plugin
+      vars:
+        NAME: 'VNLib.Plugins.Sessions.VNCache'
+        PROJECT_NAME: 'VNLib.Plugins.Sessions.VNCache'
+        MODULE_NAME: "VNLib.Plugins.Sessions"
+        FILE_NAME: "release.tgz"
+        DIR: './plugins/assets/VNLib.Plugins.Sessions.VNCache'
+
+  install-plugin:
+    cmds:
+    #make the plugin directory
+    - cmd: powershell -Command "mkdir {{.DIR}} -Force"
+      ignore_error: true
+    - cd {{.DIR}} && powershell "{{.USER_WORKING_DIR}}/install.ps1" -BaseUrl {{.BUILDS_URL}} -ModuleName {{.MODULE_NAME}} -ProjectName {{.PROJECT_NAME}} -FileName {{.FILE_NAME}}
+    - cd {{.DIR}} && tar -xzf {{.FILE_NAME}} 
+    #remove the archive file 
+    - cd {{.DIR}} && powershell -Command "rm {{.FILE_NAME}}"
+    #copy config file from config dir
+    - cmd: powershell -Command "cp -Force ./config/{{.NAME}}.json {{.DIR}}/{{.NAME}}.json"
+      ignore_error: true

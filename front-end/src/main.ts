@@ -53,10 +53,10 @@ createVnApp({
     siteTitle: 'CMNext Admin',
 
     //Routes to display in the header when the user is not logged in
-    headerRoutes: ['Home', 'Login'],
+    headerRoutes: ['Blog', 'Login'],
 
     //Routes to display in the header when the user is logged in
-    authRoutes: ['Home', 'Blog', 'Account', 'Login'],
+    authRoutes: ['Blog', 'Account', 'Login'],
 
     //Enable dark mode support
     useDarkMode: true,

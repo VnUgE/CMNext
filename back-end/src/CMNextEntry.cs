@@ -58,9 +58,7 @@ namespace Content.Publishing.Blog.Admin
         }
 
         protected override void ProcessHostCommand(string cmd)
-        {
-            throw new NotImplementedException();
-        }
+        { }
 
         private void PrintHelloMessage()
         {
@@ -73,8 +71,7 @@ namespace Content.Publishing.Blog.Admin
     License: GNU Affero General Public License v3.0
     This application comes with ABSOLUTELY NO WARRANTY.
 
-    Your server is now running at the following locations:
-{0}
+    Your server is now running at the following locations:{0}
 ******************************************************************************";
 
             string[] interfaces = HostConfig.GetProperty("virtual_hosts")
@@ -91,7 +88,7 @@ namespace Content.Publishing.Blog.Admin
             StringBuilder sb = new();
             foreach ( string intf in interfaces )
             {
-                sb.Append('\t');
+                sb.Append("\n\t");
                 sb.AppendLine(intf);
             }
 
