@@ -53,10 +53,10 @@
       "path": "dist",
 
       //The hostname to listen for, "*" as wildcard, and "[system]" as the default hostname for the current machine
-      "hostname": "*",
+      //"hostname": "*",
 
       //Or specify an array of hostnames instead, the hostnames array property takes priority over the single hostname property, each must be unique
-      //"hostnames": [ ],
+      "hostnames": [ "*" ],
 
       //Collection of "trusted" servers to allow proxy header support from
       "downstream_servers": [],
@@ -71,9 +71,6 @@
       //The default file extensions to append to a resource that does not have a file extension
       "default_files": [ "index.html" ],
 
-      //Denys files to non-browser user-agent connections
-      "browser_only_files": false,
-
       //Key-value headers object, some headers are special and are controlled by the vh processor
       "headers": {
         "X-Content-Type-Options": "nosniff",
@@ -83,12 +80,10 @@
       },
 
       //Enables cors support for all endpoints and header controls, if false, all endpoints that are send CORS request headers will be forbidden
-      "enable_cors": true,
+      //"enable_cors": true,
 
       //Allowed cors authoriy domains
-      "cors_allowed_authority": [
-        "localhost:8080"
-      ],
+      //"cors_allowed_authority": [ "localhost:8080" ],
 
       //Define a TLS certificate (enables TLS on the interface)
       "disabled ssl": {

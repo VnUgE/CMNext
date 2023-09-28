@@ -115,8 +115,8 @@ namespace Content.Publishing.Blog.Admin.Storage
             .WithObject(filePath)
             .WithCallbackStream(async (stream, cancellation) =>
             {
-                //Read the objec to memory
-                await stream.CopyToAsync(output, 4096, MemoryUtil.Shared, cancellation);
+                //Read the object to memory
+                await stream.CopyToAsync(output, 16384, MemoryUtil.Shared, cancellation);
             });
             try
             {
