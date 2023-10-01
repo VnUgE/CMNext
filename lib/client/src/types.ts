@@ -153,6 +153,11 @@ export interface PostMeta extends CMNextEntity {
      * The post's image, assumed to be an absolute url
      */
     readonly image?: string;
+    /**
+     * Optional html description stored directly on the entity, this 
+     * is only available if the post was published in podcast mode. 
+     */
+    readonly html_description?: string;
 }
 
 export interface ContentMeta extends CMNextEntity {
