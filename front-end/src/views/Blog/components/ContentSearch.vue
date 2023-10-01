@@ -79,8 +79,8 @@ const searchResults = computed<ContentResult[]>(() => {
         return {
             ...content,
             //truncate the id and name for display
-            shortId: truncate(content.id, { length: 15 }),
-            shortName: truncate(content.name, { length: 24 }),
+            shortId: truncate(content.id, { length: 18 }),
+            shortName: truncate(content.name, { length: 36 }),
             copyLink: () => copyLink(content, copy),
             copied
         }
@@ -109,6 +109,10 @@ const onSelected = (result: ContentResult) => {
 
         .controls{
             @apply min-w-[4rem] text-center;
+        }
+
+        &.name{
+            @apply text-sm;
         }
     }
 

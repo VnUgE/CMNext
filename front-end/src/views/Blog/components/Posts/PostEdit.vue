@@ -9,9 +9,6 @@
         </div>
         <div class="mx-auto">
             <h4 class="text-center">Edit Post</h4>
-            <p>
-                Add or edit a post to publish to your blog.
-            </p>
         </div>
         <div class="relative">
             <div class="absolute top-2 right-10">
@@ -28,7 +25,7 @@
         />
 
         <div id="post-content-editor" class="px-6" :class="{'invalid':v$.content.$invalid}">
-            <Editor @change="onContentChanged" :blog="$props.blog" @load="onEditorLoad" />
+            <Editor :podcast-mode="podcastMode" :blog="$props.blog" @change="onContentChanged" @mode-change="onModeChange" @load="onEditorLoad" />
         </div>
 
          <FeedFields :properties="postProperties" :blog="$props.blog" />
@@ -44,7 +41,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { BlogState } from '../../blog-api';
 import { reactiveComputed } from '@vueuse/core';
 import { isNil, isString, split } from 'lodash-es';
@@ -64,6 +61,7 @@ const { getProfile } = useUser();
 const { schema, getValidator } = getPostForm();
 
 const { posts, content } = props.blog;
+const podcastMode = ref(false)
 
 const isNew = computed(() => isNil(posts.selectedItem.value));
 
@@ -97,6 +95,14 @@ const onSubmit = async () =>{
 
     //Remove the content from the post object
     delete post.content;
+
+    //Store the post content on the html descrption if in podcast mode
+    if(podcastMode.value){
+        post.html_description = v$.value.content.$model;
+    }
+    else{
+        delete post.html_description; 
+    }
 
     //Convert the tags string to an array of strings
     post.tags = isString(post.tags) ? split(post.tags, ',') : post.tags;
@@ -136,6 +142,10 @@ const setMeAsAuthor = () => {
     })
 }
 
+const onModeChange = (e: boolean) => {
+    podcastMode.value = e;
+}
+
 const onEditorLoad = async (editor : any) =>{
 
     //Get the initial content
@@ -145,6 +155,12 @@ const onEditorLoad = async (editor : any) =>{
     if(!isNil(postContent)){
         onContentChanged(postContent);
         editor.setData(postContent);
+    }
+
+    //If the post has an html description, set podcast mode
+    if(postBuffer.html_description){
+        //Set podcast mode to true
+        podcastMode.value = true;
     }
 }
 

@@ -43,6 +43,9 @@ namespace Content.Publishing.Blog.Admin.Model
         [JsonPropertyName("summary")]
         public string? Summary { get; set; }
 
+        [JsonPropertyName("html_description")]
+        public string? HtmlDescription { get; set; }
+
         [JsonPropertyName("tags")]
         public string[]? Tags { get; set; }
 

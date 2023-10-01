@@ -107,6 +107,7 @@ export interface PostMeta extends NamedBlogEntity, XmlPropertyContainer {
     author?: string;
     tags?: string[];
     image?: string;
+    html_description?: string;
 }
 
 /**

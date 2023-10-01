@@ -27,18 +27,25 @@ using System.Collections.Generic;
 
 using VNLib.Utils.IO;
 using VNLib.Plugins;
+using VNLib.Plugins.Extensions.Loading;
 
 using Content.Publishing.Blog.Admin.Model;
 
 namespace Content.Publishing.Blog.Admin
 {
+    [ConfigurationName("rss_feed", Required = false)]
     internal sealed class FeedGenerator : IRssFeedGenerator
     {
         const int defaultMaxItems = 20;
         const string ITUNES_XML_ATTR = "http://www.itunes.com/dtds/podcast-1.0.dtd";
         const string CONTENT_XML_ATTR = "http://purl.org/rss/1.0/modules/content/";
+        const string PODCAST_INDEX_ATTR = "https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md";
+        const string GENERATOR_NAME = "CMNext";
 
         public FeedGenerator(PluginBase pbase)
+        { }
+
+        public FeedGenerator(PluginBase pbase, IConfigScope config)
         { }
 
         public void BuildFeed(IChannelContext context, IEnumerable<PostMeta> posts, VnMemoryStream output)
@@ -66,7 +73,7 @@ namespace Content.Publishing.Blog.Admin
             writer.WriteAttributeString("version", "2.0");
             writer.WriteAttributeString("xmlns", "itunes", null, ITUNES_XML_ATTR);
             writer.WriteAttributeString("xmlns", "content", null, CONTENT_XML_ATTR);
-          
+            writer.WriteAttributeString("xmlns", "podcast", null, PODCAST_INDEX_ATTR);
 
             //Channel element
             writer.WriteStartElement("channel");
@@ -93,6 +100,12 @@ namespace Content.Publishing.Blog.Admin
                 foreach (ExtendedProperty prop in context.Feed.ExtendedProperties)
                 {
                     PrintExtendedProps(prop, writer);
+                }
+
+                //Add generator tag if not set by user
+                if(!context.Feed.ExtendedProperties.Any(static p => "generator".Equals(p.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    writer.WriteElementString("generator", GENERATOR_NAME);
                 }
             }
 
@@ -127,8 +140,24 @@ namespace Content.Publishing.Blog.Admin
                 writer.WriteElementString("itunes", "author", null, post.Author);
 
                 //Description is just the post summary
-                writer.WriteElementString("description", post.Summary);
                 writer.WriteElementString("itunes", "summary", null, post.Summary);
+
+                //Allow an html description from the post meta itself
+                if (post.HtmlDescription != null)
+                {
+                    writer.WriteStartElement("description");
+                    writer.WriteCData(post.HtmlDescription);
+                    writer.WriteEndElement();
+
+                    //Add content encoded tag
+                    writer.WriteStartElement("content", "encoded", null);
+                    writer.WriteCData(post.HtmlDescription);
+                    writer.WriteEndElement();
+                }
+                else
+                {
+                    writer.WriteElementString("description", post.Summary);
+                }
 
                 //Time as iso string from unix seconds timestamp
                 string pubDate = DateTimeOffset.FromUnixTimeSeconds(post.Created).ToString("R");
@@ -189,6 +218,10 @@ namespace Content.Publishing.Blog.Admin
                 {
                     PrintExtendedProps(child, writer);
                 }
+            }
+            else if(prop.Value != null && prop.Value.StartsWith("<![CDATA", StringComparison.OrdinalIgnoreCase))
+            {
+                writer.WriteCData(prop.Value);
             }
             else
             {

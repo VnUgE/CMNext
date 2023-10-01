@@ -1,7 +1,21 @@
 <template>
     <div class="pt-6">
         <div class="flex justify-end w-full gap-2 my-2">
-             <div class="w-fit">
+            <div class="w-fit">
+                <div class="flex flex-row py-2 mr-auto">
+                    <Switch v-model="podcastMode"
+                        :class="$props.podcastMode ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-500'"
+                        class="relative inline-flex items-center w-10 h-5 my-auto duration-75 rounded-full">
+                        <span class="sr-only">Podcast Mode</span>
+                        <span :class="$props.podcastMode ? 'translate-x-6' : 'translate-x-1'"
+                            class="inline-block w-3 h-3 transition transform bg-white rounded-full" />
+                    </Switch>
+                    <div class="my-auto ml-3">
+                        Podcast Mode
+                    </div>
+                </div>
+            </div>
+            <div class="w-fit">
                  <Popover class="relative">
                     <PopoverButton class="btn">
                         Add
@@ -56,11 +70,11 @@
 
 <script setup lang="ts">
 import { debounce, defer } from 'lodash-es';
-import { ref } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import { useSessionStorage } from '@vueuse/core';
 import { tryOnMounted } from '@vueuse/shared';
 import { apiCall } from '@vnuge/vnlib.browser';
-import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+import { Popover, PopoverButton, PopoverPanel, Switch } from '@headlessui/vue'
 import { BlogState } from '../blog-api'
 import { Converter } from 'showdown'
 
@@ -68,18 +82,24 @@ import { Converter } from 'showdown'
 import { config } from './build.ts'
 import ContentSearch from '../components/ContentSearch.vue';
 
-const emit = defineEmits(['change', 'load'])
+const emit = defineEmits(['change', 'load', 'mode-change'])
 
-defineProps<{
-    blog: BlogState
+const props = defineProps<{
+    blog: BlogState,
+    podcastMode: boolean
 }>()
 
 let editor = {}
+const propRefs = toRefs(props)
 //Init new shodown converter
 const showdownConverter = new Converter()
 const mdBuffer = ref('')
 const editorFrame = ref(null)
 const crashBuffer = useSessionStorage('post-crash', '')
+const podcastMode = computed({
+    get: () => propRefs.podcastMode.value,
+    set: (v) => emit('mode-change', v)
+})
 
 const recoverFromCrash = () => {
     //Set editor content from crash buffer

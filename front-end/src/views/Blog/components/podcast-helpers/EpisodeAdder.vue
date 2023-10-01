@@ -13,12 +13,26 @@
             <div class="fixed inset-0 flex justify-center pt-[8rem]">
                 <DialogPanel class="dialog">
                     <div class="">
-                        <DialogTitle>Set feed enclosure</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle class="text-2xl font-bold">Add Media Enclosure</DialogTitle>
+                        <DialogDescription class="text-xs">
                             You may set a podcast episode or other rss enclosure from 
                             content stored in the cms.
                         </DialogDescription>
-                        <div class="my-3 ml-auto w-fit">
+                        <div class="flex flex-row gap-3 my-3 ml-auto w-fit">
+                            <div class="flex flex-row gap-2 my-auto">
+                                <div class="text-sm">
+                                    Explicit
+                                </div>
+                                <div class="">
+                                    <Switch v-model="isExplicit"
+                                        :class="isExplicit ? 'bg-red-500' : 'bg-gray-300 dark:bg-dark-500'"
+                                        class="relative inline-flex items-center w-10 h-5 my-auto duration-75 rounded-full">
+                                        <span class="sr-only">Podcast Mode</span>
+                                        <span :class="isExplicit ? 'translate-x-6' : 'translate-x-1'"
+                                            class="inline-block w-3 h-3 transition transform bg-white rounded-full" />
+                                    </Switch>
+                                </div>
+                            </div>
                             <Popover class="relative">
                                 <PopoverButton class="btn">
                                     Add media
@@ -57,7 +71,7 @@
 </template>
 <script setup lang="ts">
 
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { BlogState } from '../../blog-api';
 import { PodcastEntity, getPodcastForm } from './podcast-form'
 import {
@@ -68,6 +82,7 @@ import {
     PopoverButton,
     PopoverPanel,
     Popover,
+    Switch
 } from '@headlessui/vue'
 import ContentSearch from '../ContentSearch.vue'
 import { apiCall, debugLog } from '@vnuge/vnlib.browser';
@@ -87,6 +102,11 @@ const buffer = reactive<PodcastEntity>({} as PodcastEntity)
 
 const { v$, validate } = getValidator(buffer)
 
+const isExplicit = computed({
+    get : () => buffer.explicit,
+    set : (v: boolean) => buffer.explicit = v
+});
+
 const setIsOpen = (value: boolean) => isOpen.value = value
 
 const onFormSubmit = async () =>{
@@ -102,15 +122,13 @@ const onFormSubmit = async () =>{
     setIsOpen(false)
 }
 
-const onCancel = () =>{
-    setIsOpen(false)
-}
+const onCancel = () => setIsOpen(false)
 
 const onContentSelected = (content: ContentMeta) =>{
     apiCall(async () =>{
         //Get the content link from the server
         const url = await getPublicUrl(content)
-
+        
         //set the form content
         setEnclosureContent(buffer, content, `/${url}`)
     })
@@ -147,7 +165,7 @@ const onContentSelected = (content: ContentMeta) =>{
         @apply py-1.5 bg-transparent;
 
         &:disabled{
-            @apply bg-gray-100 dark:bg-transparent dark:border-transparent;
+            @apply bg-gray-100 py-0.5 bg-transparent disabled:text-sm disabled:border-0 dark:text-gray-400 text-black;
         }
 
         &:focus{

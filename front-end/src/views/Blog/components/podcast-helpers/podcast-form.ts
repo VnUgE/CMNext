@@ -25,6 +25,7 @@ export interface EnclosureEntity{
     contentUrl: string;
     contentLength: number;
     contentType: string;
+    explicit: boolean;
 }
 
 export interface PodcastEntity extends EnclosureEntity{
@@ -58,7 +59,6 @@ export const getPodcastForm = (editMode?: Ref<boolean>) => {
                     label: 'File Id',
                     name: 'fileId',
                     placeholder: '',
-                    description: 'The file id of the episode already in the channel',
                     disabled: true,
                 },
                 {
@@ -67,7 +67,6 @@ export const getPodcastForm = (editMode?: Ref<boolean>) => {
                     label: 'Content url',
                     name: 'contentUrl',
                     placeholder: '',
-                    description: 'This the relative url to the episode content file',
                     disabled: true,
                 },
                 {
@@ -76,16 +75,14 @@ export const getPodcastForm = (editMode?: Ref<boolean>) => {
                     label: 'Content length',
                     name: 'contentLength',
                     placeholder: '',
-                    description: 'This the length in bytes of the episode content file',
                     disabled: true,
                 },
                 {
                     id: 'content-type',
                     type: 'text',
-                    label: 'The MIME content type',
+                    label: 'MIME content type',
                     name: 'contentType',
                     placeholder: '',
-                    description: 'The MIME content type for the episode content file',
                     disabled: true,
                 }
             ]
@@ -159,6 +156,11 @@ export const getPodcastForm = (editMode?: Ref<boolean>) => {
                     length: podcast.contentLength?.toString(),
                     type: podcast.contentType
                 },
+            },
+            {
+                name: 'explicit',
+                namespace: 'itunes',
+                value: podcast.explicit ? 'true' : 'false'
             }
         ]
     } 

@@ -44,6 +44,11 @@ namespace Content.Publishing.Blog.Admin.Model
                 .IllegalCharacters()
                 .MaximumLength(200);
 
+            //Allow an custom html description to be stored on the post object
+            validator.RuleFor(x => x.HtmlDescription)
+                .MaximumLength(4000)
+                .When(p => p.HtmlDescription != null);
+
             validator.RuleFor(x => x.Author!)
                 .NotEmpty()
                 .IllegalCharacters()
