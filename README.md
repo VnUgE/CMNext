@@ -1,7 +1,7 @@
 ﻿<h1 align="center">CMNext</h1> 
 
 <p align="center">
-A self-hosted, mulit-channel, content publishing platform (CMS) built with my [Essentials](https://github.com/VnUgE/VNLib.Core) framework, using your existing S3 or FTP storage.
+A self-hosted, mulit-channel, content publishing platform (CMS) built with my <a href="https://github.com/VnUgE/VNLib.Core">Essentials</a> framework, using your existing S3 or FTP storage.
 </p>
 
 <h4 align="center">
