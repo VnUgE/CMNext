@@ -37,9 +37,10 @@ namespace Content.Publishing.Blog.Admin
     internal sealed class FeedGenerator : IRssFeedGenerator
     {
         const int defaultMaxItems = 20;
-        const string ITUNES_XML_ATTR = "http://www.itunes.com/dtds/podcast-1.0.dtd";
-        const string CONTENT_XML_ATTR = "http://purl.org/rss/1.0/modules/content/";
-        const string PODCAST_INDEX_ATTR = "https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md";
+        const string ITUNES_NAMESPACE_LINK = "http://www.itunes.com/dtds/podcast-1.0.dtd";
+        const string CONTENT_NAMESPACE_LINK = "http://purl.org/rss/1.0/modules/content/";
+        const string PODCAST_INDEX_LINK = "https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md";
+        const string ATOM_NAMESPACE_LINK = "https://www.w3.org/2005/Atom";
         const string GENERATOR_NAME = "CMNext";
 
         public FeedGenerator(PluginBase pbase)
@@ -71,22 +72,26 @@ namespace Content.Publishing.Blog.Admin
             writer.WriteStartDocument();
             writer.WriteStartElement("rss");
             writer.WriteAttributeString("version", "2.0");
-            writer.WriteAttributeString("xmlns", "itunes", null, ITUNES_XML_ATTR);
-            writer.WriteAttributeString("xmlns", "content", null, CONTENT_XML_ATTR);
-            writer.WriteAttributeString("xmlns", "podcast", null, PODCAST_INDEX_ATTR);
+            writer.WriteAttributeString("xmlns", "itunes", null, ITUNES_NAMESPACE_LINK);
+            writer.WriteAttributeString("xmlns", "content", null, CONTENT_NAMESPACE_LINK);
+            writer.WriteAttributeString("xmlns", "podcast", null, PODCAST_INDEX_LINK);
+            writer.WriteAttributeString("xmlns", "atom", null, ATOM_NAMESPACE_LINK);
 
             //Channel element
             writer.WriteStartElement("channel");
 
             writer.WriteElementString("title", context.BlogName);
+            writer.WriteElementString("atom", "title", null, context.BlogName);
 
             writer.WriteElementString("link", context.Feed.PublihUrl);
 
             //Description/summary
             writer.WriteElementString("description", context.Feed.Description);
             writer.WriteElementString("itunes", "summary", null, context.Feed.Description);
+            writer.WriteElementString("atom", "summary", null, context.Feed.Description);
 
             writer.WriteElementString("itunes", "author", null, context.Feed.Author);
+            writer.WriteElementString("atom", "author", null, context.Feed.Author);
 
             //Itunes owner tag
             writer.WriteStartElement("itunes", "owner", null);
@@ -106,11 +111,10 @@ namespace Content.Publishing.Blog.Admin
                 if(!context.Feed.ExtendedProperties.Any(static p => "generator".Equals(p.Name, StringComparison.OrdinalIgnoreCase)))
                 {
                     writer.WriteElementString("generator", GENERATOR_NAME);
+                    writer.WriteElementString("atom", "generator", null, GENERATOR_NAME);
                 }
             }
-
-            //Author
-            writer.WriteElementString("itunes", "author", null, context.Feed.Author);
+          
 
             //Itunes image url
             if (context.Feed.ImageUrl != null)
@@ -134,13 +138,16 @@ namespace Content.Publishing.Blog.Admin
 
                 writer.WriteElementString("title", post.Title);
                 writer.WriteElementString("itunes","title", null, post.Title);
+                writer.WriteElementString("atom", "title", null, post.Title);
 
                 writer.WriteElementString("link", $"{context.Feed.PublihUrl}/{post.Id}");
                
                 writer.WriteElementString("itunes", "author", null, post.Author);
+                writer.WriteElementString("atom", "author", null, post.Author);
 
                 //Description is just the post summary
                 writer.WriteElementString("itunes", "summary", null, post.Summary);
+                writer.WriteElementString("atom", "summary", null, post.Summary);
 
                 //Allow an html description from the post meta itself
                 if (post.HtmlDescription != null)
@@ -161,9 +168,12 @@ namespace Content.Publishing.Blog.Admin
 
                 //Time as iso string from unix seconds timestamp
                 string pubDate = DateTimeOffset.FromUnixTimeSeconds(post.Created).ToString("R");
+                string updated = DateTimeOffset.FromUnixTimeSeconds(post.Date).ToString("R");
 
                 writer.WriteElementString("pubDate", pubDate);
                 writer.WriteElementString("published", pubDate);
+                writer.WriteElementString("atom", "published", null, pubDate);
+                writer.WriteElementString("atom", "updated", null, updated);
 
                 if (post.Image != null)
                 {
@@ -182,6 +192,7 @@ namespace Content.Publishing.Blog.Admin
 
                 //Set post id as the guid
                 writer.WriteElementString("guid", post.Id);
+                writer.WriteElementString("podcast", "guid", null, post.Id);
 
                 writer.WriteEndElement();
             }
