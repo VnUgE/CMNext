@@ -100,7 +100,7 @@ namespace Content.Publishing.Blog.Admin.Model
                 Length = length,
                 FileName = fileName,
                 //File path from ct
-                FilePath = GetFileNameFromType(fileId, ct)
+                FilePath = GetFileNameFromTypeOrExtension(fileId, ct, fileName)
             };
         }
 
@@ -194,7 +194,7 @@ namespace Content.Publishing.Blog.Admin.Model
                 FileName = $"Content for post {postId}",
                 Id = postId,
                 Length = 0,
-                FilePath = GetFileNameFromType(postId, ContentType.Html),
+                FilePath = GetFileNameFromTypeOrExtension(postId, ContentType.Html, null),
             };
 
             //Get the content index
@@ -287,14 +287,24 @@ namespace Content.Publishing.Blog.Admin.Model
             return $"{context.ContentDir}/{meta.FilePath}";
         }
 
-        private static string GetFileNameFromType(string fileId, ContentType type)
+        private static string GetFileNameFromTypeOrExtension(string fileId, ContentType type, string? fileName)
         {
-            //Create file path from its id and file extension
-            return type switch
+            if(Path.HasExtension(fileName))
             {
-                ContentType.Javascript => $"{fileId}.js",
-                _ => $"{fileId}.{type.ToString().ToLowerInvariant()}",
-            };
+                string extension = Path.GetExtension(fileName);
+                return $"{fileId}{extension}";              
+            }
+            else
+            {
+                //Create file path from its id and file extension
+                string extension = type switch
+                {
+                    ContentType.Javascript => ".js",
+                    _ => type.ToString().ToLowerInvariant(),
+                };
+
+                return $"{fileId}.{extension}";
+            }
         }
     }
 }

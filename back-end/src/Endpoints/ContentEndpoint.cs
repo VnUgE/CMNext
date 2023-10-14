@@ -251,15 +251,22 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VfReturnType.VirtualSkip;
             }
 
+            //Get the first file
+            FileUpload file = entity.Files[0];
+
             //Check content length
-            if (webm.Assert(entity.Files[0].FileData.Length <= MaxContentLength, $"The content length is too long, max length is {MaxContentLength} bytes"))
+            if (webm.Assert(file.FileData.Length <= MaxContentLength, $"The content length is too long, max length is {MaxContentLength} bytes"))
             {
                 entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
                 return VfReturnType.VirtualSkip;
             }
 
-            //Get the first file
-            FileUpload file = entity.Files[0];
+            //the http layer should protect from this but just in case
+            if(webm.Assert(file.ContentType != ContentType.NonSupported, "The uploaded file is not a supported system content type"))
+            {
+                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
+                return VfReturnType.VirtualSkip;
+            }
 
             //Get the channel
             IChannelContext? channel = await _blogContextManager.GetChannelAsync(channelId, entity.EventCancellation);

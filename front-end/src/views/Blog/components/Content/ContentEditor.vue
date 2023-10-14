@@ -3,24 +3,15 @@
         <div class="my-4 ml-auto">
             <div class="button-group">
                 <!-- Submit the post form -->
-                <button :disabled="waiting" class="btn primary" form="content-upload-form">
+                <button :disabled="waiting || !isChannelSelected" class="btn primary" form="content-upload-form">
                     <fa-icon icon="spinner" v-if="waiting" class="animate-spin" />
                     <span v-else>Save</span>
                 </button>
                 <button class="btn" @click="onClose">Cancel</button>
             </div>
         </div>
-        <div class="mx-auto sm:min-w-[20rem]">
-            <h4 class="text-center">Edit Content</h4>
-            <p>
-                Add or edit content file
-            </p>
-            <div class="mt-3 text-sm">
-                Publishing to: 
-            </div>
-            <div class="p-2 px-3 bg-gray-200 border border-gray-300 rounded-md dark:border-dark-500 dark:bg-transparent">
-                {{ selectedChannelName }}
-            </div>
+        <div class="mx-auto sm:min-w-[20rem] text-center">
+            <h4 >Edit Content</h4>
         </div>
         <div id="content-edit-body" class="min-h-[24rem] my-10">
             <form id="content-upload-form" class="flex" @submit.prevent="onSubmit">
@@ -51,8 +42,8 @@
                             </div>
                             <div class="">
                                 Name:
-                                <span class="border-b border-coolGray-400">
-                                    {{ getFileName(uploadedFile) }}
+                                <span class="pr-4 truncate border-b border-coolGray-400">
+                                    {{ uploadedFile.name }}
                                 </span>
                             </div>
                             <div class="mt-3">
@@ -64,8 +55,8 @@
                         </div>
                         <div v-else-if="editFile?.id" >
                             <div class="border border-gray-300 dark:border-dark-500 p-4 min-w-[24rem] mx-auto rounded-sm relative mt-5">
-                                <div class="">
-                                    Name: {{ getFileName(editFile) }}
+                                <div class="pr-4 truncate">
+                                    Name: {{ editFile.name }}
                                 </div>
                                 <div class="mt-3">
                                     Size: {{ getSizeinKb(editFile?.length) }}
@@ -100,7 +91,7 @@ import { computed, ref } from 'vue';
 import { reactiveComputed, useFileDialog } from '@vueuse/core';
 import { ContentMeta } from '@vnuge/cmnext-admin';
 import { useConfirm, useVuelidateWrapper, useFormToaster, useWait } from '@vnuge/vnlib.browser';
-import { defaultTo, first, isEmpty, round, truncate } from 'lodash-es';
+import { defaultTo, first, isEmpty, round } from 'lodash-es';
 import { required, helpers, maxLength } from '@vuelidate/validators'
 import useVuelidate from '@vuelidate/core';
 import { BlogState } from '../../blog-api';
@@ -118,7 +109,7 @@ const { content, channels } = props.blog;
 const selectedId = computed(() => content.selectedId.value);
 const selectedContent = computed<ContentMeta>(() => defaultTo(content.selectedItem.value, {} as ContentMeta));
 const metaBuffer = reactiveComputed<ContentMeta>(() => ({ ...selectedContent.value}));
-const selectedChannelName = computed(() => defaultTo(channels.selectedItem.value?.name, 'No channel selected'));
+const isChannelSelected = computed(() => channels.selectedItem.value?.id?.length ?? 0 > 0);
 
 const v$ = useVuelidate({
     name: { 
@@ -141,7 +132,6 @@ onChange(() => {
 const editFile = computed<ContentMeta | undefined>(() => selectedContent.value);
 const uploadedFile = computed<File>(() => defaultTo(file.value, {} as File));
 
-const getFileName = (file : File | ContentMeta) => truncate(file.name, { length: 20 });
 const getFileSize = (file : File) => {
     const size = round(file.size > 1024 ? file.size / 1024 : file.size, 2);
     return `${size} ${file.size > 1024 ? 'KB' : 'B'}`;
