@@ -12,15 +12,15 @@
       <h6>FIDO/WebAuthN Authentication</h6>
       <div class="">
         <div v-if="fidoEnabled" class="">
-          <button class="ml-1 btn red sm" @click.prevent="Disable">
+          <button class="ml-1 btn red xs" @click.prevent="Disable">
             <fa-icon icon="minus-circle" />
-            <span class="pl-3">Disable</span>
+            <span class="pl-2">Disable</span>
           </button>
         </div>
         <div v-else>
-          <button class="btn primary sm" @click.prevent="Setup">
+          <button class="btn primary xs" @click.prevent="Setup">
             <fa-icon icon="plus" />
-            <span class="pl-3">Setup</span>
+            <span class="pl-2">Setup</span>
           </button>
         </div>
       </div>

@@ -12,9 +12,9 @@
           </div>
 
           <div class="flex justify-end">
-            <button class="btn red sm" @click="showForm">
+            <button class="btn red xs" @click="showForm">
               <fa-icon icon="sync" />
-              <span class="pl-3">Reset Password</span>
+              <span class="pl-2">Reset Password</span>
             </button>
           </div>
         </div>

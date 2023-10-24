@@ -58,20 +58,20 @@
       <h6>TOTP Authenticator App</h6>
 
       <div v-if="totpEnabled" class="button-group">
-        <button class="btn yellow sm" @click.prevent="regenTotp">
+        <button class="btn yellow xs" @click.prevent="regenTotp">
           <fa-icon icon="sync" />
-          <span class="pl-3">Regenerate</span>
+          <span class="pl-2">Regenerate</span>
         </button>
-        <button class="btn red sm" @click.prevent="disable">
+        <button class="btn red xs" @click.prevent="disable">
           <fa-icon icon="minus-circle" />
-          <span class="pl-3">Disable</span>
+          <span class="pl-2">Disable</span>
         </button>
       </div>
 
       <div v-else>
-        <button class="btn primary sm" @click.prevent="configTotp">
+        <button class="btn primary xs" @click.prevent="configTotp">
           <fa-icon icon="plus" />
-          <span class="pl-3">Setup</span>
+          <span class="pl-2">Setup</span>
         </button>
       </div>
       <p class="p-1 pt-3 text-sm text-gray-600">

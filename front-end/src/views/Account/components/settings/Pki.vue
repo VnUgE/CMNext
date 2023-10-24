@@ -1,29 +1,68 @@
 <template>
     <div id="pki-settings" v-show="pkiEnabled" class="container">
         <div class="panel-content">
-            <h5>PKI Authentication</h5>
+           
             <div class="flex flex-row flex-wrap justify-between">
-                <h6>Authentication keys</h6>
+                <h5>PKI Authentication</h5>
+                <div class="">
+                    <div v-if="enabled" class="button-group">
+                        <button class="btn yellow xs" @click.prevent="setIsOpen(true)">
+                            <fa-icon icon="plus" />
+                            <span class="pl-2">Add Key</span>
+                        </button>
+                        <button class="btn red xs" @click.prevent="onDisable">
+                            <fa-icon icon="minus-circle" />
+                            <span class="pl-2">Disable</span>
+                        </button>
+                    </div>
+                      <div v-else class="">
+                        <button class="btn primary xs" @click.prevent="setIsOpen(true)">
+                            <fa-icon icon="plus" />
+                            <span class="pl-2">Add Key</span>
+                        </button>
+                    </div>
+                </div>
 
-                <div v-if="enabled" class="button-group">
-                    <button class="btn yellow sm" @click.prevent="setIsOpen(true)">
-                        <fa-icon icon="sync" />
-                        <span class="pl-3">Update Key</span>
-                    </button>
-                    <button class="btn red sm" @click.prevent="onDisable">
-                        <fa-icon icon="minus-circle" />
-                        <span class="pl-3">Disable</span>
-                    </button>
+                <div v-if="pubKeys && pubKeys.length > 0" class="w-full mt-4">
+                    <table class="min-w-full text-sm divide-y-2 divide-gray-200 dark:divide-dark-500">
+                        <thead class="text-left">
+                            <tr>
+                                <th class="p-2 font-medium whitespace-nowrap dark:text-white" >
+                                    KeyID
+                                </th>
+                                <th class="p-2 font-medium whitespace-nowrap dark:text-white">
+                                    Algorithm
+                                </th>
+                                <th class="p-2 font-medium whitespace-nowrap dark:text-white">
+                                    Curve
+                                </th>
+                                <th class="p-2"></th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-gray-200 dark:divide-dark-500">
+                            <tr v-for="key in pubKeys">
+                                <td class="p-2 t font-medium truncate max-w-[8rem] whitespace-nowrap dark:text-white">
+                                    {{ key.kid }}
+                                </td>
+                                <td class="p-2 text-gray-700 whitespace-nowrap dark:text-gray-200">
+                                    {{ key.alg }}
+                                </td>
+                                <td class="p-2 text-gray-700 whitespace-nowrap dark:text-gray-200">
+                                    {{ key.crv }}
+                                </td>
+                                <td class="p-2 text-right whitespace-nowrap">
+                                    <button class="rounded btn red xs borderless" @click="onRemoveKey(key)">
+                                        <span class="hidden sm:inline">Remove</span>
+                                        <fa-icon icon="trash-can" class="inline sm:hidden" />
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 
-                <div v-else class="">
-                    <button class="btn primary sm" @click.prevent="setIsOpen(true)">
-                        <fa-icon icon="plus" />
-                        <span class="pl-3">Add Key</span>
-                    </button>
-                </div>
-                
-                <p class="p-1 pt-3 text-sm text-gray-600">
+                <p v-else class="p-1 pt-3 text-sm text-gray-600">
                   PKI authentication is a method of authenticating your user account with signed messages and a shared public key. This method implementation 
                   uses client signed Json Web Tokens to authenticate user generated outside this website as a One Time Password (OTP). This allows for you to
                   use your favorite hardware or software tools, to generate said OTPs to authenticate your user.
@@ -55,8 +94,9 @@
 
 <script setup lang="ts">
 import { isEmpty, isNil } from 'lodash-es'
-import { apiCall, useConfirm, useSession, debugLog, useFormToaster, PkiApi } from '@vnuge/vnlib.browser'
+import { apiCall, useConfirm, useSession, debugLog, useFormToaster, PkiApi, PkiPublicKey } from '@vnuge/vnlib.browser'
 import { computed, ref, watch } from 'vue'
+import { asyncComputed } from '@vueuse/core'
 import { Dialog, DialogPanel } from '@headlessui/vue'
 
 const props = defineProps<{
@@ -69,6 +109,8 @@ const { error } = useFormToaster()
 
 const pkiEnabled = computed(() => isLocalAccount.value && !isNil(import.meta.env.VITE_PKI_ENDPOINT) && window.crypto.subtle)
 const { enabled, refresh } = props.pkaiApi
+
+const pubKeys = asyncComputed(() => pkiEnabled.value ? apiCall(props.pkaiApi.getAllKeys) : [], [])
 
 const isOpen = ref(false)
 const keyData = ref('')
@@ -84,6 +126,39 @@ watch(isOpen, () =>{
 })
 
 const setIsOpen = (value : boolean) => isOpen.value = value
+
+const onRemoveKey = async (single: PkiPublicKey) =>{
+      const { isCanceled } = await reveal({
+        title: 'Are you sure?',
+        text: `This will remove key ${single.kid} from your account.`
+    })
+    if (isCanceled) {
+        return;
+    }
+
+      //Delete pki
+    await apiCall(async ({ toaster }) => {
+       
+        //TODO: require password or some upgrade to disable
+        const { success } = await props.pkaiApi.removeKey(single.kid);
+
+        if (success) {
+            toaster.general.success({
+                title: 'Success',
+                text: 'Key was removed successfully.'
+            })
+        }
+        else {
+            toaster.general.error({
+                title: 'Error',
+                text: 'Your single PKI key could not be removed.'
+            })
+        }
+
+        //Refresh the status
+        props.pkaiApi.refresh();
+    });
+}
 
 const onDisable = async () => {
      const { isCanceled } = await reveal({
@@ -119,11 +194,6 @@ const onDisable = async () => {
     });
 }
 
-//Server requires the JWK to set a keyid (kid) field
-interface IdJsonWebKey extends JsonWebKey {
-    readonly kid?: string
-}
-
 const onSubmitKeys = async () =>{
     
     if(window.crypto.subtle == null){
@@ -137,7 +207,7 @@ const onSubmitKeys = async () =>{
         return;
     }
 
-    let jwk : IdJsonWebKey;
+    let jwk : PkiPublicKey & JsonWebKey;
     try {
         //Try to parse as jwk
         jwk = JSON.parse(keyData.value)
@@ -162,7 +232,7 @@ const onSubmitKeys = async () =>{
 
         //init/update the key
         //TODO: require password or some upgrade to disable
-        const { getResultOrThrow } = await props.pkaiApi.initOrUpdate(jwk);
+        const { getResultOrThrow } = await props.pkaiApi.addOrUpdate(jwk);
 
         const result = getResultOrThrow();
 

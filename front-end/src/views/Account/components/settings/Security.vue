@@ -27,16 +27,16 @@
           <h5>Keep me logged in</h5>
           <div class="pl-1">
               <Switch
-                  v-model="enabled"
-                  :class="enabled ? 'bg-primary-500 dark:bg-primary-600' : 'bg-gray-200 dark:bg-dark-400'"
-                  class="relative inline-flex items-center h-6 rounded-full w-11"
-                >
-                  <span class="sr-only">Enable auto heartbeat</span>
-                  <span
-                    :class="enabled ? 'translate-x-6' : 'translate-x-1'"
-                    class="inline-block w-4 h-4 transition transform bg-white rounded-full"
-                  />
-                </Switch>
+                v-model="enabled"
+                :class="enabled ? 'bg-primary-500 dark:bg-primary-600' : 'bg-gray-200 dark:bg-dark-400'"
+                class="relative inline-flex items-center h-6 rounded-full w-11"
+              >
+                <span class="sr-only">Enable auto heartbeat</span>
+                <span
+                  :class="enabled ? 'translate-x-6' : 'translate-x-1'"
+                  class="inline-block w-4 h-4 transition transform bg-white rounded-full"
+                />
+              </Switch>
           </div>
         </div>
 
@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAutoHeartbeat, useMfaConfig, MfaMethod, usePkiConfig } from '@vnuge/vnlib.browser'
+import { useAutoHeartbeat, useMfaConfig, MfaMethod, usePkiConfig  } from '@vnuge/vnlib.browser'
 import { computed } from 'vue'
 import { Switch } from '@headlessui/vue'
 import { includes } from 'lodash-es'

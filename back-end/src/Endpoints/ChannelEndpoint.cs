@@ -70,8 +70,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             object[] contexts = await ContentManager.GetAllContextsAsync(entity.EventCancellation);
 
             //Return the list to the client
-            entity.CloseResponseJson(HttpStatusCode.OK, contexts);
-            return VfReturnType.VirtualSkip;
+            return VirtualOkJson(entity, contexts);
         }
 
         protected override async ValueTask<VfReturnType> PostAsync(HttpEntity entity)
@@ -81,8 +80,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Check user write-permissions
             if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permission to add channels"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Get the blog context from the request body
@@ -90,22 +88,19 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(channel != null, "You must specify a new blog channel"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Validate the blog context
             if (!ChannelValidator.Validate(channel, webm))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Validate the feed if its defined
             if (channel.Feed != null && !FeedValidator.Validate(channel.Feed, webm))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Add the blog context to the manager
@@ -113,13 +108,11 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(result, "A blog with the given name already exists"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Conflict, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Conflict);
             }
 
             //Return the new blog context to the client
-            entity.CloseResponse(HttpStatusCode.Created);
-            return VfReturnType.VirtualSkip;
+            return VirtualClose(entity, HttpStatusCode.Created);
         }
 
         protected override async ValueTask<VfReturnType> PatchAsync(HttpEntity entity)
@@ -129,8 +122,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Check user write-permissions
             if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permission to add channels"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Get the blog context from the request body
@@ -138,22 +130,19 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(channel?.Id != null, "You must specify a new blog channel"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Validate the blog context
             if (!ChannelValidator.Validate(channel, webm))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Validate the feed if its defined
             if (channel.Feed != null && !FeedValidator.Validate(channel.Feed, webm))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Make sure the blog context exists
@@ -161,8 +150,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(context != null, "The specified blog channel does not exist"))
             {
-                entity.CloseResponseJson(HttpStatusCode.NotFound, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
             //Update the context
@@ -170,16 +158,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(result, "Failed to update the channel setting"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Conflict, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Conflict);
             }
 
             //Update post feeds
             await PostManager.UpdateFeedForChannelAsync(channel, entity.EventCancellation);
-
-            //Return the new blog context to the client
-            entity.CloseResponse(HttpStatusCode.Created);
-            return VfReturnType.VirtualSkip;
+            
+            return VirtualClose(entity, HttpStatusCode.Created);
         }
 
         protected override async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
@@ -205,10 +190,8 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             //Delete the blog context
             await ContentManager.DeleteChannelAsync(context, entity.EventCancellation);
-
-            //Return the new blog context to the client
-            entity.CloseResponse(HttpStatusCode.NoContent);
-            return VfReturnType.VirtualSkip;
+           
+            return VirtualClose(entity, HttpStatusCode.NoContent);
         }
 
         private sealed class ChannelRequest : BlogChannel, IJsonOnDeserialized

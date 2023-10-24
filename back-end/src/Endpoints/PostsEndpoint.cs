@@ -65,23 +65,20 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 {
                     Result = "You do not have permission to read content"
                 };
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Try to get the blog id from the query
             if (!entity.QueryArgs.TryGetNonEmptyValue("channel", out string? contextId))
             {
-                entity.CloseResponse(HttpStatusCode.BadRequest);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.BadRequest;
             }
 
             //Try to get the blog context from the id
             IChannelContext? context = await ContentManager.GetChannelAsync(contextId, entity.EventCancellation);
             if (context == null)
             {
-                entity.CloseResponse(HttpStatusCode.NotFound);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.NotFound;
             }
 
             //Try to get the post id from the query
@@ -90,22 +87,12 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 //Try to get single post
                 PostMeta? post = await PostManager.GetPostAsync(context, postId, entity.EventCancellation);
 
-                if (post != null)
-                {
-                    entity.CloseResponseJson(HttpStatusCode.OK, post);
-                }
-                else
-                {
-                    entity.CloseResponse(HttpStatusCode.NotFound);
-                }
-
-                return VfReturnType.VirtualSkip;
+                return post != null ? VirtualOkJson(entity, post) : VfReturnType.NotFound;
             }
 
             //Get the post meta list
             PostMeta[] posts = await PostManager.GetPostsAsync(context, entity.EventCancellation);
-            entity.CloseResponseJson(HttpStatusCode.OK, posts);
-            return VfReturnType.VirtualSkip;
+            return VirtualOkJson(entity, posts);
         }
 
         protected override async ValueTask<VfReturnType> PostAsync(HttpEntity entity)
@@ -115,15 +102,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Check for write permissions
             if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permission to publish posts"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             if (!entity.QueryArgs.TryGetNonEmptyValue("channel", out string? contextId))
             {
                 webm.Result = "No blog channel was selected";
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Try to get the blog context from the id
@@ -131,8 +116,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(context != null, "A blog with the given id does not exist"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
             //Get the post from the request body
@@ -140,15 +124,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(post != null, "Message body was empty"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Validate post
             if (!PostValidator.Validate(post, webm))
             {
-                entity.CloseResponse(webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Publish post to the blog
@@ -159,8 +141,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             webm.Success = true;
 
             //Return updated post to client
-            entity.CloseResponse(webm);
-            return VfReturnType.VirtualSkip;
+            return VirtualOk(entity, webm);
         }
 
         protected override async ValueTask<VfReturnType> PatchAsync(HttpEntity entity)
@@ -170,16 +151,14 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Check for write permissions
             if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permissions to update posts"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Try to get the blog id from the query
             if (!entity.QueryArgs.TryGetNonEmptyValue("channel", out string? contextId))
             {
                 webm.Result = "You must select a blog channel to update posts";
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Try to get the blog context from the id
@@ -187,8 +166,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(channel != null, "The channel you selected does not exist"))
             {
-                entity.CloseResponseJson(HttpStatusCode.NotFound, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
             //Get the blog post object
@@ -196,15 +174,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(post != null, "Message body was empty"))
             {
-                entity.CloseResponse(webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Validate post
             if (!PostValidator.Validate(post, webm))
             {
-                entity.CloseResponse(webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Update post against manager
@@ -212,16 +188,14 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(result, "Failed to update post because it does not exist or the blog channel was not found"))
             {
-                entity.CloseResponse(webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualOk(entity, webm);
             }
 
             //Success
             webm.Result = post;
             webm.Success = true;
 
-            entity.CloseResponse(webm);
-            return VfReturnType.VirtualSkip;
+            return VirtualOk(entity, webm);
         }
 
         protected override async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
@@ -233,38 +207,33 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 {
                     Result = "You do not have permission to delete content"
                 };
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Try to get the blog id from the query
             if (!entity.QueryArgs.TryGetNonEmptyValue("channel", out string? contextId))
             {
-                entity.CloseResponse(HttpStatusCode.BadRequest);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.BadRequest;
             }
 
             //Try to get the blog context from the id
             IChannelContext? context = await ContentManager.GetChannelAsync(contextId, entity.EventCancellation);
             if (context == null)
             {
-                entity.CloseResponse(HttpStatusCode.NotFound);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.NotFound;
             }
 
             //Try to get the post id from the query
             if (!entity.QueryArgs.TryGetNonEmptyValue("post", out string? postId))
             {
-                entity.CloseResponse(HttpStatusCode.NotFound);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.NotFound;
             }
 
             //Delete post
             await PostManager.DeletePostAsync(context, postId, entity.EventCancellation);
 
             //Success
-            entity.CloseResponse(HttpStatusCode.OK);
-            return VfReturnType.VirtualSkip;
+            return VirtualOk(entity);
         }
 
     }

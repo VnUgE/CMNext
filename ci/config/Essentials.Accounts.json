@@ -61,8 +61,8 @@
 
   //Defines the included account provider
   "account_security": {
-    "login_cookie_name": "VNLogin",
-    "login_cookie_size": 64,
+    //Time in seconds before a session is considered expired
+    "session_valid_for_sec": 3600,
 
     //Path/domain for all security cookies
     "cookie_domain": "",

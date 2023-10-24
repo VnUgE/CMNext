@@ -28,7 +28,7 @@
     "@headlessui/vue": "^1.7.12",
     "@kyvg/vue3-notification": "^3.0.x",
     "@vnuge/cmnext-admin": "../lib/admin",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/vnlib.browser/7a2920c7c3e7f43d5fa46857808c857ad91df966/@vnuge-vnlib.browser/release.tgz",
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/vnlib.browser/4deb76d163e228dfba63c0b8fcf49789c6017011/@vnuge-vnlib.browser/release.tgz",
     "@vuelidate/core": "^2.0.2",
     "@vuelidate/validators": "^2.0.2",
     "@vueuse/core": "^10.3.x",

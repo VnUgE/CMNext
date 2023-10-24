@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 
 using Minio;
 using Minio.DataModel;
+using Minio.DataModel.Args;
 
 using VNLib.Utils.Memory;
 using VNLib.Utils.Extensions;

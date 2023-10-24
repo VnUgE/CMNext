@@ -75,8 +75,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Get the channel id 
             if (!entity.QueryArgs.TryGetNonEmptyValue("channel", out string? channelId))
             {
-                entity.CloseResponse(HttpStatusCode.BadRequest);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, HttpStatusCode.BadRequest);
             }
 
             //Get the channel
@@ -84,8 +83,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (channel == null)
             {
-                entity.CloseResponse(HttpStatusCode.NotFound);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.NotFound;
             }
 
             //Get the content id, if not set get all content meta items
@@ -95,9 +93,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 ContentMeta[] items = await _content.GetAllContentItemsAsync(channel, entity.EventCancellation);
 
                 //Return the items
-                entity.CloseResponseJson(HttpStatusCode.OK, items);
-                return VfReturnType.VirtualSkip;
-
+                return VirtualCloseJson(entity, items, HttpStatusCode.OK);
             }
 
             //See if the user wants to get a link to the content
@@ -113,9 +109,8 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 webm.Success = webm.Result != null;
                 webm.Result ??= "The requested content item was not found in the database";
 
-                //Return the link
-                entity.CloseResponse(webm);
-                return VfReturnType.VirtualSkip;
+                //Return the link in webmessage result
+                return VirtualOk(entity, webm);
             }
             else
             {
@@ -130,17 +125,15 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                     if (meta?.ContentType == null)
                     {
                         vms.Dispose();
-                        entity.CloseResponse(HttpStatusCode.NotFound);
-                        return VfReturnType.VirtualSkip;
+                        return VfReturnType.NotFound;
                     }
                     else
                     {
                         //rewind the stream
                         vms.Seek(0, SeekOrigin.Begin);
 
-                        //Return the content
-                        entity.CloseResponse(HttpStatusCode.OK, HttpHelpers.GetContentType(meta.ContentType), vms);
-                        return VfReturnType.VirtualSkip;
+                        //Return the content stream
+                        return VirtualClose(entity, HttpStatusCode.OK, HttpHelpers.GetContentType(meta.ContentType), vms);
                     }
                 }
                 catch
@@ -167,15 +160,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(entity.Session.CanWrite(), "You do not have permissions to update content"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Make sure there is content attached
             if (webm.Assert(entity.Files.Count > 0, "No content was attached to the entity body"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Get the channel
@@ -183,8 +174,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(channel != null, "The channel does not exist"))
             {
-                entity.CloseResponseJson(HttpStatusCode.NotFound, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
             //Read meta from request
@@ -192,23 +182,20 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(requestedMeta?.Id != null, "You must supply a content id"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Validate the meta
             if (!MetaValidator.Validate(requestedMeta, webm))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Get the original content meta
             ContentMeta? meta = await _content.GetMetaAsync(channel, requestedMeta.Id, entity.EventCancellation);
             if (webm.Assert(meta != null, "The requested content item does not exist"))
             {
-                entity.CloseResponseJson(HttpStatusCode.NotFound, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
             //Currently only allow chaning the file name
@@ -221,8 +208,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             webm.Result = meta;
             webm.Success = true;
 
-            entity.CloseResponse(webm);
-            return VfReturnType.VirtualSkip;
+            return VirtualOk(entity, webm);
         }
 
         /*
@@ -240,15 +226,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(entity.Session.CanWrite(), "You do not have permissions to update content"))
             {
-                entity.CloseResponseJson(HttpStatusCode.Forbidden, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Make sure there is content attached
             if (webm.Assert(entity.Files.Count > 0, "No content was attached to the entity body"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Get the first file
@@ -257,15 +241,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Check content length
             if (webm.Assert(file.FileData.Length <= MaxContentLength, $"The content length is too long, max length is {MaxContentLength} bytes"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //the http layer should protect from this but just in case
             if(webm.Assert(file.ContentType != ContentType.NonSupported, "The uploaded file is not a supported system content type"))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
             //Get the channel
@@ -273,8 +255,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             if (webm.Assert(channel != null, "The channel does not exist"))
             {
-                entity.CloseResponseJson(HttpStatusCode.NotFound, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
             ContentMeta? meta;
@@ -287,8 +268,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
                 if (webm.Assert(meta != null, "The request item does not exist"))
                 {
-                    entity.CloseResponseJson(HttpStatusCode.NotFound, webm);
-                    return VfReturnType.VirtualSkip;
+                    return VirtualClose(entity, webm, HttpStatusCode.NotFound);
                 }
 
                 //May want to change the content name
@@ -306,8 +286,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Validate the meta after updating file name
             if (!MetaValidator.Validate(meta, webm))
             {
-                entity.CloseResponseJson(HttpStatusCode.BadRequest, webm);
-                return VfReturnType.VirtualSkip;
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Add or update the content
@@ -317,8 +296,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             webm.Result = meta;
             webm.Success = true;
 
-            entity.CloseResponse(webm);
-            return VfReturnType.VirtualSkip;
+            return VirtualOk(entity, webm);
         }
 
         protected override async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
@@ -331,15 +309,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Get the channel id
             if (!entity.QueryArgs.TryGetNonEmptyValue("channel", out string? channelId))
             {
-                entity.CloseResponse(HttpStatusCode.BadRequest);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.BadRequest;
             }
 
             //get the content id
             if (!entity.QueryArgs.TryGetNonEmptyValue("id", out string? contentId))
             {
-                entity.CloseResponse(HttpStatusCode.BadRequest);
-                return VfReturnType.VirtualSkip;
+                return VfReturnType.BadRequest;
             }
 
             //Get channel
@@ -352,15 +328,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Try to delete the content
             bool deleted = await _content.DeleteContentAsync(channel, contentId, entity.EventCancellation);
 
-            if (deleted)
-            {
-                entity.CloseResponse(HttpStatusCode.OK);
-                return VfReturnType.VirtualSkip;
-            }
-            else
-            {
-                return VfReturnType.NotFound;
-            }
+            return deleted ? VirtualOk(entity) : VfReturnType.NotFound;
         }
     }
 
