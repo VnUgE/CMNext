@@ -30,9 +30,23 @@ export default defineConfig({
       plugins: [],
       output: {
         manualChunks: {
-          vnlib: ['@vnuge/vnlib.browser'],
-          cmnex: ['@vnuge/cmnext-admin'],
-        }
+          util: [
+            '@vnuge/vnlib.browser', 
+            '@vnuge/cmnext-admin',
+            'jose',
+            'universal-cookie',
+            'base32-encode',
+            'axios',
+            'lodash-es',
+            'otpauth',
+            '@vuelidate/core',
+            '@vuelidate/validators',
+            'showdown'
+          ],
+          vuejson:[
+            'json-editor-vue'
+          ],
+        },
       }
     },
   },

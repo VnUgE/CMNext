@@ -1,8 +1,11 @@
+# https://taskfile.dev
+
+#Called by the vnbuild system to produce builds for my website
+#https://www.vaughnnugent.com/resources/software
 
 version: "3"
 
 vars:
-
 
 tasks:
 
@@ -12,6 +15,7 @@ tasks:
     - task: install-accounts
     - task: install-sessions
     - task: install-vncache
+    - task: install-vncache-sessions
     - task: install-router
     - task: install-users
     - task: build-cmnext
@@ -77,7 +81,18 @@ tasks:
 
   install-vncache:
     cmds:
-    #install sessions plugin
+    #install vncache global cache provider plugin
+    - task: install-plugin
+      vars:
+        NAME: 'VNLib.Data.Caching.Providers.VNCache'
+        PROJECT_NAME: 'VNLib.Data.Caching.Providers.VNCache'
+        MODULE_NAME: "VNLib.Data.Caching"
+        FILE_NAME: "release.tgz"
+        DIR: './plugins/assets/VNLib.Data.Caching.Providers.VNCache'
+
+  install-vncache-sessions:
+    cmds:
+    #install vncache-web-sessions plugin
     - task: install-plugin
       vars:
         NAME: 'VNLib.Plugins.Sessions.VNCache'

@@ -289,6 +289,15 @@ namespace Content.Publishing.Blog.Admin.Model
 
         private static string GetFileNameFromTypeOrExtension(string fileId, ContentType type, string? fileName)
         {
+            /*
+             * Allow file extension pass through for servers that require it. Content type
+             * translation is sometimes inaccurate due to the chain of events that occur. 
+             * It seems that often the browsers have a very outdated MIME type list and 
+             * privacy browsers may choose to obfuscate the exacte type for privacy reasons.
+             * 
+             * So passing the extension through to the outside world allows the web server to
+             * choose. 
+             */
             if(Path.HasExtension(fileName))
             {
                 string extension = Path.GetExtension(fileName);

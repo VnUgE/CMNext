@@ -1,13 +1,12 @@
 {
   "debug": false,
-  "setup_mode":true,
 
   //endpoints
 
   "login_endpoint": {
     "path": "/account/login",
-    "failed_count_timeout_sec": 600, //10 minutes
-    "failed_count_max": 10 //10 failed attempts in 10 minutes
+    "max_login_attempts": 10, //10 failed attempts in 10 minutes
+    "failed_attempt_timeout_sec": 600 //10 minutes
   },
 
   "keepalive_endpoint": {
@@ -35,11 +34,9 @@
   "pki_auth_endpoint": {
     "path": "/account/pki",
     "jwt_time_dif_sec": 30,
-
     "max_login_attempts": 10,
     "failed_attempt_timeout_sec": 600,
-
-    //Configures the PATCH method to update the user's stored key when logged in
+    //Configures the PATCH and DELETE methods to update the user's stored key when logged in
     "enable_key_update": true
   },
 
@@ -51,7 +48,7 @@
     //Defines totp specific arguments
     "totp": {
       "digits": 6,
-      "issuer": "localhost",
+      "issuer": "CMNext",
       "period_secs": 30,
       "algorithm": "sha1",
       "secret_size": 32,
@@ -63,17 +60,13 @@
   "account_security": {
     //Time in seconds before a session is considered expired
     "session_valid_for_sec": 3600,
-
     //Path/domain for all security cookies
     "cookie_domain": "",
     "cookie_path": "/",
-
     "status_cookie_name": "li",
-
     "otp_header_name": "X-Web-Token",
     "otp_time_diff_sec": 30,
     "otp_key_size": 64,
-
     "pubkey_cookie_name": "client-id",
     "pubkey_signing_key_size": 32
   }

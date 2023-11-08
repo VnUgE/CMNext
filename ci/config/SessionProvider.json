@@ -17,26 +17,5 @@
     "valid_for_sec": 3600,
     //The maxium number of connections waiting for the cache server responses
     "max_waiting_connections": 100
-  },
-
-  //Enable vncache as the providers above rely on the object caching server
-  "vncache": {
-
-    //Max size (in bytes) of allowed data to be stored in each user's session object
-    "max_object_size": 8128,
-
-    //Initial nodes to discover from
-    "initial_nodes": [],
-
-    //Setting this value to true will cause the cache store to load a memory-only instance, without remote backing
-    "memory_only": true,
-
-    //enable memory cache
-    "memory_cache": {
-      "buckets": 20,
-      "bucket_size": 5000,
-      "max_age_sec": 600,
-      "refresh_interval_sec": 60
-    }
-  }
+  } 
 }

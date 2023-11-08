@@ -62,8 +62,7 @@ import { defaultTo } from 'lodash-es'
 import useVuelidate  from '@vuelidate/core'
 import { ref, computed, watch } from 'vue'
 import { Rules, FormSchema } from './profile-schema.ts'
-import { apiCall, useMessage, useWait, useDataBuffer, useUser, useVuelidateWrapper } from '@vnuge/vnlib.browser'
-import { IUserProfile } from '@vnuge/vnlib.browser/dist/user'
+import { apiCall, useMessage, useWait, useDataBuffer, useUser, useVuelidateWrapper, IUserProfile } from '@vnuge/vnlib.browser'
 
 const ACCOUNT_URL = '/account/profile'
 

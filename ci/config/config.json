@@ -148,6 +148,23 @@
     //"ms_security": false
   },
 
+  //caching should be setup globally after VNCache #78a47dd
+  "cache":{
+    //Load the vncache dll
+    "assembly_name": "VNLib.Data.Caching.Providers.VNCache.dll",
+    //Defaulting to memory only for now
+    "memory_only": true,
+    //enable memory cache
+    "memory_cache": {
+        "buckets": 20,
+        "bucket_size": 5000,
+        "max_age_sec": 600,
+        "refresh_interval_sec": 60,
+        "zero_all": false,
+        "max_object_size": 8128
+    }
+  },
+
   //Global secrets object, used by the host and pluings for a specialized secrets
   "secrets": {
     //"db_password": ""
