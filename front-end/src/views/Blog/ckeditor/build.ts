@@ -38,7 +38,7 @@ export const config = {
         ]
     },
     // https://ckeditor.com/docs/ckeditor5/latest/features/editor-placeholder.html#using-the-editor-configuration
-    placeholder: 'Welcome to CKEditor 5!',
+    placeholder: 'Edit CMNext post content using CKEditor 5 ',
     // https://ckeditor.com/docs/ckeditor5/latest/features/font.html#configuring-the-font-family-feature
     fontFamily: {
         options: [
@@ -120,6 +120,13 @@ export const config = {
         'WProofreader',
         // Careful, with the Mathtype plugin CKEditor will not load when loading this sample
         // from a local file system (file://) - load this site via HTTP server if you enable MathType
-        'MathType'
+        'MathType',
+        'DocumentOutline',
+        'PasteFromOfficeEnhanced',
+        'Template',
+        'SlashCommand',
+        'AIAssistant',
+        'FormatPainter',
+        'TableOfContents'
     ],
 }

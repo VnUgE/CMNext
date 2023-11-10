@@ -98,7 +98,7 @@
                     </TabPanel>
                     
                     <TabPanel>
-                        <Content :blog="blogState" />
+                        <Content :progress="progress" :blog="blogState" />
                     </TabPanel>
                 
                 </TabPanels>
@@ -108,9 +108,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useScriptTag } from '@vueuse/core';
 import { useRouteQuery } from '@vueuse/router';
+import { AxiosProgressEvent } from 'axios';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
 import { first } from 'lodash-es';
 import { useRoute, useRouter } from 'vue-router';
@@ -127,12 +128,13 @@ useTitle('CMNext Admin')
 
 if(!window.CKEDITOR){
     //Load scripts
-    const ckEditorTag = useScriptTag("https://cdn.ckeditor.com/ckeditor5/35.4.0/super-build/ckeditor.js")
+    const ckEditorTag = useScriptTag("https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js")
     //Store the wait result on the window for the editor script to wait
     window.editorLoadResult = ckEditorTag.load(true);
 }
 
 const { userName, getProfile } = useUser()
+const progress = ref<number>(0)
 
 //Load user profile and forget if not set
 if(!userName.value){
@@ -143,10 +145,19 @@ const firstLetter = computed(() => first(userName.value))
 
 const tabIdQ = useRouteQuery<string>('tabid', '', { mode: 'push' })
 
+const axios = useAxios({
+    onUploadProgress: (e:AxiosProgressEvent) => {
+        progress.value = Math.round((e.loaded * 100) / e.total!)
+    },
+    //Set to 60 second timeout
+    timeout:60 * 1000
+})
+
+
 const context = createBlogContext({
+    axios,
     route: useRoute(),
     router: useRouter(),
-    axios: useAxios(null),
     channelUrl: '/blog/channels',
     postUrl: '/blog/posts',
     contentUrl: '/blog/content'

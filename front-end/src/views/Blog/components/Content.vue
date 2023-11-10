@@ -9,6 +9,22 @@
                 />
             </template>
             <template #editor>
+                 <div v-if="showProgress" class="max-w-xl mx-auto">
+                    <span id="ProgressLabel" class="sr-only">Loading</span>
+
+                    <span 
+                        role="progressbar"
+                        aria-labelledby="ProgressLabel"
+                        :aria-valuenow="progress"
+                        class="relative block bg-gray-200 rounded-full dark:bg-dark-500"
+                    >
+                        <span class="absolute inset-0 flex items-center justify-center text-[10px]/4">
+                            <span class="font-bold text-white "> {{ loadingProgress }} </span>
+                        </span>
+
+                        <span class="block h-4 text-center rounded-full bg-primary-600" :style="progressWidth"></span>
+                    </span>
+                </div>
                 <ContentEditor 
                     :blog="$props.blog"
                     @submit="onSubmit"
@@ -21,22 +37,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, toRefs } from 'vue';
 import { BlogState } from '../blog-api';
 import { isEmpty } from 'lodash-es';
 import { apiCall } from '@vnuge/vnlib.browser';
+import { useClipboard } from '@vueuse/core';
+import { ContentMeta, useFilteredPages } from '@vnuge/cmnext-admin';
 import EditorTable from './EditorTable.vue';
 import ContentEditor from './Content/ContentEditor.vue';
 import ContentTable from './Content/ContentTable.vue';
-import { useClipboard } from '@vueuse/core';
-import { ContentMeta, useFilteredPages } from '@vnuge/cmnext-admin';
 
 const emit = defineEmits(['reload'])
 
 const props = defineProps<{
-   blog: BlogState
+    blog: BlogState,
+    progress: number
 }>()
 
+const { progress } = toRefs(props)
 
 //Get the computed content
 const { selectedId, 
@@ -51,6 +69,9 @@ const { selectedId,
  const { items, pagination } = useFilteredPages(props.blog.content, 15)
 
 const showEdit = computed(() => !isEmpty(selectedId.value));
+const loadingProgress = computed(() => `${progress?.value}%`);
+const progressWidth = computed(() => ({ width: `${progress?.value}%` }));
+const showProgress = computed(() => progress?.value > 0 && progress?.value < 100);
 
 const openEdit = async (item: ContentMeta) => selectedId.value = item.id
 
