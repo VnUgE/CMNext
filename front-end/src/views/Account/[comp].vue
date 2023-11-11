@@ -58,10 +58,8 @@ const comp = useRouteParams<ComponentType>('comp')
 
 const tabId = computed<number>(() =>{
    switch (comp.value) {
-    case ComponentType.Oauth:
-      return 1
     case ComponentType.Settings:
-      return 2
+      return 1
     case ComponentType.Profile:
     default:
       return 0
@@ -71,9 +69,6 @@ const tabId = computed<number>(() =>{
 const onTabChange = (tabid : number) =>{
   switch (tabid) {
     case 1:
-      comp.value = ComponentType.Oauth
-      break
-    case 2:
       comp.value = ComponentType.Settings
       break
     case 0:

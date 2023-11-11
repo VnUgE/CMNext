@@ -41,15 +41,16 @@
     </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, defineAsyncComponent, ref } from 'vue';
 import { BlogState } from '../../blog-api';
 import { reactiveComputed } from '@vueuse/core';
 import { isNil, isString, split } from 'lodash-es';
 import { PostMeta, useXmlProperties } from '@vnuge/cmnext-admin';
 import { apiCall, useUser } from '@vnuge/vnlib.browser';
 import { getPostForm } from '../../form-helpers';
-import Editor from '../../ckeditor/Editor.vue';
 import FeedFields from '../FeedFields.vue';
+
+const Editor = defineAsyncComponent(() => import('../../ckeditor/Editor.vue'));
 
 const emit = defineEmits(['close', 'submit', 'delete']);
 const props = defineProps<{

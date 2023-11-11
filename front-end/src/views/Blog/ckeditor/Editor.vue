@@ -75,13 +75,11 @@ import { useSessionStorage } from '@vueuse/core';
 import { tryOnMounted } from '@vueuse/shared';
 import { apiCall } from '@vnuge/vnlib.browser';
 import { Popover, PopoverButton, PopoverPanel, Switch } from '@headlessui/vue'
-import { BlogState } from '../blog-api'
 import { Converter } from 'showdown'
-
-//Import the editor config
+import { BlogState } from '../blog-api'
 import { useCkConfig } from './build.ts'
-import ContentSearch from '../components/ContentSearch.vue';
 import { useUploadAdapter } from './uploadAdapter';
+import ContentSearch from '../components/ContentSearch.vue';
 
 const emit = defineEmits(['change', 'load', 'mode-change'])
 

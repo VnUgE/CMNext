@@ -29,24 +29,7 @@ export default defineConfig({
     rollupOptions: {
       plugins: [],
       output: {
-        manualChunks: {
-          util: [
-            '@vnuge/vnlib.browser', 
-            '@vnuge/cmnext-admin',
-            'jose',
-            'universal-cookie',
-            'base32-encode',
-            'axios',
-            'lodash-es',
-            'otpauth',
-            '@vuelidate/core',
-            '@vuelidate/validators',
-            'showdown'
-          ],
-          vuejson:[
-            'json-editor-vue'
-          ],
-        },
+       
       }
     },
   },

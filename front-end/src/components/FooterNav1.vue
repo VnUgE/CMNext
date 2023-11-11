@@ -5,7 +5,7 @@
   <router-link class="footer-link" to="/login" >
     Login
   </router-link>
-  <router-link class="footer-link" to="/account">
+  <router-link class="footer-link" to="/account/profile">
     Profile
   </router-link>
   <router-link class="footer-link" to="/account/settings">

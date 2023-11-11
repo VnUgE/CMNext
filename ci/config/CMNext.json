@@ -3,15 +3,15 @@
   "debug": false,
 
   "post_endpoint": {
-    "path": "/blog/posts"
+    "path": "/api/blog/posts"
   },
 
   "channel_endpoint": {
-    "path": "/blog/channels"
+    "path": "/api/blog/channels"
   },
 
   "content_endpoint": {
-    "path": "/blog/content",
+    "path": "/api/blog/content",
     "max_content_length": 50000000
   },
 
