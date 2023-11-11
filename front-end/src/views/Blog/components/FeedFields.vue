@@ -36,11 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, defineAsyncComponent, ref } from 'vue';
 import { FeedProperty, UseXmlProperties } from '@vnuge/cmnext-admin';
 import { BlogState } from '../blog-api';
-import JsonEditorVue from 'json-editor-vue'
 import EpAdder from './podcast-helpers/EpisodeAdder.vue';
+const JsonEditorVue = defineAsyncComponent(() => import('json-editor-vue'))
 
 const props = defineProps<{
     properties: UseXmlProperties,

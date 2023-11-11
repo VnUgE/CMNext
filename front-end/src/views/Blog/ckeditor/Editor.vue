@@ -79,8 +79,9 @@ import { BlogState } from '../blog-api'
 import { Converter } from 'showdown'
 
 //Import the editor config
-import { config } from './build.ts'
+import { useCkConfig } from './build.ts'
 import ContentSearch from '../components/ContentSearch.vue';
+import { useUploadAdapter } from './uploadAdapter';
 
 const emit = defineEmits(['change', 'load', 'mode-change'])
 
@@ -152,6 +153,12 @@ tryOnMounted(() => defer(() =>
 
         //CKEditor 5 superbuild in global scope
         const { ClassicEditor } = window['CKEDITOR']
+
+         //Init the ck config
+        const config = useCkConfig([
+            //Add the upload adapter
+            useUploadAdapter(props.blog.content, apiCall, toaster.general)
+        ]);
 
         //Init editor when loading is complete
         editor = await ClassicEditor.create(editorFrame.value, config);

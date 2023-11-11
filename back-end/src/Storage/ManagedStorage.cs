@@ -30,13 +30,23 @@ using VNLib.Plugins.Extensions.Loading;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
+    [ConfigurationName("storage", Required = false)]
     internal sealed class ManagedStorage : ISimpleFilesystem
     {
         private readonly ISimpleFilesystem _backingStorage;
 
-        public ManagedStorage(PluginBase plugin)
+        public ManagedStorage(PluginBase plugin) : this(plugin, null)
+        { }
+
+        public ManagedStorage(PluginBase plugin, IConfigScope? config)
         {
-            if (plugin.HasConfigForType<MinioClientManager>())
+            //try to get custom storage assembly
+            if (config != null && config.ContainsKey("custom_storage_assembly"))
+            {
+                string storageAssembly = config.GetRequiredProperty("custom_storage_assembly", p => p.GetString()!);
+                _backingStorage = plugin.CreateServiceExternal<ISimpleFilesystem>(storageAssembly);
+            }
+            else if (plugin.HasConfigForType<MinioClientManager>())
             {
                 //Use minio storage
                 _backingStorage = plugin.GetOrCreateSingleton<MinioClientManager>();

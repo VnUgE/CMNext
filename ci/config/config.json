@@ -7,7 +7,7 @@
     //The defaut HTTP version to being requests with (does not support http/2 yet)
     "default_version": "HTTP/1.1",
     //The maxium size (in bytes) of response messges that will be compressed
-    "compression_limit": 512000,
+    "compression_limit": 2048000,
     //Minium response size (in bytes) to compress
     "compression_minimum": 2048,
     //The size of the buffer to use when parsing multipart/form data uploads

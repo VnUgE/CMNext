@@ -22,6 +22,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Linq;
 using System.Threading.Tasks;
 
 using FluentValidation;
@@ -45,6 +46,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
     internal sealed class ContentEndpoint : ProtectedWebEndpoint
     {
         private static readonly IValidator<ContentMeta> MetaValidator = ContentMeta.GetValidator();
+        private static readonly IValidator<string[]> MultiDeleteValidator = GetMultiDeleteValidator();
 
         private readonly ContentManager _content;
         private readonly IChannelContextManager _blogContextManager;
@@ -312,12 +314,6 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VfReturnType.BadRequest;
             }
 
-            //get the content id
-            if (!entity.QueryArgs.TryGetNonEmptyValue("id", out string? contentId))
-            {
-                return VfReturnType.BadRequest;
-            }
-
             //Get channel
             IChannelContext? channel = await _blogContextManager.GetChannelAsync(channelId, entity.EventCancellation);
             if (channel == null)
@@ -325,11 +321,59 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VfReturnType.NotFound;
             }
 
-            //Try to delete the content
-            bool deleted = await _content.DeleteContentAsync(channel, contentId, entity.EventCancellation);
+            //get the single content id
+            if (entity.QueryArgs.TryGetNonEmptyValue("id", out string? contentId))
+            {
+                //Try to delete the content
+                bool deleted = await _content.DeleteContentAsync(channel, contentId, entity.EventCancellation);
 
-            return deleted ? VirtualOk(entity) : VfReturnType.NotFound;
+                return deleted ? VirtualOk(entity) : VfReturnType.NotFound;
+            }
+
+            //Check for bulk delete
+            if (entity.QueryArgs.TryGetNonEmptyValue("ids", out string? multiIds))
+            {
+                ValErrWebMessage webm = new();
+
+                string[] allIds = multiIds.Split(',');
+
+                //validate the ids
+                if (!MultiDeleteValidator.Validate(allIds, webm))
+                {
+                    return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
+                }
+
+                //Delete all async at the same time, then filter out the nulls
+                Task<string>[] deleted = allIds.Select(async id =>
+                {
+                    return await _content.DeleteContentAsync(channel, id, entity.EventCancellation) ? id : null;
+
+                }).Where(id => id != null).ToArray()!;
+
+                //Get the deleted ids
+                string[] deletedIds = await Task.WhenAll(deleted);
+
+                webm.Result = deletedIds;
+                webm.Success = true;
+
+                return VirtualOk(entity, webm);
+            }
+
+            return VfReturnType.BadRequest;
+          
         }
+
+        static IValidator<string[]> GetMultiDeleteValidator()
+        {
+            InlineValidator<string[]> val = new();
+
+            val.RuleForEach(p => p)
+                .NotEmpty()
+                .Length(0, 64)
+                .AlphaNumericOnly();
+
+            return val;
+        } 
     }
 
 }

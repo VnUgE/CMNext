@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Ref, computed } from "vue";
+import { Ref, computed, ref } from "vue";
 import { find, filter, includes, isEqual, isNil, toLower } from 'lodash-es';
 import { apiCall } from "@vnuge/vnlib.browser"
 import { ContentMeta, BlogEntity, ContentApi, ComputedBlogApi, BlogAdminContext } from "../types.js";
@@ -30,6 +30,10 @@ export interface ComputedContent extends ContentApi, ComputedBlogApi<ContentMeta
      * @param filter The reactive filter used to filter the content
      */
     createReactiveSearch(filter: Ref<string>): Ref<ContentMeta[] | undefined>;
+    /**
+     * triggers a refresh of the content
+     */
+    refresh(): void
 }
 
 /**
@@ -41,11 +45,12 @@ export const useComputedContent = (context: BlogAdminContext): ComputedContent =
 
     //Get the content api from the context
     const contentApi = useContent(context);
+    const trigger = ref(0);
 
     const { content, post, channel } = context.getQuery();
 
     //Watch for channel and selected id changes and get the content
-    const items = watchAndCompute([channel, content, post], async () => {
+    const items = watchAndCompute([channel, content, post, trigger], async () => {
         //Get all content if the channel is set, otherwise return empty array
         return channel.value ? await apiCall(contentApi.getAllContent) ?? [] : [];
     }, []);
@@ -70,6 +75,10 @@ export const useComputedContent = (context: BlogAdminContext): ComputedContent =
         })
     }
 
+    const refresh = () => {
+        trigger.value++;
+    }
+
     return {
         ...contentApi,
         items,
@@ -78,5 +87,6 @@ export const useComputedContent = (context: BlogAdminContext): ComputedContent =
         createReactiveSearch,
         selectedId: content,
         getQuery: context.getQuery,
+        refresh
     };
 }

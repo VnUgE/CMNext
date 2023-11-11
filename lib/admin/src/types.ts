@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { UseOffsetPaginationReturn } from '@vueuse/core';
-import { AxiosInstance } from 'axios';
+import { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Dictionary } from 'lodash';
 import { Ref } from 'vue';
 
@@ -185,17 +185,29 @@ export interface ContentApi {
      */
     getAllContent(): Promise<ContentMeta[]>;
     /**
+     * Gets a single content meta object by its id
+     * @param id The id of the content meta object to get
+     * @returns A promise that resolves to the content meta object
+     */
+    getContent(id: string): Promise<ContentMeta | undefined>;
+    /**
      * Deletes a content meta object from the server in the current channel
      * @param content The content meta object to delete
+     * @returns A promise that resolves when the content has been deleted
      */
     deleteContent(content: ContentMeta): Promise<void>;
+    /**
+     * Deletes an array of content meta objects from the server in the current channel
+     * @param content The content items to delete
+     */
+    deleteContent(content: ContentMeta[]): Promise<void>;
     /**
      * Uploads a content file to the server in the current channel
      * @param content The content file to upload
      * @param name The name of the content file
      * @returns A promise that resolves to the content meta object for the uploaded content
      */
-    uploadContent(data: File, name: string): Promise<ContentMeta>;
+    uploadContent(data: File, name: string, config?: AxiosRequestConfig): Promise<ContentMeta>;
     /**
      * Updates the content for a post in the current channel
      * @param post The post to update the content for
@@ -221,7 +233,7 @@ export interface ContentApi {
      * @param content The content meta object to update
      * @param data The new content data file
      */
-    updateContent(content: ContentMeta, data: File): Promise<ContentMeta>;
+    updateContent(content: ContentMeta, data: File, config?:AxiosRequestConfig): Promise<ContentMeta>;
 }
 
 /**
@@ -244,6 +256,10 @@ export interface ComputedBlogApi<T> extends CanPaginate<T>{
 }
 
 export interface ComputedPosts extends PostApi, ComputedBlogApi<PostMeta> {
+    /**
+     * Triggers a refresh of the posts
+     */
+    refresh(): void;
 }
 
 /**

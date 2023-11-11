@@ -46,7 +46,7 @@ import { BlogState } from '../../blog-api';
 import { reactiveComputed } from '@vueuse/core';
 import { isNil, isString, split } from 'lodash-es';
 import { PostMeta, useXmlProperties } from '@vnuge/cmnext-admin';
-import { apiCall, useConfirm, useUser } from '@vnuge/vnlib.browser';
+import { apiCall, useUser } from '@vnuge/vnlib.browser';
 import { getPostForm } from '../../form-helpers';
 import Editor from '../../ckeditor/Editor.vue';
 import FeedFields from '../FeedFields.vue';
@@ -56,7 +56,6 @@ const props = defineProps<{
     blog: BlogState
 }>()
 
-const { reveal } = useConfirm();
 const { getProfile } = useUser();
 const { schema, getValidator } = getPostForm();
 
@@ -117,23 +116,7 @@ const onContentChanged = (content: string) => {
     v$.value.content.$model = content;
 }
 
-const onDelete = async () => {
-    //Show confirm
-    const { isCanceled } = await reveal({
-        title: 'Delete Post?',
-        text: 'Are you sure you want to delete this post? This action cannot be undone.',
-    })
-    if (isCanceled) {
-        return;
-    }
-
-    if (!confirm('Are you sure you want to delete this post forever?')) {
-        return;
-    }
-
-    //Emit the delete event with the original post
-    emit('delete', posts.selectedItem.value)
-}
+const onDelete = () => emit('delete', posts.selectedItem.value)
 
 const setMeAsAuthor = () => {
     apiCall(async () => {

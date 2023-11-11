@@ -13,8 +13,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { includes, isEmpty } from 'lodash-es';
+import { includes, isArray, isEmpty, join, map } from 'lodash-es';
 import { WebMessage } from "@vnuge/vnlib.browser"
+import { AxiosRequestConfig } from 'axios';
 import { PostMeta, ContentMeta, ContentApi, BlogEntity, BlogAdminContext } from "../types.js";
 
 
@@ -56,14 +57,14 @@ export const useContent = (context : BlogAdminContext): ContentApi => {
      * @param cotentId The id of the content to get the raw value of
      * @returns A promise that resolves to the raw content string
      */
-    const getContent = async (cotentId: string): Promise<string> => {
+    const _getContent = async (cotentId: string): Promise<string> => {
         const url = getUrl();
         const response = await axios.get(`${url}&id=${cotentId}`);
         return await response.data;
     }
 
     const getPostContent = async (post: BlogEntity): Promise<string> => {
-        return await getContent(post.id);
+        return await _getContent(post.id);
     }
 
     const getAllContent = async (): Promise<ContentMeta[]> => {
@@ -72,15 +73,31 @@ export const useContent = (context : BlogAdminContext): ContentApi => {
         return response.data;
     }
 
-    const deleteContent = async (content: ContentMeta): Promise<void> => {
+    const deleteContent = async (content: ContentMeta | ContentMeta[]): Promise<void> => {
         const url = getUrl();
-        await axios.delete(`${url}&id=${content.id}`);
+
+        if(isArray(content)){
+            const ids = join(map(content, x => x.id));
+            //bulk delete by setting multiple ids
+            const { data } = await axios.delete<WebMessage<string[]>>(`${url}&ids=${ids}`);
+            
+            //Delete results returns a webmessage that contains the ids of the successfully deleted items
+            const deleted = data.getResultOrThrow();
+            if(deleted.length !== content.length){
+                throw { message: 'Some items failed to delete' }
+            }
+        }
+        else{
+            await axios.delete(`${url}&id=${content.id}`);
+        }
+       
     }
 
-    const uploadContent = async (file: File, name: string): Promise<ContentMeta> => {
+    const uploadContent = async (file: File, name: string, config?:AxiosRequestConfig): Promise<ContentMeta> => {
         const url = getUrl();
         //Endpoint returns the new content meta for the uploaded content
         const { data } = await axios.put<WebMessage<ContentMeta>>(url, file, {
+            ...config,
             headers: {
                 'Content-Type': getContentType(file),
                 //Set the content name header as the supplied content name
@@ -103,10 +120,11 @@ export const useContent = (context : BlogAdminContext): ContentApi => {
         return data.getResultOrThrow();
     }
 
-    const updateContent = async (content: ContentMeta, data: File): Promise<ContentMeta> => {
+    const updateContent = async (content: ContentMeta, data: File, config?: AxiosRequestConfig): Promise<ContentMeta> => {
         const url = getUrl();
 
         const response = await axios.put<ContentMeta>(`${url}&id=${content.id}`, data, {
+            ...config,
             headers: {
                 'Content-Type': getContentType(data),
                 //Set the content name header as the supplied content name
@@ -136,6 +154,11 @@ export const useContent = (context : BlogAdminContext): ContentApi => {
         return response.data.result;
     }
 
+    const getContent = async (id: string): Promise<ContentMeta | undefined> => {
+        const index = await getAllContent();
+        return index.find(x => x.id === id);
+    }
+
     return {
         getPostContent,
         getAllContent,
@@ -144,6 +167,7 @@ export const useContent = (context : BlogAdminContext): ContentApi => {
         updateContentName,
         updatePostContent,
         updateContent,
-        getPublicUrl
+        getPublicUrl,
+        getContent
     };
 }

@@ -1,11 +1,12 @@
 <template>
     <div id="content-editor" class="">
         <EditorTable title="Manage content" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
-            <template v-slot:table>
+            <template #table>
                 <ContentTable 
                     :content="items"
                     @open-edit="openEdit"
                     @copy-link="copyLink"
+                    @delete="onDelete"
                 />
             </template>
             <template #editor>
@@ -40,7 +41,7 @@
 import { computed, toRefs } from 'vue';
 import { BlogState } from '../blog-api';
 import { isEmpty } from 'lodash-es';
-import { apiCall } from '@vnuge/vnlib.browser';
+import { apiCall, useConfirm } from '@vnuge/vnlib.browser';
 import { useClipboard } from '@vueuse/core';
 import { ContentMeta, useFilteredPages } from '@vnuge/cmnext-admin';
 import EditorTable from './EditorTable.vue';
@@ -67,6 +68,7 @@ const { selectedId,
 
  //Setup content filter
  const { items, pagination } = useFilteredPages(props.blog.content, 15)
+ const { reveal } = useConfirm()
 
 const showEdit = computed(() => !isEmpty(selectedId.value));
 const loadingProgress = computed(() => `${progress?.value}%`);
@@ -142,12 +144,28 @@ const onSubmit = async (value : OnSubmitValue) => {
 }
 
 const onDelete = async (item: ContentMeta) => {
+    //Show confirm
+    const { isCanceled } = await reveal({
+        title: 'Delete File?',
+        text: `Are you sure you want to delete ${item.name}? This action cannot be undone.`,
+    })
+    if (isCanceled) {
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${item.name} forever?`)) {
+        return;
+    }
+
     //Exec delete call
     await apiCall(async () => {
         await deleteContent(item);
         //Close the edit panel
         closeEdit(true);
     })
+
+    //Refresh content after delete
+    props.blog.content.refresh();
 }
 
 

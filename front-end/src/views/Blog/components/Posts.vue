@@ -1,10 +1,11 @@
 <template>
     <div id="post-editor" class="">
         <EditorTable title="Manage posts" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
-            <template v-slot:table>
+            <template #table>
                 <PostTable 
                     :posts="items"
                     @open-edit="openEdit"
+                    @delete="onDelete"
                 />
             </template> 
             <template #editor>
@@ -20,14 +21,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import { isEmpty } from 'lodash-es';
 import { PostMeta, useFilteredPages } from '@vnuge/cmnext-admin';
-import { apiCall, debugLog } from '@vnuge/vnlib.browser';
-import EditorTable from './EditorTable.vue';
-import PostEditor from './Posts/PostEdit.vue';
-import PostTable from './Posts/PostTable.vue';
+import { apiCall, debugLog, useConfirm } from '@vnuge/vnlib.browser';
 import { BlogState } from '../blog-api';
+import EditorTable from './EditorTable.vue';
+import PostTable from './Posts/PostTable.vue';
+
+const PostEditor = defineAsyncComponent(() => import('./Posts/PostEdit.vue'))
 
 const emit = defineEmits(['reload'])
 
@@ -37,6 +39,7 @@ const props = defineProps<{
 
 const { selectedId, publishPost, updatePost, deletePost } = props.blog.posts;
 const { updatePostContent } = props.blog.content;
+const { reveal } = useConfirm()
 
 const showEdit = computed(() => !isEmpty(selectedId.value));
 
@@ -98,12 +101,28 @@ const onSubmit = async ({post, content } : { post:PostMeta, content:string }) =>
 }
 
 const onDelete = async (post: PostMeta) => {
+
+    //Show confirm
+    const { isCanceled } = await reveal({
+        title: 'Delete Post?',
+        text: `Are you sure you want to delete post '${post.title}?' This action cannot be undone.`,
+    })
+    if (isCanceled) {
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete post '${post.id}' forever?`)) {
+        return;
+    }
+
     //Exec delete call
     await apiCall(async () => {
         await deletePost(post);
         //Close the edit panel
         closeEdit(true);
     })
+
+    props.blog.posts.refresh();
 }
 
 </script>

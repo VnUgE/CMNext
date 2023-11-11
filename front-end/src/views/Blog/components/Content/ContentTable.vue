@@ -28,14 +28,17 @@
             </td>
             <td class="w-24">
                 <fieldset :disabled="waiting">
+                     <button class="btn xs no-border" @click="openEdit(item)">
+                        <fa-icon icon="pencil" />
+                    </button>
                     <button class="btn xs no-border" @click="copyLink(item)">
                         <fa-icon icon="link" />
                     </button>
                     <button class="btn xs no-border" @click="copy(item.id)">
                         <fa-icon icon="copy" />
                     </button>
-                    <button class="btn xs no-border" @click="openEdit(item)">
-                        <fa-icon icon="pencil" />
+                      <button class="btn xs no-border red" @click="deleteItem(item)">
+                        <fa-icon icon="trash" />
                     </button>
                 </fieldset>
             </td>
@@ -50,7 +53,7 @@ import { useClipboard } from '@vueuse/core';
 import { useWait } from '@vnuge/vnlib.browser';
 import { ContentMeta } from '@vnuge/cmnext-admin';
 
-const emit = defineEmits(['open-edit', 'copy-link'])
+const emit = defineEmits(['open-edit', 'copy-link', 'delete'])
 
 const props = defineProps<{
     content: ContentMeta[]
@@ -71,5 +74,6 @@ const getItemName = (item : ContentMeta) => truncate(item.name || '', { length: 
 
 const openEdit = async (item: ContentMeta) => emit('open-edit', item)
 const copyLink = (item : ContentMeta) => emit('copy-link', item)
+const deleteItem = (item : ContentMeta) => emit('delete', item)
 
 </script>

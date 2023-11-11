@@ -180,23 +180,8 @@ const onSubmit = async () => {
 
 const onClose = () => emit('close');
 
-const onDelete = async () => {
-    //Show confirm
-    const { isCanceled } = await reveal({
-        title: 'Delete File?',
-        text: 'Are you sure you want to delete this file? This action cannot be undone.',
-    })
-    if (isCanceled) {
-        return;
-    }
-
-    if (!confirm('Are you sure you want to delete this file forever?')) {
-        return;
-    }
-
-    //Emit the delete event with the original post
-    emit('delete', metaBuffer)
-}
+//Emit delete event
+const onDelete = () => emit('delete', metaBuffer)
 
 const removeNewFile = () =>{
     file.value = undefined;

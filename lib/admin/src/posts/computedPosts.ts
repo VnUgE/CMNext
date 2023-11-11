@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { isEqual, find } from 'lodash-es';
 import { apiCall } from "@vnuge/vnlib.browser";
 import { PostMeta, ComputedPosts, BlogAdminContext } from "../types";
@@ -28,11 +28,12 @@ import { watchAndCompute } from "../helpers";
 export const useComputedPosts = (context: BlogAdminContext): ComputedPosts => {
     //Post api around the post url and channel
     const postApi = usePostApi(context);
+    const trigger = ref(0);
 
     const { channel, post } = context.getQuery();
     
     //Get all posts
-    const items = watchAndCompute([channel, post], async () => {
+    const items = watchAndCompute([channel, post, trigger], async () => {
         return channel.value ? await apiCall(postApi.getPosts) ?? [] : [];
     }, [])
 
@@ -40,11 +41,16 @@ export const useComputedPosts = (context: BlogAdminContext): ComputedPosts => {
         return find(items.value, p => isEqual(p.id, post.value));
     })
 
+    const refresh = () => {
+        trigger.value++;
+    }
+
     return {
         ...postApi,
         items,
         selectedItem,
         selectedId:post,
-        getQuery: context.getQuery
+        getQuery: context.getQuery,
+        refresh
     };
 }

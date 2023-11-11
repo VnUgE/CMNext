@@ -11,7 +11,7 @@
     </thead>
     <tbody>
         <tr v-for="post in posts" :key="post.id" class="table-row">
-            <td>
+            <td class="truncate max-w-[16rem]">
                 {{ post.title }}
             </td>
             <td>
@@ -20,18 +20,21 @@
             <td>
                 {{ getDateString(post.date) }}
             </td>
-            <td>
+            <td class="truncate max-w-[10rem]">
                 {{ post.author }}
             </td>
-            <td>
-                {{ getSummaryString(post.summary) }}
+            <td class="truncate max-w-[16rem]">
+                {{ post.summary }}
             </td>
             <td class="w-20">
+                 <button class="btn xs no-border" @click="openEdit(post)">
+                    <fa-icon icon="pencil" />
+                </button>
                 <button class="btn xs no-border" @click="copy(post.id)">
                     <fa-icon icon="copy" />
                 </button>
-                <button class="btn xs no-border" @click="openEdit(post)">
-                    <fa-icon icon="pencil" />
+                <button class="btn xs no-border red" @click="onDelete(post)">
+                    <fa-icon icon="trash" />
                 </button>
             </td>
         </tr>
@@ -45,7 +48,7 @@ import { useClipboard } from '@vueuse/core';
 import { PostMeta } from '@vnuge/cmnext-admin';
 import { useGeneralToaster } from '@vnuge/vnlib.browser';
 
-const emit = defineEmits(['reload', 'open-edit'])
+const emit = defineEmits(['reload', 'open-edit', 'delete'])
 
 const props = defineProps<{
     posts: PostMeta[],
@@ -59,8 +62,8 @@ const { info } = useGeneralToaster()
 const openEdit = async (post: PostMeta) => emit('open-edit', post)
 
 const getDateString = (time?: number) => new Date((time || 0) * 1000).toLocaleString();
-const getSummaryString = (summary?: string) => truncate(summary || '', { length: 40 })
 const getPostId = (post: PostMeta) => truncate(post.id || '', { length: 20 })
+const onDelete = (post: PostMeta) => emit('delete', post)
 
 watch(copied, (c) => c ? info({'title':'Copied to clipboard'}) : null)
 </script>

@@ -1,7 +1,7 @@
 <template>
     <div id="channel-editor">
         <EditorTable title="Manage channels" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
-            <template v-slot:table>
+            <template #table>
                 <ChannelTable
                     :channels="items"
                     @open-edit="openEdit"
