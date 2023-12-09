@@ -170,10 +170,11 @@ namespace Content.Publishing.Blog.Admin
             //Mem stream to read the object into
             using VnMemoryStream ms = new();
 
-            await storage.ReadFileAsync(objPath, ms, cancellation);
-
-            //Load the db from the stream
-            db.Load(ms);
+            if(await storage.ReadFileAsync(objPath, ms, cancellation) > 0)
+            {
+                //Load the db from the stream
+                db.Load(ms);
+            }
         }
 
     }

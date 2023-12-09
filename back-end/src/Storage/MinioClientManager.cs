@@ -123,13 +123,13 @@ namespace Content.Publishing.Blog.Admin.Storage
             {
                 //Get the post content file 
                 ObjectStat stat = await Client.GetObjectAsync(args, cancellation);
+                return stat.Size;
             }
             catch (Minio.Exceptions.ObjectNotFoundException)
             {
                 //File not found
-                return -1;
+                return -1L;
             }
-            return output.Position;
         }
     }
 }

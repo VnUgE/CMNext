@@ -11,8 +11,8 @@
 
   "keepalive_endpoint": {
     "path": "/api/account/keepalive",
-    //Regen token every 15 mins along with cookies
-    "token_refresh_sec": 600 //15 minutes
+    //Regen token every 10 mins along with cookies
+    "token_refresh_sec": 600 //10 minutes
   },
 
   "profile_endpoint": {
