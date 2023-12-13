@@ -18,13 +18,13 @@
           </button>
         </div>
         <div v-else>
-          <button class="btn primary xs" @click.prevent="Setup">
+          <button class="btn primary xs" disabled="true" @click.prevent="Setup">
             <fa-icon icon="plus" />
             <span class="pl-2">Setup</span>
           </button>
         </div>
       </div>
-      <p class="p-1 pt-3 text-sm text-gray-600">
+      <p class="p-1 pt-3 text-sm text-color-background">
         WebAuthN/FIDO is not yet supported, due to complexity and browser support. 
       </p>
     </div>

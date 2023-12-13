@@ -20,7 +20,7 @@ import { resolve } from 'path'
 import { server } from './vite.config.local.ts'
 
 //Pages setup
-import Pages from 'vite-plugin-pages'
+import VueRouter from 'unplugin-vue-router/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -37,13 +37,20 @@ export default defineConfig({
     postcss: postcss
   },
   plugins: [
-    vue(), 
     //Setup the vite pages plugin
-    Pages({
+    VueRouter({
       extensions: ['vue'],
-      dirs: 'src/views',
+      routesFolder: 'src/views',
       exclude: ['**/components/**'],
+      logs: true,
+      getRouteName:(node) => {
+        const trimSlashes = /^\/|\/$/g
+        const name = node.fullPath.replace(trimSlashes, '')
+        return name
+      },
+      importMode: 'async',
     }),
+    vue(), 
   ],
   resolve: {
     alias: {

@@ -23,25 +23,40 @@
 </template>
 
 <script setup lang="ts">
-import { useMessage, useWait } from '@vnuge/vnlib.browser';
+import { toRefs, defineAsyncComponent } from 'vue';
+import { IMfaFlowContinuiation, apiCall, useMessage, useWait } from '@vnuge/vnlib.browser';
 import { toSafeInteger } from 'lodash-es';
-import VOtpInput from "vue3-otp-input";
+const VOtpInput = defineAsyncComponent(() => import('vue3-otp-input'))
 
-const emit = defineEmits(['submit'])
+const emit = defineEmits(['clear'])
 
+const props = defineProps<{
+    upgrade: IMfaFlowContinuiation
+}>()
+
+const { upgrade } = toRefs(props)
 const { waiting } = useWait();
 const { onInput } = useMessage();
 
-const SubimitTotp = async (code : string) => {
+const SubimitTotp = (code : string) => {
     
     //If a request is still pending, do nothing
     if (waiting.value) {
         return
     }
 
-    //Submit a mfa upgrade result
-    emit('submit', {
-        code: toSafeInteger(code)
+    apiCall(async ({ toaster }) => {
+         //Submit totp code
+        const res = await upgrade.value.submit({ code: toSafeInteger(code) })
+        res.getResultOrThrow()
+
+        emit('clear')
+        
+        // Push a new toast message
+        toaster.general.success({
+            title: 'Success',
+            text: 'You have been logged in',
+        })
     })
 }
 

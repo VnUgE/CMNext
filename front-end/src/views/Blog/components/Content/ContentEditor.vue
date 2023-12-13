@@ -26,6 +26,20 @@
                                 v-model="v$.name.$model" 
                                 :class="{'invalid':v$.name.$invalid && v$.name.$dirty}"
                             />
+                            <div v-if="isNewUpload"
+                                id="file-drop-zone" 
+                                ref="newFileDropZone" 
+                                class="py-16 mt-3 transition-all duration-150 ease-linear border-2 border-dashed rounded cursor-pointer dark:border-dark-500"
+                                :class="{'border-primary-500 dark:border-primary-500':isOverDropZone}"
+                                @click.prevent="open()"
+                            >
+                                <div class="flex flex-col items-center justify-center">
+                                    <fa-icon icon="file-upload" class="text-4xl" />
+                                    <p class="mt-2 text-sm text-center">
+                                        Drop file here or click to select file
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                         <div v-if="editFile?.id" class="mt-3">
                             <div class="p-3 py-0.5">
@@ -68,17 +82,17 @@
                                     Content-Type: {{ editFile.content_type }}
                                 </div>
                             </div>
-                        </div>
-                        <div v-if="!uploadedFile.name" class="m-auto mt-5 w-fit">
-                            <button class="btn" @click.prevent="open()">
-                                {{ editFile?.id ? 'Overwrite file' : 'Select File' }}
-                            </button>
+                            <div class="m-auto mt-5 w-fit">
+                                <button class="btn" @click.prevent="open()">
+                                    Overwrite file
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </fieldset>
             </form>
         </div>
-        <div class="mt-4">
+        <div v-if="!isNewUpload" class="mt-4">
             <div class="mx-auto w-fit">
                 <button class="btn red" @click="onDelete">Delete Forever</button>
             </div>
@@ -87,13 +101,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { reactiveComputed, useFileDialog } from '@vueuse/core';
+import { computed, ref, watch } from 'vue';
+import { reactiveComputed, useFileDialog, useDropZone } from '@vueuse/core';
 import { ContentMeta } from '@vnuge/cmnext-admin';
 import { useConfirm, useVuelidateWrapper, useFormToaster, useWait } from '@vnuge/vnlib.browser';
 import { defaultTo, first, isEmpty, round } from 'lodash-es';
 import { required, helpers, maxLength } from '@vuelidate/validators'
-import useVuelidate from '@vuelidate/core';
+import { useVuelidate } from '@vuelidate/core';
 import { BlogState } from '../../blog-api';
 
 const emit = defineEmits(['close', 'submit', 'delete']);
@@ -105,11 +119,13 @@ const { reveal } = useConfirm();
 const { waiting } = useWait();
 
 const { content, channels } = props.blog;
+const newFileDropZone = ref<HTMLElement>();
 
 const selectedId = computed(() => content.selectedId.value);
 const selectedContent = computed<ContentMeta>(() => defaultTo(content.selectedItem.value, {} as ContentMeta));
 const metaBuffer = reactiveComputed<ContentMeta>(() => ({ ...selectedContent.value}));
 const isChannelSelected = computed(() => channels.selectedItem.value?.id?.length ?? 0 > 0);
+const isNewUpload = computed(() => selectedId.value === 'new');
 
 const v$ = useVuelidate({
     name: { 
@@ -122,11 +138,15 @@ const v$ = useVuelidate({
 const { validate } = useVuelidateWrapper(v$);
 
 const file = ref<File | undefined>();
-const { files, open, reset, onChange } = useFileDialog({ accept: '*' })
+//set the file name when a file is selected
+watch(file, f => v$.value.name.$model = f?.name);
+
+const { open, reset, onChange } = useFileDialog({ accept: '*' })
 //update the file buffer when a user selects a file to upload
-onChange(() => {
-    file.value = first(files.value)
-    v$.value.name.$model = file.value?.name;
+onChange((f) => onFileUploaded(first(f)))
+
+const { isOverDropZone } = useDropZone(newFileDropZone, {
+   onDrop: (files) => onFileUploaded(first(files))
 })
 
 const editFile = computed<ContentMeta | undefined>(() => selectedContent.value);
@@ -142,6 +162,8 @@ const getSizeinKb = (value : number | undefined) => {
     const size = round(value > 1024 ? value / 1024 : value, 2);
     return `${size} ${value > 1024 ? 'KB' : 'B'}`;
 }
+
+const onFileUploaded = (f: File | undefined) => file.value = f
 
 const onSubmit = async () => {
 

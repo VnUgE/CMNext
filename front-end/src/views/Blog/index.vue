@@ -115,16 +115,17 @@ import { AxiosProgressEvent } from 'axios';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
 import { first } from 'lodash-es';
 import { useRoute, useRouter } from 'vue-router';
-import { usePageGuard, useUser, useTitle, useAxios } from '@vnuge/vnlib.browser';
+import { useUser, useAxios } from '@vnuge/vnlib.browser';
 import { createBlogContext, useComputedChannels, useComputedPosts, useComputedContent, SortType } from '@vnuge/cmnext-admin';
 import { BlogState } from './blog-api';
+import { useStore } from '../../store';
 import Channels from './components/Channels.vue';
 import Posts from './components/Posts.vue';
 import Content from './components/Content.vue';
 
 //Protect page
-usePageGuard();
-useTitle('CMNext Admin')
+const store = useStore()
+store.setPageTitle('Blog Admin')
 
 if(!window.CKEDITOR){
     //Load scripts

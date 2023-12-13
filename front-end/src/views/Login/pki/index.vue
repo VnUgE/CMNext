@@ -12,7 +12,7 @@
 
                     <div class="flex justify-between mt-4">
                         <div class="text-sm">
-                            <a class="link" target="_blank" href="https://github.com/VnUgE/Plugins.Essentials/tree/master/plugins/VNLib.Plugins.Essentials.Accounts">
+                            <a class="link" target="_blank" href="https://www.vaughnnugent.com/resources/software/articles?tags=docs,_VNLib.Plugins.Essentials.Accounts">
                                 Goto OTP spec
                                 <fa-icon icon="arrow-right" class="ml-1" />
                             </a>
@@ -33,16 +33,17 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash-es';
-import { apiCall, debugLog, useMessage, usePkiAuth } from '@vnuge/vnlib.browser';
+import { apiCall, debugLog, useMessage } from '@vnuge/vnlib.browser';
 import { ref } from 'vue'
 import { decodeJwt } from 'jose'
 import { useRouter } from 'vue-router';
-
-const otp = ref('')
+import { useStore } from '../../../store';
 
 const { setMessage } = useMessage()
 const { push } = useRouter()
-const { login } = usePkiAuth(import.meta.env.VITE_PKI_ENDPOINT)
+const store = useStore()
+
+const otp = ref('')
 
 const submit = () =>{
 
@@ -56,7 +57,7 @@ const submit = () =>{
         const jwt = decodeJwt(otp.value)
         debugLog(jwt)
 
-        await login(otp.value)
+        await store.pkiAuth.login(otp.value)
 
         //Go back to login page
         push({ name: 'Login' })

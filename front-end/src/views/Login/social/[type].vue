@@ -32,84 +32,52 @@
 </template>
 
 <script setup lang="ts">
-import { isEqual } from 'lodash-es'
-import { useRouteParams, useRouteQuery } from '@vueuse/router'
-import { useSession, useWait, useUser, useTitle, configureApiCall } from '@vnuge/vnlib.browser'
+import { defer } from 'lodash-es'
+import { set, tryOnMounted } from '@vueuse/core'
+import { useWait, configureApiCall } from '@vnuge/vnlib.browser'
 import { useRouter } from 'vue-router';
 import { ref } from 'vue'
-import { ITokenResponse } from '@vnuge/vnlib.browser/dist/session';
+import { storeToRefs } from 'pinia';
+import { useStore } from '../../../store';
 
-useTitle('Social Login')
-
-const { loggedIn } = useSession()
-const { prepareLogin } = useUser()
+const store = useStore();
+const { loggedIn } = storeToRefs(store)
 const { waiting } = useWait()
 
-const type = useRouteParams('type')
-const result = useRouteQuery('result', '');
-const nonce = useRouteQuery('nonce', '');
 const router = useRouter()
-
 const message = ref('')
 
 //Override the message handler to capture the error message and display it
 const { apiCall } = configureApiCall(m => message.value = m)
 
-//If logged-in redirect to login page
-if (loggedIn.value) {
-  router.push({ name: 'Login' })
-}
+//Set the page title
+store.setPageTitle('Social Login')
 
+tryOnMounted(() => defer(() => {
 
-const run = async () => {
-  if (isEqual(result.value, 'authorized')) {
-
-    let loginUrl : string = ''
-
-    switch (type.value) {
-      case 'github':
-        loginUrl = '/login/social/github';
-        break;
-      case 'discord':
-        loginUrl = '/login/social/discord';
-        break;
-      default:
-        router.push({ name: 'Login' })
-        break;
-    }
-
-    // If nonce is set, then we can proceed with finalization
-    await apiCall(async ({ axios }) => {
-      const preppedLogin = await prepareLogin()
-      // Send the login request
-      const { data } = await axios.post<ITokenResponse>(loginUrl, { nonce: nonce.value })
-
-      data.getResultOrThrow()
-
-      // Finalize the login
-      await preppedLogin.finalize(data)
-      
-      // If the login was successful, then we can redirect to the login page
-      router.push({ name: 'Login' })
-    })
-    
-  } else {
-    switch (result.value) {
-      case 'invalid':
-        message.value = 'The request was invalid, and you could not be logged in. Please try again.'
-        break
-      case 'expired':
-        message.value = 'The request has expired. Please try again.'
-        break
-      default:
-        message.value = 'There was an error processing the request. Please try again.'
-        break
-    }
+  //If logged-in redirect to login page
+  if (loggedIn.value) {
+    router.push({ name: 'Login' })
   }
-}
 
-//Run without awaiting
-run()
+  //try to complete an oauth login
+  apiCall(async ({ toaster }) => {
+    try{
+        //Complete the login
+        await store.socialOauth.completeLogin();
+        
+        toaster.general.success({
+          title:'Login Successful',
+          text: 'You have successfully logged in.'
+        })
+        
+        router.push({ name: 'Login' })
+    }
+    catch(err: any){
+      set(message, err.message)
+    }
+  })
+}))
 
 </script>
 

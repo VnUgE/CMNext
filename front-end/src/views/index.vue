@@ -12,7 +12,3 @@ const { push } = useRouter();
 push('/blog')
 
 </script>
-
-<style lang="scss">
-
-</style>

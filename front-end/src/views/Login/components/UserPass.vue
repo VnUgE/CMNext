@@ -1,7 +1,12 @@
 <template>
     <div class="">
         <h3>Login</h3>
-        <form id="user-pass-submit-form" method="post" action="/login" @submit.prevent="SubmitLogin">
+
+        <div v-if="mfaUpgrade?.type === MfaMethod.TOTP">
+            <Totp @clear="totpClear" :upgrade="mfaUpgrade" />
+        </div>
+
+        <form v-else id="user-pass-submit-form" method="post" action="/login" @submit.prevent="SubmitLogin">
             <fieldset class="" :disabled="waiting" >
                 <div>
                     <div class="float-label">
@@ -17,7 +22,7 @@
                         <label for="username">Email</label>
                     </div>
                 </div>
-                 <div class="py-3">
+                    <div class="py-3">
                     <div class="mb-2 float-label">
                         <input
                             id="password"
@@ -37,28 +42,44 @@
                 <fa-icon :class="{'animate-spin':waiting}" :icon="waiting ? 'spinner' : 'sign-in-alt'"/>
                 Log-in
             </button>
+            <div class="flex flex-row justify-between gap-3 pt-3 pb-2 form-links">
+                <router-link to="/pwreset">
+                    Forgot password
+                </router-link>
+                <router-link to="/register">
+                    Register a new account
+                </router-link>
+            </div>
         </form>
-         <div class="flex flex-row justify-between gap-3 pt-3 pb-2 form-links">
-            <router-link to="/pwreset">
-              Forgot password
-            </router-link>
-            <router-link to="/register">
-              Register a new account
-            </router-link>
-          </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-import useVuelidate from '@vuelidate/core'
+import { ref, shallowRef, reactive, defineAsyncComponent, type Ref } from 'vue'
+import { useTimeoutFn, set } from '@vueuse/core'
+import { useVuelidate } from '@vuelidate/core'
+import { isEqual } from 'lodash-es'
 import { required, maxLength, minLength, email, helpers } from '@vuelidate/validators'
-import { useMessage, useVuelidateWrapper, useWait } from '@vnuge/vnlib.browser'
+import { 
+    useVuelidateWrapper, useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation, MfaMethod,
+    apiCall, useMessage, useWait, debugLog, WebMessage
+} from '@vnuge/vnlib.browser'
+const Totp = defineAsyncComponent(() => import('./Totp.vue'))
 
-const emit = defineEmits(['login'])
-
-const { onInput } = useMessage();
+const { onInput, setMessage } = useMessage();
 const { waiting } = useWait();
+
+//Setup mfa login with TOTP support
+const { login } = useMfaLogin([ totpMfaProcessor() ])
+
+const mfaUpgrade = shallowRef<IMfaFlowContinuiation>();
+
+const mfaTimeout = ref<number>(600 * 1000);
+const mfaTimer = useTimeoutFn(() => {
+    //Clear upgrade message
+    mfaUpgrade.value = undefined;
+    setMessage('Your TOTP request has expired')
+}, mfaTimeout, { immediate: false })
 
 const vState = reactive({ username: '', password: '' })
 
@@ -84,9 +105,50 @@ const SubmitLogin = async () => {
     if (!await validate()) {
         return
     }
+    
+    // Run login in an apicall wrapper
+    await apiCall(async ({ toaster }) => {
+        
+        //Attempt to login
+        const response = await login(
+            v$.value.username.$model, 
+            v$.value.password.$model
+        );
 
-    //Emit login and pass the username and password
-    emit('login', { username: v$.value.username.$model, password: v$.value.password.$model });
+        debugLog('Mfa-login', response);
+
+        //See if the response is a web message
+        if(response.getResultOrThrow){
+            (response as WebMessage).getResultOrThrow();
+        }
+
+        //Try to get response as a flow continuation
+        const mfa = response as IMfaFlowContinuiation
+
+        // Response is a totp upgrade request
+        if (isEqual(mfa.type, MfaMethod.TOTP)) {
+            //Store the upgrade message
+            set(mfaUpgrade, mfa);
+            //Setup timeout timer
+            set(mfaTimeout, mfa.expires! * 1000);
+            mfaTimer.start();
+        }
+        //If login without mfa was successful
+        else if (response.success) {
+            // Push a new toast message
+            toaster.general.success({
+                title: 'Success',
+                text: 'You have been logged in',
+            })
+        }
+    })
+}
+
+const totpClear = () => {
+    //Clear timer
+    mfaTimer.stop();
+    //Clear upgrade message
+    set(mfaUpgrade, undefined);
 }
 
 </script>

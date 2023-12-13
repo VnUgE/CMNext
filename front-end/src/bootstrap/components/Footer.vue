@@ -17,7 +17,7 @@
           <p class="nav-title">
             Built with
           </p>
-          <a class="footer-link" href="https://www.vaughnnugent.com/resources/software/modules">VNLib HTTP v1.0.1</a>
+          <a class="footer-link" href="https://www.vaughnnugent.com/resources/software/modules">VNLib HTTP v0.1.0</a>
           <a class="footer-link" href="https://tailwindcss.com/">Tailwindcss</a>
           <a class="footer-link" href="https://vuejs.org/">Vuejs v3</a>
           <a class="footer-link" href="https://fontawesome.com/">Font Awesome</a>

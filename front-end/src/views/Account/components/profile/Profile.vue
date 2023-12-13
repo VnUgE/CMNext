@@ -2,10 +2,10 @@
   <div id="account-profile" class="acnt-content-container panel-container">
     <div class="acnt-content profile-container panel-content">
 
-      <div id="profile-control-container" class="flex flex-row" :modified="modified">
+      <div id="profile-control-container" class="flex flex-row" :modified="store.userProfile.modified">
         <div class="m-0">
           <div class="flex rounded-full w-14 h-14 bg-primary-500 dark:bg-primary-600">
-            <div class="m-auto text-white dark:text-dark-400">
+            <div class="m-auto text-white dark:text-dark-500">
               <fa-icon :icon="['fas', 'user']" size="2xl" />
             </div>
           </div>
@@ -28,7 +28,7 @@
 
       <div>
         
-        <p class="profile-text">
+        <p class="profile-text text-color-background">
           You may set or change your profile information here. All fields are optional,
           but some features may not work without some information.
         </p>
@@ -36,7 +36,7 @@
         <div class="locked-info">
           <div class="mx-auto my-1 sm:mx-0 sm:my-2">
             <span class="pr-2">Email:</span>
-            <span class="">{{ data.email }}</span>
+            <span class="">{{ store.userProfile.data.email }}</span>
           </div>
           <div class="mx-auto my-1 sm:mx-0 sm:my-2">
             <span class="pr-2">Created:</span>
@@ -62,43 +62,28 @@ import { defaultTo } from 'lodash-es'
 import useVuelidate  from '@vuelidate/core'
 import { ref, computed, watch } from 'vue'
 import { Rules, FormSchema } from './profile-schema.ts'
-import { apiCall, useMessage, useWait, useDataBuffer, useUser, useVuelidateWrapper, IUserProfile } from '@vnuge/vnlib.browser'
-
-const ACCOUNT_URL = '/account/profile'
-
-interface UserProfile extends IUserProfile{
-  created : string | Date
-}
+import { apiCall, useMessage, useWait, useVuelidateWrapper, WebMessage } from '@vnuge/vnlib.browser'
+import { useStore } from '../../../../store'
 
 const { waiting } = useWait()
-const { getProfile } = useUser()
 const { onInput, clearMessage } = useMessage()
-const { data, buffer, apply, revert, modified } = useDataBuffer<UserProfile>({} as UserProfile)
+
+const store = useStore()
 
 const editMode = ref(false)
 
 // Create validator based on the profile buffer as a data model
-const v$ = useVuelidate(Rules, buffer, { $lazy:true, $autoDirty:false })
+const v$ = useVuelidate(Rules, store.userProfile.buffer, { $lazy:true })
 
 // Setup the validator wrapper
 const { validate } = useVuelidateWrapper(v$);
 
 //const modified = computed(() => profile.value.Modified)
-const createdTime = computed(() => defaultTo(data.created?.toLocaleString(), ''))
-
-const loadProfileData = async () => {
-  await apiCall(async () => {
-    // Get the user's profile
-    const profile = await getProfile<UserProfile>()
-    profile.created = new Date(profile.created)
-    //Apply the profile to the buffer
-    apply(profile)
-  })
-}
+const createdTime = computed(() => defaultTo(store.userProfile.data.created?.toLocaleString(), ''))
 
 const revertProfile = () => {
   //Revert the buffer
-  revert()
+  store.userProfile.revert()
   clearMessage()
   editMode.value = false
 }
@@ -112,32 +97,24 @@ const onSubmit = async () => {
     return
   }
   // Init the api call
-  await apiCall(async ({ axios, toaster }) => {
-    // Apply the buffer to the profile
-    const response = await axios.post(ACCOUNT_URL, buffer)
+  await apiCall(async ({ toaster }) => {
+    const res = await store.userProfile.update();
 
-    if(!response.data.success){
-      throw { response }
-    }
-
+    const successm = (res as WebMessage<string>).getResultOrThrow();
+  
     //No longer in edit mode
     editMode.value = false
 
     //Show success message
     toaster.general.success({
       title: 'Update successful',
-      text: response.data.result,
+      text: successm,
     })
-
-    //reload the profile data
-    loadProfileData()
   })
 }
 
 watch(editMode, () => v$.value.$reset())
 
-//Inital profile data load, dont await
-loadProfileData()
 
 </script>
 

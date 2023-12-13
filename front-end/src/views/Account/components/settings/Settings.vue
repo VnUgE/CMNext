@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import Security from './security.vue'
+import Security from './Security.vue'
 
 </script>
 

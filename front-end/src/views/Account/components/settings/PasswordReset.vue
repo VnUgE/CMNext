@@ -2,24 +2,22 @@
   <div id="pwreset-settings" class="container">
     <div class="panel-content">
 
-      <h5>Password Reset</h5>
-
-      <div v-if="!pwResetShow" class="py-2">
+      <div v-if="!pwResetShow" class="">
         <div class="flex flex-wrap items-center justify-between">
-
-          <div class="my-auto">
-            Click to reset
+          
+          <div class="">
+             <h5>Password Reset</h5>
           </div>
 
           <div class="flex justify-end">
-            <button class="btn red xs" @click="showForm">
+            <button class="btn xs" @click="showForm">
               <fa-icon icon="sync" />
               <span class="pl-2">Reset Password</span>
             </button>
           </div>
         </div>
 
-        <p class="mt-3 text-sm">
+        <p class="mt-3 text-sm text-color-background">
           You may only reset your password if you have an internal user account. If you exclusivly use an external
           authentication provider (like GitHub or Discord), you will need to reset your password externally.
         </p>
@@ -61,7 +59,7 @@
 
 <script setup lang="ts">
 import { isEmpty, toSafeInteger } from 'lodash-es';
-import useVuelidate from '@vuelidate/core'
+import { useVuelidate } from '@vuelidate/core'
 import { required, maxLength, minLength, helpers } from '@vuelidate/validators'
 import { useUser, apiCall, useMessage, useWait, useConfirm, useVuelidateWrapper } from '@vnuge/vnlib.browser'
 import { computed, reactive, ref, toRefs, watch } from 'vue'

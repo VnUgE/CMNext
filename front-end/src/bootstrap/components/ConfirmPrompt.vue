@@ -5,7 +5,7 @@
       <div class="modal-content-container">
         <DialogPanel>
           <DialogTitle class="modal-title">
-            {{ title }}
+            {{ message.title ?? 'Confirm' }}
           </DialogTitle>
 
           <DialogDescription class="modal-description">
@@ -55,9 +55,7 @@ const message = ref({})
 onClickOutside(dialog, () => isRevealed.value ? cancel() : null)
 
 //Set message on reveal
-onReveal(m => message.value = m);
-
-const title = computed(() => defaultTo(message.value.title, 'Confirm'))
+onReveal(m => message.value = defaultTo(m, {}));
 
 const style = computed(() => {
   return {

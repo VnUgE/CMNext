@@ -1,7 +1,4 @@
 <template>
-  <head>
-    <title>{{ metaTile }}</title>
-  </head>
   <div id="env-entry" ref="content" class="absolute top-0 left-0 w-full min-h-screen env-bg">
     <div class="absolute flex w-full">
       <notifications 
@@ -20,7 +17,7 @@
       />
     </div>
 
-    <site-header ref="header" :site-title="siteTitle" :routes="routes" >
+    <site-header ref="header" :routes="routes" @logout="emit('logout')" >
       <template #site_logo>
          <!-- Use the global site-logo if enabled -->
         <site-logo />
@@ -53,54 +50,37 @@
 import { computed } from 'vue'
 import { RouteLocation, useRouter } from 'vue-router'
 import { filter, map, without, find, includes } from 'lodash-es'
-import { useEnvSize, useScrollOnRouteChange, useSession, useTitle } from '@vnuge/vnlib.browser'
+import { storeToRefs } from 'pinia'
+import { useEnvSize } from '@vnuge/vnlib.browser'
+import { useStore } from '../store'
 import CookieWarning from './components/CookieWarning.vue'
 import PasswordPrompt from './components/PasswordPrompt.vue'
 import siteHeader from './components/Header.vue'
 import siteFooter from './components/Footer.vue'
 import ConfirmPrompt from './components/ConfirmPrompt.vue'
-import { headerRoutes, authRoutes, siteTitle, showCookieWarning } from './index'
 
-const { loggedIn } = useSession();
+const emit = defineEmits(['logout'])
+const store = useStore()
+const { showCookieWarning, currentRoutes } = storeToRefs(store)
 const { getRoutes } = useRouter();
-const { title } = useTitle(siteTitle.value);
 
 //Use the env size to calculate the header and footer heights for us
 const { header, footer, content, headerHeight, footerHeight } = useEnvSize(true)
 
-//setup autoscroll
-useScrollOnRouteChange();
-
-//Compute meta title from the default site title and the page title
-const metaTile = computed(() => title.value ? `${title.value} | ${siteTitle.value}` : siteTitle.value)
-
 const routes = computed<RouteLocation[]>(() => {
   // Get routes that are defined above but only if they are defined in the router
   // This is a computed property because loggedin is a reactive property
-  const routeNames = loggedIn.value ? authRoutes.value : headerRoutes.value
 
-  const routes = filter(getRoutes(), (pageName) => includes(routeNames, pageName.name))
+  const routes = filter(getRoutes(), (pageName) => includes(currentRoutes.value, pageName.name))
 
-  const activeRoutes = map(routeNames, route => find(routes, { name: route }))
+  const activeRoutes = map(currentRoutes.value, route => find(routes, { name: route }))
 
   return without<RouteLocation>(activeRoutes, undefined)
 })
 
-
 //Forces the page content to be exactly the height of the viewport - header and footer sizes
-const bodyStyle = computed(() => {
-  return { 'min-height': `calc(100vh - ${headerHeight.value + footerHeight.value}px)` }
-})
+const bodyStyle = computed(() => ({ 'min-height': `calc(100vh - ${headerHeight.value + footerHeight.value}px)` }))
+const generalToastStyle = computed(() => ({ top: `${headerHeight.value + 5}px` }))
+const formToastStyle = computed(() => ({ top: `${headerHeight.value}px` }))
 
-const generalToastStyle = computed(() => {
-  return { top: `${headerHeight.value + 5}px` }
-})
-
-const formToastStyle = computed(() => {
-  return { top: `${headerHeight.value}px` }
-})
 </script>
-
-<style>
-
-</style>

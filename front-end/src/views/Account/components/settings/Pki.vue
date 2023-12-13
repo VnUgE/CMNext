@@ -1,12 +1,12 @@
 <template>
-    <div id="pki-settings" v-show="pkiEnabled" class="container">
+    <div id="pki-settings" class="container">
         <div class="panel-content">
            
             <div class="flex flex-row flex-wrap justify-between">
                 <h5>PKI Authentication</h5>
                 <div class="">
-                    <div v-if="enabled" class="button-group">
-                        <button class="btn yellow xs" @click.prevent="setIsOpen(true)">
+                    <div v-if="pkiEnabled" class="button-group">
+                        <button class="btn xs" @click.prevent="setIsOpen(true)">
                             <fa-icon icon="plus" />
                             <span class="pl-2">Add Key</span>
                         </button>
@@ -23,7 +23,7 @@
                     </div>
                 </div>
 
-                <div v-if="pubKeys && pubKeys.length > 0" class="w-full mt-4">
+                <div v-if="store.pkiPublicKeys && store.pkiPublicKeys.length > 0" class="w-full mt-4">
                     <table class="min-w-full text-sm divide-y-2 divide-gray-200 dark:divide-dark-500">
                         <thead class="text-left">
                             <tr>
@@ -41,7 +41,7 @@
                         </thead>
 
                         <tbody class="divide-y divide-gray-200 dark:divide-dark-500">
-                            <tr v-for="key in pubKeys">
+                            <tr v-for="key in store.pkiPublicKeys">
                                 <td class="p-2 t font-medium truncate max-w-[8rem] whitespace-nowrap dark:text-white">
                                     {{ key.kid }}
                                 </td>
@@ -62,11 +62,10 @@
                     </table>
                 </div>
                 
-                <p v-else class="p-1 pt-3 text-sm text-gray-600">
+                <p v-else class="p-1 pt-3 text-sm text-color-background">
                   PKI authentication is a method of authenticating your user account with signed messages and a shared public key. This method implementation 
                   uses client signed Json Web Tokens to authenticate user generated outside this website as a One Time Password (OTP). This allows for you to
                   use your favorite hardware or software tools, to generate said OTPs to authenticate your user.
-                
                 </p>
             </div>
         </div>
@@ -75,7 +74,7 @@
         <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
 
         <div class="fixed inset-0 flex justify-center">
-          <DialogPanel class="w-full max-w-lg p-4 m-auto mt-24 bg-white rounded dark:bg-dark-600 dark:text-gray-300">
+          <DialogPanel class="w-full max-w-lg p-4 m-auto mt-24 bg-white rounded dark:bg-dark-700 dark:text-gray-300">
             <h4>Configure your authentication key</h4>
             <p class="mt-2 text-sm">
                 Please paste your authenticator's public key as a Json Web Key (JWK) object. Your JWK must include a kid (key id) and a kty (key type) field.
@@ -85,7 +84,7 @@
             </div>
             <div class="flex justify-end gap-2 mt-4">
                 <button class="rounded btn sm primary" @click.prevent="onSubmitKeys">Submit</button>
-                <button class="rounded btn sm red" @click.prevent="setIsOpen(false)">Cancel</button>
+                <button class="rounded btn sm" @click.prevent="setIsOpen(false)">Cancel</button>
             </div>
           </DialogPanel>
         </div>
@@ -93,24 +92,19 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isNil } from 'lodash-es'
-import { apiCall, useConfirm, useSession, debugLog, useFormToaster, PkiApi, PkiPublicKey } from '@vnuge/vnlib.browser'
+import { includes, isEmpty } from 'lodash-es'
+import { apiCall, useConfirm, useSession, debugLog, useFormToaster, PkiPublicKey } from '@vnuge/vnlib.browser'
 import { computed, ref, watch } from 'vue'
-import { asyncComputed } from '@vueuse/core'
 import { Dialog, DialogPanel } from '@headlessui/vue'
+import { useStore } from '../../../../store'
+import { } from 'pinia'
 
-const props = defineProps<{
-    pkaiApi: PkiApi
-}>()
-
+const store = useStore()
 const { reveal } = useConfirm()
 const { isLocalAccount } = useSession()
 const { error } = useFormToaster()
 
-const pkiEnabled = computed(() => isLocalAccount.value && !isNil(import.meta.env.VITE_PKI_ENDPOINT) && window.crypto.subtle)
-const { enabled, refresh } = props.pkaiApi
-
-const pubKeys = asyncComputed(() => pkiEnabled.value ? apiCall(props.pkaiApi.getAllKeys) : [], [])
+const pkiEnabled = computed(() => isLocalAccount.value && includes(store.mfaEndabledMethods, "pki") && window.crypto.subtle)
 
 const isOpen = ref(false)
 const keyData = ref('')
@@ -122,7 +116,7 @@ watch(isOpen, () =>{
     pemFormat.value = false
     explicitCurve.value = ""
     //Reload status
-    refresh()
+    store.mfaRefreshMethods()
 })
 
 const setIsOpen = (value : boolean) => isOpen.value = value
@@ -140,7 +134,7 @@ const onRemoveKey = async (single: PkiPublicKey) =>{
     await apiCall(async ({ toaster }) => {
        
         //TODO: require password or some upgrade to disable
-        const { success } = await props.pkaiApi.removeKey(single.kid);
+        const { success } = await store.pkiConfig.removeKey(single.kid);
 
         if (success) {
             toaster.general.success({
@@ -156,7 +150,7 @@ const onRemoveKey = async (single: PkiPublicKey) =>{
         }
 
         //Refresh the status
-        props.pkaiApi.refresh();
+       store.mfaRefreshMethods()
     });
 }
 
@@ -174,7 +168,7 @@ const onDisable = async () => {
 
         //Disable pki
         //TODO: require password or some upgrade to disable
-        const { success } = await props.pkaiApi.disable();
+        const { success } = await store.pkiConfig.disable();
         
         if(success){
             toaster.general.success({
@@ -190,7 +184,7 @@ const onDisable = async () => {
         }
 
         //Refresh the status
-        props.pkaiApi.refresh();
+        store.mfaRefreshMethods()
     });
 }
 
@@ -232,7 +226,7 @@ const onSubmitKeys = async () =>{
 
         //init/update the key
         //TODO: require password or some upgrade to disable
-        const { getResultOrThrow } = await props.pkaiApi.addOrUpdate(jwk);
+        const { getResultOrThrow } = await store.pkiConfig.addOrUpdate(jwk);
 
         const result = getResultOrThrow();
 

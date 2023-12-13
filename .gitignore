@@ -388,3 +388,4 @@ dist-ssr
 *.sw?
 
 /back-end/*/CMNext.json
+front-end/typed-router.d.ts

@@ -24,13 +24,13 @@
         Your secret, if your application requires it.
       </p>
 
-      <p class="flex flex-row flex-wrap justify-center p-2 bg-gray-200 border border-gray-300 dark:bg-dark-800 dark:border-dark-300">
+      <p class="flex flex-row flex-wrap justify-center p-2 bg-gray-200 border border-gray-300 dark:bg-dark-800 dark:border-dark-500">
         <span v-for="code in secretSegments" :key="code" class="px-2 font-mono tracking-wider" >
           {{ code }}
         </span>
       </p>
 
-      <p class="py-2">
+      <p class="py-2 text-color-background">
         Please enter your code from your authenticator app to continue.
       </p>
 
@@ -58,7 +58,7 @@
       <h6>TOTP Authenticator App</h6>
 
       <div v-if="totpEnabled" class="button-group">
-        <button class="btn yellow xs" @click.prevent="regenTotp">
+        <button class="btn xs" @click.prevent="regenTotp">
           <fa-icon icon="sync" />
           <span class="pl-2">Regenerate</span>
         </button>
@@ -74,7 +74,7 @@
           <span class="pl-2">Setup</span>
         </button>
       </div>
-      <p class="p-1 pt-3 text-sm text-gray-600">
+      <p class="p-1 pt-3 text-sm text-color-background">
         TOTP is a time based one time password. You can use it as a form of Multi Factor Authentication when
         using another device such as a smart phone or TOTP hardware device. You can use TOTP with your smart
         phone
@@ -91,21 +91,21 @@
 <script setup lang="ts">
 import { isNil, chunk, defaultTo, includes, map, join } from 'lodash-es'
 import { TOTP } from 'otpauth'
+import { computed, ref, defineAsyncComponent } from 'vue'
 import base32Encode from 'base32-encode'
-import VueQrcode from '@chenfengyuan/vue-qrcode'
-import VOtpInput from "vue3-otp-input";
-import { computed, ref } from 'vue'
 import { 
-  useSessionUtils,
   useSession,
-  useUser,
   useMessage,
   useConfirm,
   usePassConfirm,
   useFormToaster,
-  MfaApi,
   MfaMethod
 } from '@vnuge/vnlib.browser'
+import { useStore } from '../../../../store';
+import { storeToRefs } from 'pinia';
+
+const VueQrcode = defineAsyncComponent(() => import('@chenfengyuan/vue-qrcode'))
+const VOtpInput = defineAsyncComponent(() => import('vue3-otp-input'));
 
 interface TotpConfig{
     secret: string;
@@ -115,19 +115,15 @@ interface TotpConfig{
     readonly period?: number;
 }
 
-const props = defineProps<{
-  mfa: MfaApi
-}>()
+const store = useStore();
+const { userName, isLocalAccount, mfaEndabledMethods } = storeToRefs(store);
 
-const { isLocalAccount } = useSession()
-const { KeyStore } = useSessionUtils()
-const { userName } = useUser()
+const { KeyStore } = useSession()
 const { reveal } = useConfirm()
 const { elevatedApiCall } = usePassConfirm()
 const { onInput, setMessage } = useMessage()
 
-const { enabledMethods, disableMethod, initOrUpdateMethod, refreshMethods }  = props.mfa;
-const totpEnabled = computed(() => includes(enabledMethods.value, MfaMethod.TOTP))
+const totpEnabled = computed(() => includes(mfaEndabledMethods.value, MfaMethod.TOTP))
 
 const totpMessage = ref<TotpConfig>()
 const showSubmitButton = ref(false)
@@ -164,7 +160,7 @@ const ProcessAddOrUpdate = async () => {
   await elevatedApiCall(async ({ password }) => {
 
     // Init or update the totp method and get the encrypted totp message
-    const res =  await initOrUpdateMethod<TotpConfig>(MfaMethod.TOTP, password);
+    const res =  await store.mfaConfig.initOrUpdateMethod<TotpConfig>(MfaMethod.TOTP, password);
 
     //Get the encrypted totp message
     const totp = res.getResultOrThrow()
@@ -220,10 +216,10 @@ const disable = async () => {
   await elevatedApiCall(async ({ password }) => {
 
     // Disable the totp method
-    const res = await disableMethod(MfaMethod.TOTP, password)
+    const res = await store.mfaConfig.disableMethod(MfaMethod.TOTP, password)
     res.getResultOrThrow()
     
-    refreshMethods()
+    store.mfaRefreshMethods()
   })
 }
 
@@ -250,7 +246,7 @@ const CloseQrWindow = () => {
   totpMessage.value = undefined
   
   //Fresh methods
-  refreshMethods()
+  store.mfaRefreshMethods()
 }
 
 </script>

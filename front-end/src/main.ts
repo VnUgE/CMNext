@@ -16,9 +16,11 @@
 
 //Get the create app from boostrap dir
 import { createVnApp } from './bootstrap'
+import { configureApi } from '@vnuge/vnlib.browser'
 
 //Import all styles
 import './bootstrap/style/all.scss'
+//Import your main style file
 import './assets/main.scss'
 
 //Import font data
@@ -41,22 +43,36 @@ import FooterNav1 from './components/FooterNav1.vue'
 import FooterNav2 from './components/FooterNav2.vue'
 import SiteLogo from './components/Site-Logo.vue'
 import DynamicFormVue from './components/DynamicForm.vue'
-import { configureApi, useAutoHeartbeat } from '@vnuge/vnlib.browser'
-import { useLocalStorage } from '@vueuse/core'
-import { watch } from 'vue'
+
+import { globalStatePlugin } from './store/globalState'
+import { profilePlugin } from './store/userProfile'
+import { mfaSettingsPlugin } from './store/mfaSettingsPlugin'
+import { pageProtectionPlugin } from './store/pageProtectionPlugin'
+import { socialMfaPlugin } from './store/socialMfaPlugin'
+
+//Setup the vnlib api
+configureApi({
+    session: {
+        //The identifier of the login cookie, see Essentials.Accounts docs
+        loginCookieName: 'li',
+        browserIdSize: 32,
+    },
+    user: {
+        accountBasePath: '/account',
+    },
+    axios: {
+        //The base url to make api requests against
+        baseURL: import.meta.env.VITE_API_URL,
+        withCredentials: false,
+        //See Essentials.Accounts docs
+        tokenHeader: 'X-Web-Token',
+    },
+    storage: localStorage
+})
 
 createVnApp({
     //The app mount point
     mountElement: '#app',
-
-    //The site title
-    siteTitle: 'CMNext Admin',
-
-    //Routes to display in the header when the user is not logged in
-    headerRoutes: ['Blog', 'Login'],
-
-    //Routes to display in the header when the user is logged in
-    authRoutes: ['Blog', 'Account', 'Login'],
 
     //Enable dark mode support
     useDarkMode: true,
@@ -65,11 +81,21 @@ createVnApp({
     faLibrary: library,
 
     //Called when the app is created for you to add custom elements
-    onCreate(app) {
+    onCreate(app, store) {
 
         //Add the router
         app.use(router)
 
+        store.use(globalStatePlugin)
+        //User-profile plugin
+        .use(profilePlugin('/account/profile'))
+        //setup page protection plugin with the router
+        .use(pageProtectionPlugin(router))
+        //Enable mfa with totp settings plugin (optional pki config)
+        .use(mfaSettingsPlugin('/account/mfa', '/account/pki'))
+        //Setup social mfa plugin
+        .use(socialMfaPlugin)
+        
         //Add the home-page component
         router.addRoute({
             path: '/',
@@ -83,7 +109,7 @@ createVnApp({
             name: 'Account',
             redirect: { path: '/account/profile' }
         })
-
+      
         //Add the footer nav components
         app.component('FooterNav1', FooterNav1)
         app.component('FooterNav2', FooterNav2)
@@ -95,32 +121,3 @@ createVnApp({
         app.component('dynamic-form', DynamicFormVue)
     },
 })
-
-//Setup the vnlib api
-configureApi({
-    session: {
-        cookiesEnabled: navigator.cookieEnabled,
-        loginCookieName: import.meta.env.VITE_LOGIN_COOKIE_ID,
-        bidSize: 32,
-        storage: localStorage
-    },
-    user: {
-        accountBasePath: import.meta.env.VITE_ACCOUNTS_BASE_PATH,
-        storage: localStorage,
-        //The heartbeat interval in milliseconds, if you enable it
-        autoHearbeatInterval: 1000 * 60 * 5, //5 minute interval
-    },
-    axios: {
-        baseURL: import.meta.env.VITE_API_URL,
-        withCredentials: import.meta.env.VITE_CORS_ENABLED === 'true',
-        tokenHeader: import.meta.env.VITE_WEB_TOKEN_HEADER,
-    }
-})
-
-//Get shared global state storage
-const mainState = useLocalStorage("vn-state", { ahEnabled: false });
-
-//Setup interval from local storage that remembers the user's preferrence
-const { enabled } = useAutoHeartbeat(mainState.value.ahEnabled)
-//Update the local storage when the value changes
-watch(enabled, (val) => mainState.value.ahEnabled = val)

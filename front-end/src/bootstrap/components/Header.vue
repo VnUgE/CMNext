@@ -78,18 +78,21 @@
 import { debounce, find } from 'lodash-es'
 import { useElementSize, onClickOutside, useElementHover } from '@vueuse/core'
 import { computed, ref, toRefs } from 'vue'
-import { useSession, useUser, useEnvSize, apiCall } from '@vnuge/vnlib.browser'
+import { useEnvSize } from '@vnuge/vnlib.browser'
 import { RouteLocation, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia'; 
+import { useStore } from '../../store';
 
+const emit = defineEmits(['logout'])
 const props = defineProps<{
-  siteTitle: string,
   routes: RouteLocation[]
 }>()
 
-const { siteTitle, routes } = toRefs(props)
+const { routes } = toRefs(props)
 
-const { loggedIn } = useSession()
-const { userName, logout } = useUser()
+const store = useStore();
+const { loggedIn, siteTitle } = storeToRefs(store);
+
 const { headerHeight } = useEnvSize()
 
 //Get the router for navigation
@@ -105,7 +108,7 @@ const dropMenuSize = useElementSize(userDrop)
 const sideMenuSize = useElementSize(sideMenu)
 const userMenuHovered = useElementHover(userMenu)
 
-const uname = computed(() => userName.value || 'Visitor')
+const uname = computed(() => (store as any).userName || 'Visitor')
 const sideMenuStyle = computed(() => {
   // Side menu should be the exact height of the page and under the header,
   // So menu height is the height of the page minus the height of the header
@@ -148,15 +151,8 @@ const gotoRoute = (route : string) =>{
 }
 
 const OnLogout = () =>{
-  apiCall(async ({ toaster }) => {
-    await logout()
-    toaster.general.success({
-      id: 'logout-success',
-      title: 'Success',
-      text: 'You have been logged out',
-      duration: 5000
-    })
-  })
+  //Emit logout event
+  emit('logout')
 }
 
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div id="account-template" class="app-component-entry">
-    <TabGroup :selectedIndex="tabId" @change="onTabChange" as="div" class="container h-full m-auto mt-0 mb-10 duration-150 ease-linear">
+    <TabGroup :selectedIndex="tabId" @change="onTabChange" as="div" class="container h-full m-auto mt-0 mb-10 duration-150 ease-linear text-color-foreground">
 
       <div class="flex w-full py-2 xl:w-auto lg:pt-4 xl:fixed">
         
@@ -39,25 +39,24 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { usePageGuard, useTitle } from '@vnuge/vnlib.browser'
 import { useRouteParams } from '@vueuse/router'
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
+import { useStore } from '../../store'
 import Settings from './components/settings/Settings.vue'
 import Profile from './components/profile/Profile.vue'
 
-usePageGuard()
-useTitle('Account')
+const { setPageTitle } = useStore()
+setPageTitle('Account')
 
 enum ComponentType{
   Profile = 'profile',
-  Oauth = 'oauth',
   Settings = 'settings'
 }
 
-const comp = useRouteParams<ComponentType>('comp')
+const comp = useRouteParams<ComponentType>('comp', '')
 
-const tabId = computed<number>(() =>{
-   switch (comp.value) {
+const tabId = computed<number>(() => {
+  switch (comp.value) {
     case ComponentType.Settings:
       return 1
     case ComponentType.Profile:
@@ -81,10 +80,7 @@ const onTabChange = (tabid : number) =>{
 </script>
 
 <style lang="scss">
-#account-template{
-  p{
-    @apply text-gray-700 dark:text-gray-400;
-  }
+#account-template{  
 
   .page-link{
     font-size: 1.1rem;
@@ -103,13 +99,21 @@ const onTabChange = (tabid : number) =>{
 
   }
 
+  .text-color-foreground{
+    @apply dark:text-white text-black;
+  }
+
+  .text-color-background{
+    @apply text-gray-500;
+  }
+
   .panel-container .panel-header{
     @apply flex flex-row px-2;
   }
 
   .panel-container .panel-content{
     @apply bg-white dark:bg-dark-800 border-transparent dark:border-dark-500;
-    @apply m-auto max-w-3xl border sm:rounded-md shadow-md sm:p-4 p-3 sm:my-3 my-2;
+    @apply m-auto max-w-3xl border sm:rounded shadow-md sm:p-4 p-3 sm:my-3 my-2;
   }
 
   .panel-container .panel-header .panel-title{
