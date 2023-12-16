@@ -13,7 +13,15 @@
         <tr v-for="item in $props.items" :key="item.id" class="table-row">
             <td>
                 <span class="mr-2">
-                    <fa-icon size="sm" :icon="getContentIconType(item)" />
+                    <fa-icon v-if="isImage(item)"
+                        size="sm" 
+                        :icon="getContentIconType(item)" 
+                        @click="onShowPreview(item)"
+                    />
+                     <fa-icon v-else
+                        size="sm" 
+                        :icon="getContentIconType(item)" 
+                    />
                 </span>
                 <span>
                     {{ getItemName(item) }}
@@ -52,19 +60,25 @@
             </td>
         </tr>
     </tbody>
+    <!-- Image preview dialog -->
+    <ImgPreviewDialog :item="previewItem" @close="onClosePreview()" />
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent, ref } from 'vue';
 import { filter as _filter, defaultTo, includes, truncate } from 'lodash-es';
 import { useClipboard } from '@vueuse/core';
 import { useWait } from '@vnuge/vnlib.browser';
 import { ContentMeta } from '@vnuge/cmnext-admin';
+const ImgPreviewDialog = defineAsyncComponent(() => import('../image-preview-dialog.vue'))
 
 const emit = defineEmits(['open-edit', 'copy-link', 'delete', 'download'])
 defineProps<{ items: ContentMeta[] }>()
 
 const { waiting } = useWait()
 const { copy } = useClipboard()
+
+const previewItem = ref<ContentMeta | undefined>()
 
 const getDateString = (time?: number) => new Date((time || 0) * 1000).toLocaleString();
 const getItemLength = (item: ContentMeta) : string =>{
@@ -84,10 +98,13 @@ const getContentIconType = (item: ContentMeta) => {
     return 'file'
 }
 
+const isImage = (item: ContentMeta) => includes(item.content_type, 'image')
 const openEdit = async (item: ContentMeta) => emit('open-edit', item)
 const copyLink = (item : ContentMeta) => emit('copy-link', item)
 const deleteItem = (item : ContentMeta) => emit('delete', item)
 const download = (item : ContentMeta) => emit('download', item)
 
+const onShowPreview = (item: ContentMeta) => previewItem.value = item
+const onClosePreview = () => previewItem.value = undefined
 
 </script>

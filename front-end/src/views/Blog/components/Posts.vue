@@ -29,7 +29,6 @@ import EditorTable from './EditorTable.vue';
 import PostTable from './Posts/PostTable.vue';
 const PostEditor = defineAsyncComponent(() => import('./Posts/PostEdit.vue'))
 
-const emit = defineEmits(['reload'])
 const store = useStore()
 
 const { reveal } = useConfirm()
@@ -44,7 +43,9 @@ const closeEdit = (update?: boolean) => {
     store.posts.selectedId = ''
     //reload channels
     if (update) {
-        emit('reload')
+        //must refresh content and posts when a post is updated
+        store.posts.refresh()
+        store.content.refresh()
     }
     //Reset page to top
     window.scrollTo(0, 0)

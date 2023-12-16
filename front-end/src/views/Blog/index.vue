@@ -258,6 +258,10 @@ defer(() => store.channels.refresh());
         tr td{
             @apply whitespace-nowrap px-4 py-2 font-medium;
         }
+
+        .fa-image{
+            @apply cursor-pointer text-primary-500;
+        }
     }
 
     .ck.ck-editor{

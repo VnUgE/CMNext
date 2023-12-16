@@ -23,7 +23,7 @@
 
 
         <div v-if="editMode" class="flex flex-col">
-            <div v-if="$props.blog" class="mb-2">
+            <div v-if="$props.showEpAdder" class="mb-2">
                 <EpAdder @submit="onAddEnclosure" />
             </div>
 
@@ -43,6 +43,7 @@ const JsonEditorVue = defineAsyncComponent(() => import('json-editor-vue'))
 
 const props = defineProps<{
     properties: UseXmlProperties,
+    showEpAdder?: boolean
 }>()
 
 const { getXml, saveJson, getModel, addProperties } = props.properties

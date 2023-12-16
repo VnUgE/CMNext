@@ -31,7 +31,7 @@
             <Editor :podcast-mode="podcastMode" @change="onContentChanged" @mode-change="onModeChange" @load="onEditorLoad" />
         </div>
 
-         <FeedFields :properties="postProperties" />
+         <FeedFields :show-ep-adder="true" :properties="postProperties" />
 
          <div class="mx-auto my-4">
             <div class="button-group">

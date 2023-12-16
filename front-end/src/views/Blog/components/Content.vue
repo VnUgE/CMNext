@@ -50,7 +50,6 @@ import EditorTable from './EditorTable.vue';
 import ContentEditor from './Content/ContentEditor.vue';
 import ContentTable from './Content/ContentTable.vue';
 
-const emit = defineEmits(['reload'])
 
 const store = useStore()
 const { uploadProgress } = storeToRefs(store)
@@ -64,13 +63,14 @@ const loadingProgress = computed(() => `${uploadProgress.value}%`);
 const progressWidth = computed(() => ({ width: `${uploadProgress.value}%` }));
 const showProgress = computed(() => uploadProgress.value > 0 && uploadProgress.value < 100);
 
+
 const openEdit = async (item: ContentMeta) => store.content.selectedId = item.id
 
 const closeEdit = (update?: boolean) => {
     store.content.selectedId = ''
     //reload channels
     if (update) {
-        emit('reload')
+        store.content.refresh()
     }
     //Reset page to top
     window.scrollTo(0, 0)
@@ -172,6 +172,5 @@ const onDownload = async (item: ContentMeta) => {
         anchor.click();
     })
 }
-
 
 </script>

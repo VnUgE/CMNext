@@ -28,7 +28,7 @@ import ChannelEdit from './Channels/ChannelEdit.vue';
 import ChannelTable from './Channels/ChannelTable.vue';
 import EditorTable from './EditorTable.vue';
 
-const emit = defineEmits(['close', 'reload'])
+const emit = defineEmits(['close'])
 
 const store = useStore()
 const { items, pagination } = store.channels.createPages()
@@ -41,7 +41,7 @@ const closeEdit = (update?:boolean) => {
      store.channels.editId = ''
     //reload channels
     if(update){
-        emit('reload')
+        store.channels.refresh()
     }
     //Reset page to top
     window.scrollTo(0, 0)
