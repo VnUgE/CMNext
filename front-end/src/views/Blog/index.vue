@@ -61,9 +61,9 @@
                                 <fa-icon icon="bullhorn"  />
                             </div>
                             
-                            <select id="channel-select" class="" v-model="channel">
+                            <select id="channel-select" class="" v-model="store.channels.selectedId">
                                 <option value="">Select Channel</option>
-                                <option v-for="c in channels.items.value" :value="c.id">
+                                <option v-for="c in store.channels.all" :value="c.id">
                                     {{ c.name }}
                                 </option>
                             </select>
@@ -71,7 +71,7 @@
                         
                         <div class="flex flex-row w-full max-w-md gap-4 ml-auto mr-4 filter">
                             <div class="my-auto">Filter</div>
-                            <input class="w-full rounded input primary" v-model="search"/>
+                            <input class="w-full rounded input primary" v-model="store.queryState.search"/>
                         </div>
                         
                         <div class="flex flex-row py-2 mr-auto">
@@ -90,15 +90,15 @@
                     </div>
 
                     <TabPanel>
-                        <Channels :blog="blogState" />
+                        <Channels />
                     </TabPanel>
                     
                     <TabPanel>
-                       <Posts :blog="blogState" />
+                       <Posts />
                     </TabPanel>
                     
                     <TabPanel>
-                        <Content :progress="progress" :blog="blogState" />
+                        <Content />
                     </TabPanel>
                 
                 </TabPanels>
@@ -108,80 +108,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useScriptTag } from '@vueuse/core';
+import { computed } from 'vue';
 import { useRouteQuery } from '@vueuse/router';
-import { AxiosProgressEvent } from 'axios';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
-import { first } from 'lodash-es';
-import { useRoute, useRouter } from 'vue-router';
-import { useUser, useAxios } from '@vnuge/vnlib.browser';
-import { createBlogContext, useComputedChannels, useComputedPosts, useComputedContent, SortType } from '@vnuge/cmnext-admin';
-import { BlogState } from './blog-api';
-import { useStore } from '../../store';
+import { defer, first } from 'lodash-es';
+import { useStore, SortType } from '../../store';
 import Channels from './components/Channels.vue';
 import Posts from './components/Posts.vue';
 import Content from './components/Content.vue';
+
 
 //Protect page
 const store = useStore()
 store.setPageTitle('Blog Admin')
 
-if(!window.CKEDITOR){
-    //Load scripts
-    const ckEditorTag = useScriptTag("https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js")
-    //Store the wait result on the window for the editor script to wait
-    window.editorLoadResult = ckEditorTag.load(true);
-}
-
-const { userName, getProfile } = useUser()
-const progress = ref<number>(0)
-
-//Load user profile and forget if not set
-if(!userName.value){
-    getProfile()
-}
-
-const firstLetter = computed(() => first(userName.value))
-
+const firstLetter = computed(() => first(store.userName))
 const tabIdQ = useRouteQuery<string>('tabid', '', { mode: 'push' })
-
-const axios = useAxios({
-    onUploadProgress: (e:AxiosProgressEvent) => {
-        progress.value = Math.round((e.loaded * 100) / e.total!)
-    },
-    //Set to 60 second timeout
-    timeout:60 * 1000
-})
-
-
-const context = createBlogContext({
-    axios,
-    route: useRoute(),
-    router: useRouter(),
-    channelUrl: '/blog/channels',
-    postUrl: '/blog/posts',
-    contentUrl: '/blog/content'
-})
-
-const { search, sort, channel } = context.getQuery();
-
-const channels = useComputedChannels(context)
-const posts = useComputedPosts(context)
-const content = useComputedContent(context)
-
-const blogState = { channels, posts, content } as BlogState
 
 //Map queries to their respective computed values
 const tabId = computed(() => tabIdQ.value ? parseInt(tabIdQ.value) : 0);
 const lastModified = computed({
-    get :() => sort.value === SortType.ModifiedTime,
+    get :() => store.queryState.sort === SortType.ModifiedTime,
     set: (value:boolean) => {
-        sort.value = value ? SortType.ModifiedTime : SortType.CreatedTime
+        store.queryState.sort = value ? SortType.ModifiedTime : SortType.CreatedTime
     }
 })
 
 const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
+
+//Load channels on page load
+defer(() => store.channels.refresh());
 
 </script>
 
@@ -190,6 +146,14 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
 #blog-admin-template{
     @apply flex flex-row flex-auto min-h-[50rem] border rounded-sm max-w-[82rem] mx-auto;
     @apply dark:border-dark-600 dark:text-gray-300 border-gray-200;
+
+    .text-color-foreground{
+        @apply dark:text-white text-black;
+    }
+
+    .text-color-background{
+        @apply text-gray-500;
+    }
 
     .username-box{
         @apply grid w-10 h-10 text-sm rounded-lg place-content-center;
@@ -264,7 +228,7 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
                 }
 
                 .dynamic-form.field-description{
-                    @apply pt-1 p-2 pb-4 text-sm;
+                    @apply pt-1 p-2 pb-4 text-sm text-gray-500;
                 }
 
             }
@@ -303,6 +267,7 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
     .ck-editor .ck-content,
     .ck-editor .ck-source-editing-area{
         @apply min-h-[32rem] resize-y dark:bg-dark-800 px-4 dark:border-dark-300 leading-6;
+        @apply text-sm;
 
         a {
             @apply text-blue-500;
@@ -317,11 +282,36 @@ const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
         }
 
         h1, h2{
-            @apply border-b pb-3 mb-4;
+            @apply border-b pb-3 mb-2;
         }
 
         ul, ol{
             @apply pl-6 pr-3 my-3;
+        }
+
+        /* Change some font sizing and spacing up */
+        h1{
+            @apply text-3xl;
+        }
+
+        h2{
+            @apply text-2xl;
+        }
+
+        h3{
+            @apply text-xl;
+        }
+
+        h4{
+            @apply text-lg;
+        }
+
+        h5{
+            @apply text-base;
+        }
+
+        h6{
+            @apply text-sm;
         }
     }
 

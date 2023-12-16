@@ -9,7 +9,7 @@
         </tr>
     </thead>
     <tbody>
-        <tr v-for="channel in channels" :key="channel.id" class="table-row">
+        <tr v-for="channel in $props.items" :key="channel.id" class="table-row">
             <td>
                 {{ channel.name }}
             </td>
@@ -33,14 +33,9 @@
 
 <script setup lang="ts">
 import { BlogChannel } from '@vnuge/cmnext-admin';
-import { toRefs } from 'vue';
+
 const emit = defineEmits(['open-edit'])
-
-const props = defineProps<{
-    channels:BlogChannel[]
-}>()
-
-const { channels } = toRefs(props)
+defineProps<{ items: BlogChannel[] }>()
 
 const feedEnabled = (channel: BlogChannel) => channel.feed ? 'Enabled' : 'Disabled'
 const openEdit = (channel: BlogChannel) => emit('open-edit', channel)

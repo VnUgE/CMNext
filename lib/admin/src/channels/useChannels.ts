@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { isEqual, toSafeInteger } from 'lodash-es';
+import { isArray, isEqual, toSafeInteger } from 'lodash-es';
 import { BlogChannel, ChannelFeed, ChannelApi, BlogAdminContext } from '../types.js'
 
 /**
@@ -31,29 +31,40 @@ export const useChannels = (context: BlogAdminContext): ChannelApi => {
         return channel;
     }
    
-    const getChannels = async (): Promise<BlogChannel[]> => {
-        const { data } = await axios.get(getUrl());
-        return data;
-    }
-    
     const deleteChannel = async (channel: BlogChannel) => {
         //Call delete with the channel id query
         await axios.delete(`${getUrl()}?channel=${channel.id}`);
     }
   
-    const addChannel = async (channel: BlogChannel, feed?: ChannelFeed): Promise<BlogChannel> => {
-        //Clone the item to avoid modifying the original
-        const add = sanitizeNumbers({ ...channel, feed });
-        //Call post with the channel data
-        return await axios.post(getUrl(), add);
-    }
+    return { 
+        async getAllItems() {
+            const { data } = await axios.get(getUrl());
+            return data;
+        },
+        
+        async add(item: BlogChannel, feed?: ChannelFeed) {
+            //Clone the item to avoid modifying the original
+            const add = sanitizeNumbers({ ...item, feed });
+            //Call post with the channel data
+            return await axios.post(getUrl(), add);
+        },
 
-    const updateChannel = async (channel: BlogChannel, feed?: ChannelFeed): Promise<BlogChannel> => {
-        //Manually assign the feed or null, and clone the item to avoid modifying the original
-        const update = sanitizeNumbers({ ...channel, feed });
-        //Call put with the channel data
-        return await axios.patch(getUrl(), update);
-    }
-
-    return { getChannels, deleteChannel, addChannel, updateChannel };
+        async update(item: BlogChannel, feed?: ChannelFeed){
+            //Manually assign the feed or null, and clone the item to avoid modifying the original
+            const update = sanitizeNumbers({ ...item, feed });
+            //Call put with the channel data
+            return await axios.patch(getUrl(), update);
+        },
+        
+        async delete(item: BlogChannel | BlogChannel[]){
+            //invoke delete for each item
+            if(isArray(item)){
+                await Promise.all(item.map(deleteChannel));
+            }
+            else{
+                //Call delete with the channel id query
+                await deleteChannel(item)
+            }
+        },
+     };
 }

@@ -16,7 +16,7 @@
 import { MaybeRefOrGetter, computed } from 'vue';
 import { useOffsetPagination } from '@vueuse/core';
 import { filter, includes, isEmpty, orderBy, slice, toLower } from 'lodash-es';
-import { CanPaginate, NamedBlogEntity, SortedFilteredPaged } from '../types';
+import type { CanPaginate, NamedBlogEntity, SortedFilteredPaged } from '../types';
 
 /**
  * Allows filtering, sorting, and paginating a collection of blog items 
@@ -26,7 +26,7 @@ import { CanPaginate, NamedBlogEntity, SortedFilteredPaged } from '../types';
 export const useFilteredPages = <T extends NamedBlogEntity>(pageable: CanPaginate<T>, pageSize: MaybeRefOrGetter<number>): SortedFilteredPaged<T> => {
 
     //Get filterable items, and the query state to filter by
-    const { sort, search } = pageable.getQuery();
+    const { sort, search } = pageable;
 
     const filtered = computed<T[]>(() => {
 

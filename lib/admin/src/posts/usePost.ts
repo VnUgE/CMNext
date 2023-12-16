@@ -14,28 +14,23 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { isArray, orderBy } from 'lodash-es';
-import { WebMessage } from "@vnuge/vnlib.browser"
-import { PostMeta, PostApi, BlogAdminContext } from "../types";
+import { get } from '@vueuse/core';
+import { type WebMessage } from "@vnuge/vnlib.browser"
+import { type MaybeRef } from 'vue';
+import type { PostMeta, PostApi, BlogAdminContext } from "../types";
 
 /**
  * Gets a reactive post api for the given channel
  * @param context The blog admin context
  * @returns The configured post api
  */
-export const usePostApi = (context : BlogAdminContext): PostApi => {
+export const usePosts = (context: BlogAdminContext, channel: MaybeRef<string>): PostApi => {
     const axios = context.getAxios();
-
-    const { channel } = context.getQuery();
 
     const getUrl = (): string => {
         const url = context.getPostUrl();
         //Return the url with the channel id query
-        return `${url}?channel=${channel.value}`;
-    }
-
-    const getPosts = async (): Promise<PostMeta[]> => {
-        const { data } = await axios.get(getUrl());
-        return isArray(data) ? orderBy(data, 'date', 'desc') : [];
+        return `${url}?channel=${get(channel)}`;
     }
 
     const deletePost = (post: PostMeta): Promise<void> => {
@@ -43,28 +38,39 @@ export const usePostApi = (context : BlogAdminContext): PostApi => {
         return axios.delete(`${getUrl()}&post=${post.id}`);
     }
 
-    const publishPost = async (post: PostMeta): Promise<PostMeta> => {
-        //Call post with the post data
-        const { data } = await axios.post<WebMessage<PostMeta>>(getUrl(), post);
-        return data.getResultOrThrow();
-    }
-
-    const updatePost = async (post: PostMeta): Promise<PostMeta> => {
-        //Call patch with the updated post content, must have an id set as an existing post
-        const { data } = await axios.patch<WebMessage<PostMeta>>(getUrl(), post);
-        return data.getResultOrThrow();
-    }
-
-    const getSinglePost = async (postId: string): Promise<PostMeta> => {
-        const { data } = await axios.get(`${getUrl()}&post=${postId}`);
-        return data;
-    }
-
     return { 
-        getPosts,
-        deletePost,
-        publishPost,
-        updatePost,
-        getSinglePost
+        
+        async delete(item: PostMeta | PostMeta[]){
+            //invoke delete for each item
+            if(isArray(item)){
+                await Promise.all(item.map(deletePost));
+            }
+            else{
+                //Call delete with the post id query
+                await deletePost(item)
+            }
+        },
+
+        async add(item: PostMeta) {
+            //Call post with the post data
+            const { data } = await axios.post<WebMessage<PostMeta>>(getUrl(), item);
+            return data.getResultOrThrow();
+        },
+
+        async getAllItems(){
+            const { data } = await axios.get(getUrl());
+            return isArray(data) ? orderBy(data, 'date', 'desc') : [];
+        },
+
+        async update(item: PostMeta) {
+            //Call patch with the updated post content, must have an id set as an existing post
+            const { data } = await axios.patch<WebMessage<PostMeta>>(getUrl(), item);
+            return data.getResultOrThrow();
+        },
+
+        async getSinglePost(postId: string) {
+            const { data } = await axios.get(`${getUrl()}&post=${postId}`);
+            return data;
+        }
     };
 }

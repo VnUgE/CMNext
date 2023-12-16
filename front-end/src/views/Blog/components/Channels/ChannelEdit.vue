@@ -62,22 +62,19 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { BlogState } from '../../blog-api';
-import { forEach, isEmpty, cloneDeep, isNil } from 'lodash-es';
+import { forEach, isEmpty, cloneDeep, isNil, set } from 'lodash-es';
 import { reactiveComputed } from '@vueuse/core';
 import { useConfirm } from '@vnuge/vnlib.browser';
-import FeedFields from '../FeedFields.vue';
 import { BlogChannel, ChannelFeed, useXmlProperties } from '@vnuge/cmnext-admin';
 import { getChannelForm } from '../../form-helpers';
+import { useStore } from '../../../../store';
+import FeedFields from '../FeedFields.vue';
 
 const emit = defineEmits(['close', 'onSubmit', 'onDelete'])
-
-const props = defineProps<{
-    blog: BlogState
-}>()
+const store = useStore()
 
 //Disallow empty channels
-const channel = computed(() => props.blog.channels.editChannel.value || {} as BlogChannel)
+const channel = computed(() => store.channels.editChannel || {} as BlogChannel)
 const editMode = computed(() => !isNil(channel.value.id))
 
 const { getChannelValidator, channelSchema, feedSchema, getFeedValidator } = getChannelForm(editMode);
@@ -98,7 +95,7 @@ const feedEnabled = computed(() => !isEmpty(feedBuffer.url))
 
 const disableFeed = () => {
     //Clear the feed
-    forEach(feedBuffer, (_value, key) => feedBuffer[key] = null)
+    forEach(feedBuffer, (_value, key) => set(feedBuffer, key, null))
     //Reset the feed validator
     feedVal.reset();
 }

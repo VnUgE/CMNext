@@ -15,10 +15,10 @@
 
 import { computed, Ref } from 'vue';
 import { helpers, required, maxLength, alphaNum, numeric } from "@vuelidate/validators"
-import useVuelidate from "@vuelidate/core"
+import { useVuelidate } from "@vuelidate/core"
 import { MaybeRef } from '@vueuse/core';
 import { useVuelidateWrapper } from '@vnuge/vnlib.browser';
-import { ContentMeta, FeedProperty } from '@vnuge/cmnext-admin';
+import type { ContentMeta, FeedProperty } from '@vnuge/cmnext-admin';
 
 export interface EnclosureEntity{
     fileId: string;

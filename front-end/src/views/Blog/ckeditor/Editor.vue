@@ -76,17 +76,18 @@ import { tryOnMounted } from '@vueuse/shared';
 import { apiCall } from '@vnuge/vnlib.browser';
 import { Popover, PopoverButton, PopoverPanel, Switch } from '@headlessui/vue'
 import { Converter } from 'showdown'
-import { BlogState } from '../blog-api'
 import { useCkConfig } from './build.ts'
 import { useUploadAdapter } from './uploadAdapter';
 import ContentSearch from '../components/ContentSearch.vue';
+import { useStore } from '../../../store';
 
 const emit = defineEmits(['change', 'load', 'mode-change'])
 
 const props = defineProps<{
-    blog: BlogState,
     podcastMode: boolean
 }>()
+
+const store = useStore()
 
 let editor = {}
 const propRefs = toRefs(props)
@@ -135,13 +136,9 @@ tryOnMounted(() => defer(() =>
     //Load the editor once the component is mounted
    apiCall(async ({ toaster }) => {
 
-        //Entry script creates promise that resolves when the editor script is loaded
-        if(window.editorLoadResult){
-            //Wait for the editor script to load
-            await (window.editorLoadResult as Promise<boolean>)
-        }
+        await store.waitForEditor()
 
-        if (!window['CKEDITOR']) {
+        if ('CKEDITOR' in window === false) {
             toaster.general.error({
                 title: 'Script Error',
                 text: 'The CKEditor script failed to load, check script permissions.'
@@ -155,7 +152,7 @@ tryOnMounted(() => defer(() =>
          //Init the ck config
         const config = useCkConfig([
             //Add the upload adapter
-            useUploadAdapter(props.blog.content, apiCall, toaster.general)
+            useUploadAdapter(store.content, apiCall, toaster.general)
         ]);
 
         //Init editor when loading is complete

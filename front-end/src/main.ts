@@ -28,12 +28,14 @@ import "@fontsource/source-sans-pro"
 
 /* FONT AWESOME CONFIG */
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faBullhorn, faCertificate, faCheck, faChevronLeft, faChevronRight, faComment, faCopy, faFolderOpen, faKey, faLink, faMinusCircle, faPencil, faPhotoFilm, faPlus, faRotateLeft, faSignInAlt, faSpinner, faSync, faTrash, faUser } from '@fortawesome/free-solid-svg-icons'
+import { faBullhorn, faCertificate, faCheck, faChevronLeft, faChevronRight, faCode, faComment, faCopy, faFile, faFileDownload, faFileZipper, faFolderOpen, faHeadphones, faImage, faKey, faLink, faMinusCircle, faPencil, faPhotoFilm, faPlus, faRotateLeft, faSignInAlt, faSpinner, faSync, faTrash, faUser, faVideo } from '@fortawesome/free-solid-svg-icons'
 import { faGithub, faDiscord, faMarkdown } from '@fortawesome/free-brands-svg-icons'
 
 //Add required icons for the app
 library.add(faSignInAlt, faGithub, faDiscord, faSpinner, faCertificate, faKey, faSync, faPlus, faMinusCircle, faUser, faCheck, faTrash, faCopy, 
-    faPencil, faLink, faPhotoFilm, faRotateLeft, faMarkdown, faBullhorn, faFolderOpen, faComment, faChevronLeft, faChevronRight);
+    faPencil, faLink, faPhotoFilm, faRotateLeft, faMarkdown, faBullhorn, faFolderOpen, faComment, faChevronLeft, faChevronRight, faFileDownload,
+    faCode, faFile, faVideo, faImage, faHeadphones, faFileZipper
+    );
 
 //Add icons to library
 import router from './router'
@@ -49,6 +51,7 @@ import { profilePlugin } from './store/userProfile'
 import { mfaSettingsPlugin } from './store/mfaSettingsPlugin'
 import { pageProtectionPlugin } from './store/pageProtectionPlugin'
 import { socialMfaPlugin } from './store/socialMfaPlugin'
+import { cmnextAdminPlugin } from './store/cmnextAdminPlugin'
 
 //Setup the vnlib api
 configureApi({
@@ -95,6 +98,8 @@ createVnApp({
         .use(mfaSettingsPlugin('/account/mfa', '/account/pki'))
         //Setup social mfa plugin
         .use(socialMfaPlugin)
+        //Setup blog state
+        .use(cmnextAdminPlugin(router, 'https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js', 15))
         
         //Add the home-page component
         router.addRoute({

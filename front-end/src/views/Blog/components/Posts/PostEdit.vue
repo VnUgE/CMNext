@@ -4,7 +4,10 @@
             <div class="button-group">
                 <!-- Submit the post form -->
                 <button class="btn primary" form="post-edit-form">Save</button>
-                <button class="btn" @click="onClose">Cancel</button>
+                <button class="btn" @click="onClose">Back</button>
+            </div>
+            <div class="pl-3 text-xs text-color-background">
+                ctrl + s
             </div>
         </div>
         <div class="mx-auto">
@@ -25,51 +28,47 @@
         />
 
         <div id="post-content-editor" class="px-6" :class="{'invalid':v$.content.$invalid}">
-            <Editor :podcast-mode="podcastMode" :blog="$props.blog" @change="onContentChanged" @mode-change="onModeChange" @load="onEditorLoad" />
+            <Editor :podcast-mode="podcastMode" @change="onContentChanged" @mode-change="onModeChange" @load="onEditorLoad" />
         </div>
 
-         <FeedFields :properties="postProperties" :blog="$props.blog" />
+         <FeedFields :properties="postProperties" />
 
          <div class="mx-auto my-4">
             <div class="button-group">
                 <!-- Submit the post form -->
                 <button class="btn primary" form="post-edit-form">Save</button>
-                <button class="btn" @click="onClose">Cancel</button>
+                <button class="btn" @click="onClose">Back</button>
                 <button v-if="!isNew" class="btn red" @click="onDelete">Delete Forever</button>
             </div>
         </div>
     </div>
 </template>
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from 'vue';
-import { BlogState } from '../../blog-api';
-import { reactiveComputed } from '@vueuse/core';
-import { isNil, isString, split } from 'lodash-es';
+import { computed, defineAsyncComponent, ref, toRef } from 'vue';
+import { reactiveComputed, useMagicKeys } from '@vueuse/core';
+import { isNil, isString, split, debounce } from 'lodash-es';
 import { PostMeta, useXmlProperties } from '@vnuge/cmnext-admin';
 import { apiCall, useUser } from '@vnuge/vnlib.browser';
 import { getPostForm } from '../../form-helpers';
+import { useStore } from '../../../../store';
 import FeedFields from '../FeedFields.vue';
-
 const Editor = defineAsyncComponent(() => import('../../ckeditor/Editor.vue'));
 
 const emit = defineEmits(['close', 'submit', 'delete']);
-const props = defineProps<{
-    blog: BlogState
-}>()
+const store = useStore()
 
 const { getProfile } = useUser();
 const { schema, getValidator } = getPostForm();
 
-const { posts, content } = props.blog;
 const podcastMode = ref(false)
 
-const isNew = computed(() => isNil(posts.selectedItem.value));
+const isNew = computed(() => isNil(store.posts.selected));
 
 /* Post meta may load delayed from the api so it must be computed 
 and reactive, it may also be empty when a new post is created */
 const postBuffer = reactiveComputed<PostMeta>(() => {
     return {
-        ...posts.selectedItem.value,
+        ...store.posts.selected,
         content: ''
     } as PostMeta
 });
@@ -77,7 +76,7 @@ const postBuffer = reactiveComputed<PostMeta>(() => {
 const { v$, validate } = getValidator(postBuffer);
 
 //Wrap the post properties in an xml feed editor
-const postProperties = useXmlProperties(posts.selectedItem);
+const postProperties = useXmlProperties(toRef(store.posts.selected));
 
 const onSubmit = async () =>{
     if(!await validate()){
@@ -117,7 +116,7 @@ const onContentChanged = (content: string) => {
     v$.value.content.$model = content;
 }
 
-const onDelete = () => emit('delete', posts.selectedItem.value)
+const onDelete = () => emit('delete', store.posts.selected)
 
 const setMeAsAuthor = () => {
     apiCall(async () => {
@@ -132,8 +131,12 @@ const onModeChange = (e: boolean) => {
 
 const onEditorLoad = async (editor : any) =>{
 
+    if(isNil(store.posts.selected)){
+        return;
+    }
+
     //Get the initial content
-    const postContent = await content.getSelectedPostContent();
+    const postContent = await store.content.getPostContent(store.posts.selected);
 
     //Set the initial content
     if(!isNil(postContent)){
@@ -147,6 +150,19 @@ const onEditorLoad = async (editor : any) =>{
         podcastMode.value = true;
     }
 }
+
+const throttleOnSubmit = debounce(onSubmit, 200);
+
+//Setup ctrl+s to submit the form(save)
+useMagicKeys({
+  passive: false,
+  onEventFired(e) {
+    if (e.ctrlKey && e.key === 's' && e.type === 'keydown'){
+        e.preventDefault()
+        throttleOnSubmit()
+    }
+  },
+})
 
 </script>
 

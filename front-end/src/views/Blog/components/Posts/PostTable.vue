@@ -10,7 +10,7 @@
         </tr>
     </thead>
     <tbody>
-        <tr v-for="post in posts" :key="post.id" class="table-row">
+        <tr v-for="post in $props.items" :key="post.id" class="table-row">
             <td class="truncate max-w-[16rem]">
                 {{ post.title }}
             </td>
@@ -42,19 +42,14 @@
 </template>
 
 <script setup lang="ts">
-import { toRefs, watch } from 'vue';
+import { watch } from 'vue';
 import { filter as _filter, truncate } from 'lodash-es';
 import { useClipboard } from '@vueuse/core';
 import { PostMeta } from '@vnuge/cmnext-admin';
 import { useGeneralToaster } from '@vnuge/vnlib.browser';
 
 const emit = defineEmits(['reload', 'open-edit', 'delete'])
-
-const props = defineProps<{
-    posts: PostMeta[],
-}>()
-
-const { posts } = toRefs(props)
+defineProps<{ items: PostMeta[] }>()
 
 const { copy, copied } = useClipboard()
 const { info } = useGeneralToaster()

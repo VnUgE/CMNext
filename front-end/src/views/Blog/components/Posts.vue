@@ -3,14 +3,13 @@
         <EditorTable title="Manage posts" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
             <template #table>
                 <PostTable 
-                    :posts="items"
+                    :items="items"
                     @open-edit="openEdit"
                     @delete="onDelete"
                 />
             </template> 
             <template #editor>
                 <PostEditor 
-                    :blog="$props.blog"
                     @submit="onSubmit"
                     @close="closeEdit"
                     @delete="onDelete"
@@ -23,34 +22,26 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue';
 import { isEmpty } from 'lodash-es';
-import { PostMeta, useFilteredPages } from '@vnuge/cmnext-admin';
+import { PostMeta } from '@vnuge/cmnext-admin';
 import { apiCall, debugLog, useConfirm } from '@vnuge/vnlib.browser';
-import { BlogState } from '../blog-api';
+import { useStore } from '../../../store';
 import EditorTable from './EditorTable.vue';
 import PostTable from './Posts/PostTable.vue';
-
 const PostEditor = defineAsyncComponent(() => import('./Posts/PostEdit.vue'))
 
 const emit = defineEmits(['reload'])
+const store = useStore()
 
-const props = defineProps<{
-   blog: BlogState
-}>()
-
-const { selectedId, publishPost, updatePost, deletePost } = props.blog.posts;
-const { updatePostContent } = props.blog.content;
 const { reveal } = useConfirm()
 
-const showEdit = computed(() => !isEmpty(selectedId.value));
-
-//Init paginated items for the table and use filtered items
-const { pagination, items } = useFilteredPages(props.blog.posts, 15)
+const showEdit = computed(() => !isEmpty(store.posts.selectedId));
+const { items, pagination } = store.posts.createPages();
 
 //Open with the post id
-const openEdit = async (post: PostMeta) => selectedId.value = post.id;
+const openEdit = async (post: PostMeta) => store.posts.selectedId = post.id;
 
 const closeEdit = (update?: boolean) => {
-    selectedId.value = ''
+    store.posts.selectedId = ''
     //reload channels
     if (update) {
         emit('reload')
@@ -61,40 +52,46 @@ const closeEdit = (update?: boolean) => {
 
 const openNew = () => {
     //Reset the edit post
-    selectedId.value = 'new'
+    store.posts.selectedId = 'new'
     //Reset page to top
     window.scrollTo(0, 0)
 }
 
-const onSubmit = async ({post, content } : { post:PostMeta, content:string }) => {
+const onSubmit = async ({post, content } : { post: PostMeta, content: string }) => {
 
     debugLog('submitting', post, content);
 
     //Check for new channel, or updating old channel
-    if (selectedId.value === 'new') {
+    if (store.posts.selectedId === 'new') {
         //Exec create call
-        await apiCall(async () => {
+        await apiCall(async ({toaster}) => {
 
             //endpoint returns the content
-            const newMeta = await publishPost(post);
+            const newMeta = await store.posts.add(post);
 
             //Publish the content
-            await updatePostContent(newMeta, content)
+            await store.content.updatePostContent(newMeta, content)
 
-            //Close the edit panel
-            closeEdit(true);
+            toaster.general.success({
+                id: 'post-create-success',
+                title: 'Created',
+                text: `Post '${post.title}' created`,
+            })
         })
     }
-    else if (!isEmpty(selectedId.value)) {
+    else if (!isEmpty(store.posts.selectedId)) {
         //Exec update call
-        await apiCall(async () => {
-            await updatePost(post);
+        await apiCall(async ( {toaster} ) => {
+            await store.posts.update(post);
            
             //Publish the content
-            await updatePostContent(post, content)
+            await store.content.updatePostContent(post, content)
 
-            //Close the edit panel
-            closeEdit(true);
+            toaster.general.info({
+                id: 'post-update-success',
+                title: 'Saved',
+                text: `Post '${post.title}' updated`,
+            })
         })
     }
     //Notify error state
@@ -117,12 +114,12 @@ const onDelete = async (post: PostMeta) => {
 
     //Exec delete call
     await apiCall(async () => {
-        await deletePost(post);
+        await store.posts.delete(post);
         //Close the edit panel
         closeEdit(true);
     })
 
-    props.blog.posts.refresh();
+    store.posts.refresh();
 }
 
 </script>

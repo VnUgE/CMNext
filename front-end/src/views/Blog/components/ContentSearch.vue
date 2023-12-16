@@ -40,19 +40,15 @@ import { apiCall, useWait } from '@vnuge/vnlib.browser';
 import { computed, Ref, ref } from 'vue';
 import { map, slice, truncate } from 'lodash-es';
 import { ContentMeta } from '@vnuge/cmnext-admin';
-import { BlogState } from '../blog-api';
+import { useStore } from '../../../store';
 
 const emit = defineEmits(['selected'])
+const store = useStore()
 
-const props = defineProps<{
-    blog: BlogState,
-}>()
-
-const { createReactiveSearch, getPublicUrl } = props.blog.content
 const { waiting } = useWait()
 
 const search = ref('')
-const searcher = createReactiveSearch(search);
+const searcher = store.content.createReactiveSearch(search);
 
 interface ContentResult extends ContentMeta {
     readonly shortId: string,
@@ -67,7 +63,7 @@ const searchResults = computed<ContentResult[]>(() => {
     //Copies the link to the clipboard from the server to insert into the editor
     const copyLink = (result : ContentMeta, copy : (text: string) => Promise<void> ) => {
         apiCall(async () =>{
-            const link = await getPublicUrl(result);
+            const link = await store.content.getPublicUrl(result);
             await copy(link);
         })
     }

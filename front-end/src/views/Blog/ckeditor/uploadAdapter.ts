@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ComputedContent } from "@vnuge/cmnext-admin";
 import { IToaster } from "@vnuge/vnlib.browser";
 import { isNil } from "lodash-es";
 import type { AxiosRequestConfig } from "axios";
 import type { Editor } from "@ckeditor/ckeditor5-core";
 import type { UploadAdapter, UploadResponse, FileLoader } from '@ckeditor/ckeditor5-upload'
+import { ContentStore } from "../../../store/cmnextAdminPlugin";
 
 export type ApiCall = (callback: (data: any) => Promise<any>) => Promise<any>;
 export type CKEditorPlugin = (editor: Editor) => void;
@@ -29,7 +29,7 @@ export type CKEditorPlugin = (editor: Editor) => void;
  * @param apiCall A callback function that wraps the api call
  * @returns A CKEditor plugin initializer
  */
-export const useUploadAdapter = (content: ComputedContent, apiCall: ApiCall, toaster?: IToaster): CKEditorPlugin =>{
+export const useUploadAdapter = (content: ContentStore, apiCall: ApiCall, toaster?: IToaster): CKEditorPlugin =>{
 
     const createUploadAdapter = (loader: FileLoader): UploadAdapter => {
 

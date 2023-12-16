@@ -2,14 +2,13 @@
     <div id="channel-editor">
         <EditorTable title="Manage channels" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
             <template #table>
-                <ChannelTable
-                    :channels="items"
-                    @open-edit="openEdit"
+                <ChannelTable 
+                    :items="items"
+                    @open-edit="openEdit" 
                 />
             </template>
             <template #editor>
                 <ChannelEdit 
-                    :blog="$props.blog"
                     @close="closeEdit"
                     @on-submit="onSubmit"
                     @on-delete="onDelete"
@@ -21,32 +20,25 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { BlogState } from '../blog-api';
 import { isEmpty, filter as _filter } from 'lodash-es';
 import { apiCall } from '@vnuge/vnlib.browser';
-import { BlogChannel, ChannelFeed, useFilteredPages } from '@vnuge/cmnext-admin';
+import { BlogChannel, ChannelFeed } from '@vnuge/cmnext-admin';
+import { useStore } from '../../../store';
 import ChannelEdit from './Channels/ChannelEdit.vue';
 import ChannelTable from './Channels/ChannelTable.vue';
 import EditorTable from './EditorTable.vue';
 
 const emit = defineEmits(['close', 'reload'])
 
-const props = defineProps<{
-    blog: BlogState,
-}>()
+const store = useStore()
+const { items, pagination } = store.channels.createPages()
 
-const { updateChannel, addChannel, deleteChannel, getQuery } = props.blog.channels;
-const { channelEdit } = getQuery()
+const showEdit = computed(() => !isEmpty(store.channels.editChannel))
 
-//Setup channel filter
-const { items, pagination } = useFilteredPages(props.blog.channels, 15)
-
-const showEdit = computed(() => !isEmpty(channelEdit.value))
-
-const openEdit = (channel: BlogChannel) => channelEdit.value = channel.id;
+const openEdit = (channel: BlogChannel) => store.channels.editId = channel.id;
 
 const closeEdit = (update?:boolean) => {
-    channelEdit.value = ''
+     store.channels.editId = ''
     //reload channels
     if(update){
         emit('reload')
@@ -56,7 +48,7 @@ const closeEdit = (update?:boolean) => {
 }
 
 const openNew = () => {
-    channelEdit.value = 'new'
+     store.channels.editId = 'new'
     //Reset page to top
     window.scrollTo(0, 0)
 }
@@ -64,18 +56,18 @@ const openNew = () => {
 const onSubmit = async ({channel, feed} : { channel:BlogChannel, feed? : ChannelFeed}) => {
 
     //Check for new channel, or updating old channel
-    if(channelEdit.value === 'new'){
+    if(store.channels.editId === 'new'){
         //Exec create call
         await apiCall(async () => {
-            await addChannel(channel, feed);
+            await store.channels.add(channel, feed);
             //Close the edit panel
             closeEdit(true);
         })
     }
-    else if(!isEmpty(channelEdit.value)){
+    else if(!isEmpty(store.channels.editId)){
         //Exec update call
         await apiCall(async () => {
-            await updateChannel(channel, feed);
+            await store.channels.update(channel, feed);
             //Close the edit panel
             closeEdit(true);
         })
@@ -86,7 +78,7 @@ const onSubmit = async ({channel, feed} : { channel:BlogChannel, feed? : Channel
 const onDelete = async (channel : BlogChannel) => {
     //Exec delete call
     await apiCall(async () => {
-        await deleteChannel(channel);
+        await store.channels.delete(channel);
         //Close the edit panel
         closeEdit(true);
     })

@@ -43,7 +43,7 @@
                                         <div class="">
                                             Search for content by its id or file name.
                                         </div>
-                                        <ContentSearch :blog="$props.blog" @selected="onContentSelected"/>
+                                        <ContentSearch @selected="onContentSelected"/>
                                     </div>
                                 </PopoverPanel>
                             </Popover>
@@ -72,7 +72,6 @@
 <script setup lang="ts">
 
 import { ref, reactive, computed } from 'vue';
-import { BlogState } from '../../blog-api';
 import { PodcastEntity, getPodcastForm } from './podcast-form'
 import {
     Dialog,
@@ -87,15 +86,12 @@ import {
 import ContentSearch from '../ContentSearch.vue'
 import { apiCall, debugLog } from '@vnuge/vnlib.browser';
 import { ContentMeta } from '@vnuge/cmnext-admin';
+import { useStore } from '../../../../store';
 
 const emit = defineEmits(['submit'])
-
-const props = defineProps<{
-    blog: BlogState,
-}>()
+const store = useStore()
 
 const isOpen = ref(false)
-const { getPublicUrl } = props.blog.content;
 const { schema, setEnclosureContent, getValidator, exportProperties } = getPodcastForm()
 
 const buffer = reactive<PodcastEntity>({} as PodcastEntity)
@@ -127,7 +123,7 @@ const onCancel = () => setIsOpen(false)
 const onContentSelected = (content: ContentMeta) =>{
     apiCall(async () =>{
         //Get the content link from the server
-        const url = await getPublicUrl(content)
+        const url = await store.content.getPublicUrl(content)
         
         //set the form content
         setEnclosureContent(buffer, content, `/${url}`)

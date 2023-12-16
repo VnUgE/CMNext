@@ -28,7 +28,6 @@
 
   "peerDependencies": {
     "@vueuse/core": "^10.x",
-    "@vueuse/router": "^10.x",
     "lodash-es": "^4.x",
     "vue": "^3.x",
     "axios": "^1.x",

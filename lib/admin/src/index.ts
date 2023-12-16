@@ -14,57 +14,26 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 //Export apis and types
-export * from './types';
+
 export * from './ordering'
 export * from './feedProperties'
-export * from './posts'
-export * from './content'
-export * from './channels'
+export { usePosts } from './posts'
+export { useContent } from './content'
+export { useChannels } from './channels'
 
-import { MaybeRef } from "vue";
+export type * from './types';
+
 import { get } from '@vueuse/core'
-import { useRouteQuery } from "@vueuse/router";
-import { QueryState, QueryType, SortType, BlogAdminContext } from "./types";
-import { RouteLocationNormalized, Router } from 'vue-router';
-import { AxiosInstance } from 'axios';
+import type { MaybeRef } from "vue";
+import type { BlogAdminContext } from "./types";
+import type { Axios } from 'axios';
 
 export interface BlogAdminConfig {
-    readonly axios: AxiosInstance;
-    readonly router: Router;
-    readonly route: RouteLocationNormalized;
+    readonly axios: Axios;
     readonly postUrl: MaybeRef<string>;
     readonly contentUrl: MaybeRef<string>;
     readonly channelUrl: MaybeRef<string>;
     readonly defaultPageSize?: number;
-}
-
-const createQueryState = (router :Router , route : RouteLocationNormalized): QueryState => {
-
-    //setup filter search query
-    const search = useRouteQuery<string>(QueryType.Filter, '', { mode: 'replace', route, router });
-
-    //Get sort order query
-    const sort = useRouteQuery<SortType>(QueryType.Sort, SortType.CreatedTime, { mode: 'replace', route, router });
-
-    //Selected channel id
-    const channel = useRouteQuery<string>(QueryType.Channel, '', { mode: 'replace', route, router });
-
-    //Edits are in push mode because they are used to navigate to edit pages
-
-    const channelEdit = useRouteQuery<string>(QueryType.ChannelEdit, '', { mode: 'push', route, router });
-
-    const content = useRouteQuery<string>(QueryType.Content, '', { mode: 'push', route, router });
-    //Get the selected post id from the route
-    const post = useRouteQuery<string>(QueryType.Post, '', { mode: 'push', route, router });
-
-    return {
-        post,
-        channel,
-        content,
-        channelEdit,
-        search,
-        sort
-    }
 }
 
 /**
@@ -72,13 +41,9 @@ const createQueryState = (router :Router , route : RouteLocationNormalized): Que
  * @param param0 The blog configuration object
  * @returns A blog context object to pass to the blog admin components
  */
-export const createBlogContext = ({ channelUrl, postUrl, contentUrl, router, route, axios }: BlogAdminConfig): BlogAdminContext => {
+export const createBlogContext = ({ channelUrl, postUrl, contentUrl, axios }: BlogAdminConfig): BlogAdminContext => {
 
-    const queryState = createQueryState(router, route);
-
-    const getQuery = (): QueryState => queryState;
-
-    const getAxios = () : AxiosInstance => axios;
+    const getAxios = (): Axios => axios;
 
     const getPostUrl = (): string => get(postUrl)
 
@@ -88,7 +53,6 @@ export const createBlogContext = ({ channelUrl, postUrl, contentUrl, router, rou
 
     return{
         getAxios,
-        getQuery,
         getPostUrl,
         getChannelUrl,
         getContentUrl,

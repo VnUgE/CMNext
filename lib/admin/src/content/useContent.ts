@@ -14,9 +14,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { includes, isArray, isEmpty, join, map } from 'lodash-es';
-import { WebMessage } from "@vnuge/vnlib.browser"
-import { AxiosRequestConfig } from 'axios';
-import { PostMeta, ContentMeta, ContentApi, BlogEntity, BlogAdminContext } from "../types.js";
+import { get } from '@vueuse/core';
+import { type WebMessage } from "@vnuge/vnlib.browser"
+import { type AxiosRequestConfig } from 'axios';
+import { type MaybeRef } from 'vue';
+import type { PostMeta, ContentMeta, ContentApi, BlogEntity, BlogAdminContext } from "../types";
 
 
 /**
@@ -25,15 +27,13 @@ import { PostMeta, ContentMeta, ContentApi, BlogEntity, BlogAdminContext } from 
  * @param channel The channel to get the content for
  * @returns A content api object
  */
-export const useContent = (context : BlogAdminContext): ContentApi => {
+export const useContent = (context : BlogAdminContext, channel: MaybeRef<string>): ContentApi => {
     const axios = context.getAxios();
-
-    const { channel } = context.getQuery();
 
     const getUrl = (): string => {
         const url = context.getContentUrl();
         //Return the url with the channel id query
-        return `${url}?channel=${channel.value}`;
+        return `${url}?channel=${get(channel)}`;
     }
 
     const getContentType = (file: File): string => {
@@ -67,7 +67,7 @@ export const useContent = (context : BlogAdminContext): ContentApi => {
         return await _getContent(post.id);
     }
 
-    const getAllContent = async (): Promise<ContentMeta[]> => {
+    const getAllItems = async (): Promise<ContentMeta[]> => {
         const url = getUrl();
         const response = await axios.get<ContentMeta[]>(url);
         return response.data;
@@ -155,19 +155,26 @@ export const useContent = (context : BlogAdminContext): ContentApi => {
     }
 
     const getContent = async (id: string): Promise<ContentMeta | undefined> => {
-        const index = await getAllContent();
+        const index = await getAllItems();
         return index.find(x => x.id === id);
+    }
+
+    const downloadContent = async (content: ContentMeta): Promise<Blob> => {
+        const url = getUrl();
+        const { data } = await axios.get(`${url}&id=${content.id}`, { responseType: 'blob' });
+        return data;
     }
 
     return {
         getPostContent,
-        getAllContent,
-        deleteContent,
+        getAllItems,
+        delete:deleteContent,
         uploadContent,
         updateContentName,
         updatePostContent,
         updateContent,
         getPublicUrl,
-        getContent
+        getContent,
+        downloadContent,
     };
 }

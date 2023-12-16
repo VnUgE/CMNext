@@ -24,7 +24,7 @@
 
         <div v-if="editMode" class="flex flex-col">
             <div v-if="$props.blog" class="mb-2">
-                <EpAdder :blog="$props.blog" @submit="onAddEnclosure" />
+                <EpAdder @submit="onAddEnclosure" />
             </div>
 
             <div class="">
@@ -38,13 +38,11 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref } from 'vue';
 import { FeedProperty, UseXmlProperties } from '@vnuge/cmnext-admin';
-import { BlogState } from '../blog-api';
-import EpAdder from './podcast-helpers/EpisodeAdder.vue';
+const EpAdder = defineAsyncComponent(() => import('./podcast-helpers/EpisodeAdder.vue'));
 const JsonEditorVue = defineAsyncComponent(() => import('json-editor-vue'))
 
 const props = defineProps<{
     properties: UseXmlProperties,
-    blog?: BlogState
 }>()
 
 const { getXml, saveJson, getModel, addProperties } = props.properties

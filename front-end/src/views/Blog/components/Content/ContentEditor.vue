@@ -105,35 +105,34 @@ import { computed, ref, watch } from 'vue';
 import { reactiveComputed, useFileDialog, useDropZone } from '@vueuse/core';
 import { ContentMeta } from '@vnuge/cmnext-admin';
 import { useConfirm, useVuelidateWrapper, useFormToaster, useWait } from '@vnuge/vnlib.browser';
-import { defaultTo, first, isEmpty, round } from 'lodash-es';
+import { clone, defaultTo, first, isEmpty, round } from 'lodash-es';
 import { required, helpers, maxLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core';
-import { BlogState } from '../../blog-api';
+import { useStore } from '../../../../store';
 
 const emit = defineEmits(['close', 'submit', 'delete']);
-const props = defineProps<{
-   blog: BlogState
-}>();
 
 const { reveal } = useConfirm();
 const { waiting } = useWait();
 
-const { content, channels } = props.blog;
+const { content, channels } = useStore()
 const newFileDropZone = ref<HTMLElement>();
 
-const selectedId = computed(() => content.selectedId.value);
-const selectedContent = computed<ContentMeta>(() => defaultTo(content.selectedItem.value, {} as ContentMeta));
-const metaBuffer = reactiveComputed<ContentMeta>(() => ({ ...selectedContent.value}));
-const isChannelSelected = computed(() => channels.selectedItem.value?.id?.length ?? 0 > 0);
+const selectedId = computed(() => content.selectedId);
+const selectedContent = computed<ContentMeta>(() => defaultTo(content.selected, {} as ContentMeta));
+const metaBuffer = reactiveComputed<Required<ContentMeta>>(() => clone(selectedContent.value) as Required<ContentMeta>);
+const isChannelSelected = computed(() => channels.selected?.id?.length ?? 0 > 0);
 const isNewUpload = computed(() => selectedId.value === 'new');
 
-const v$ = useVuelidate({
-    name: { 
+const validationArgs = {
+     name: {
         required,
-        maxLen:maxLength(50),
+        maxLen: maxLength(50),
         reg: helpers.withMessage('The file name contains invalid characters', helpers.regex(/^[a-zA-Z0-9 \-\.]*$/))
-     },
-}, metaBuffer)
+    },
+}
+
+const v$ = useVuelidate(validationArgs, metaBuffer)
 
 const { validate } = useVuelidateWrapper(v$);
 
