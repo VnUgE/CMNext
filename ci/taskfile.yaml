@@ -75,6 +75,9 @@ tasks:
 
     #copy wwwroot
     - cmd: powershell -Command "cp -Recurse -Force dist {{.BUILD_DIR}}"
+
+    #copy libraries
+    - cmd: powershell -Command "cp -Recurse -Force lib {{.BUILD_DIR}}"
     
     - task: get-webserver
       vars:
