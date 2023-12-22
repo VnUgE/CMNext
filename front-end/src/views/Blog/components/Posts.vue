@@ -39,16 +39,20 @@ const { items, pagination } = store.posts.createPages();
 //Open with the post id
 const openEdit = async (post: PostMeta) => store.posts.selectedId = post.id;
 
+const refresh = () => {
+    store.posts.refresh();
+    store.content.refresh();
+}
+
 const closeEdit = (update?: boolean) => {
     store.posts.selectedId = ''
     //reload channels
     if (update) {
         //must refresh content and posts when a post is updated
-        store.posts.refresh()
-        store.content.refresh()
+       refresh();
     }
     //Reset page to top
-    window.scrollTo(0, 0)
+    window.scrollTo(0, 0);
 }
 
 const openNew = () => {
@@ -95,7 +99,7 @@ const onSubmit = async ({post, content } : { post: PostMeta, content: string }) 
             })
         })
     }
-    //Notify error state
+    refresh();
 }
 
 const onDelete = async (post: PostMeta) => {

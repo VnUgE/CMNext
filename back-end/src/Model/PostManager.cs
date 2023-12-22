@@ -233,7 +233,7 @@ namespace Content.Publishing.Blog.Admin.Model
          */
         static void ComputePostId(PostMeta post)
         {
-            post.Id = ManagedHash.ComputeHexHash($"{post.Title}.{post.Author}.{post.Summary}.{post.Date}", HashAlg.SHA1).ToLowerInvariant();
+            post.Id = ManagedHash.ComputeHash($"{post.Title}.{post.Author}.{post.Summary}.{post.Date}", HashAlg.SHA1, HashEncodingMode.Hexadecimal).ToLowerInvariant();
         }
 
         internal record class ReqLogger(ILogProvider Log) : IRequestLogger

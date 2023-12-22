@@ -78,7 +78,7 @@
         "X-Content-Type-Options": "nosniff",
         "X-Xss-Protection": "1; mode=block",
         "X-Frame-Options": "DENY",
-        "Content-Security-Policy": "default-src 'self' https://cdn.ckeditor.com 'unsafe-inline'; frame-src 'none'; object-src 'none'; referrer no-referrer-when-downgrade; upgrade-insecure-requests; block-all-mixed-content;"
+        "Content-Security-Policy": "default-src 'self' https://cdn.ckeditor.com 'unsafe-inline'; img-src 'self' blob: data:; frame-src 'none'; object-src 'none'; referrer no-referrer-when-downgrade; upgrade-insecure-requests; block-all-mixed-content;"
       },
 
       //Enables cors support for all endpoints and header controls, if false, all endpoints that are send CORS request headers will be forbidden

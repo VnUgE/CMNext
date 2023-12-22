@@ -9,7 +9,7 @@
         <div class="mx-auto">
             <h4 v-if="editMode" class="text-center">Edit Channel</h4>
             <h4 v-else class="text-center">Create Channel</h4>
-            <p>
+            <p class="text-sm">
                 Your root directory and index file name must be unique within your S3 bucket.
             </p>
         </div>
@@ -31,7 +31,7 @@
         <div class="max-w-xl mx-auto mt-6">
             <h4 v-if="editMode" class="text-center">Edit Feed</h4>
             <h4 v-else class="text-center">Create Feed</h4>
-            <p>
+            <p class="text-sm">
                 Optionally define the rss feed for this channel. If you do not configure the feed, posts
                 to this channel will not be published to an rss feed, you may configure this feed at any time.
             </p>

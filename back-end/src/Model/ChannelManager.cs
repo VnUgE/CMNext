@@ -120,7 +120,7 @@ namespace Content.Publishing.Blog.Admin.Model
         public static string ComputeContextId(IChannelContext context)
         {
             //Context-id is the hash of the base dir and index file path
-            return ManagedHash.ComputeHexHash($"{context.BaseDir}/{context.IndexPath}", HashAlg.SHA1).ToLowerInvariant();
+            return ManagedHash.ComputeHash($"{context.BaseDir}/{context.IndexPath}", HashAlg.SHA1, HashEncodingMode.Hexadecimal).ToLowerInvariant();
         }
 
         ///<inheritdoc/>
