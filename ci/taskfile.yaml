@@ -17,6 +17,10 @@ tasks:
 
   build:
     cmds:
+    #clean out dist dir before building
+    - cmd: powershell -Command "rm -Recurse -Force ./dist"
+      ignore_error: true
+      
     - task: install-plugins
     - task: install-webserver
 
@@ -120,3 +124,4 @@ tasks:
     - cmd: powershell -Command "rm -Recurse -Force ./bin"
     - cmd: powershell -Command "rm -Recurse -Force ./dist"
     - cmd: powershell -Command "rm -Recurse -Force ./plugins"
+    - cmd: powershell -Command "rm -Recurse -Force ./lib"

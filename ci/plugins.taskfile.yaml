@@ -18,6 +18,7 @@ tasks:
     - task: install-vncache-sessions
     - task: install-router
     - task: install-users
+    - task: install-argon2-lib
     - task: build-cmnext
 
   build-cmnext:
@@ -100,6 +101,36 @@ tasks:
         MODULE_NAME: "VNLib.Plugins.Sessions"
         FILE_NAME: "release.tgz"
         DIR: './plugins/assets/VNLib.Plugins.Sessions.VNCache'
+
+  install-argon2-lib:
+    cmds:
+    #install the argon2 binary for Windows
+    - task: install-plugin
+      vars:
+        NAME: 'argon2'
+        PROJECT_NAME: 'phc-winner-argon2'
+        MODULE_NAME: "VNLib.Core"
+        FILE_NAME: "win-x64-release-Argon2.tgz"
+        DIR: './lib/argon2'
+
+    #install the argon2 source code package for Linux and Mac
+    - task: install-plugin
+      vars:
+        NAME: 'argon2'
+        PROJECT_NAME: 'phc-winner-argon2'
+        MODULE_NAME: "VNLib.Core"
+        FILE_NAME: "src.tgz"
+        DIR: './lib/argon2'
+
+    #remove unneeded files
+    - cmd: powershell -Command "rm ./lib/argon2/man -Recurse"
+      ignore_error: true
+    - cmd: powershell -Command "rm ./lib/argon2/latex -Recurse"
+      ignore_error: true
+    - cmd: powershell -Command "rm ./lib/argon2/kats -Recurse"
+      ignore_error: true
+    - cmd: powershell -Command "rm ./lib/argon2/argon2-specs.pdf"
+      ignore_error: true
 
   install-plugin:
     cmds:
