@@ -26,7 +26,7 @@
                             <div class="">
                                 Search for content by its id or file name.
                             </div>
-                            <ContentSearch :blog="$props.blog"/>
+                            <ContentSearch/>
                         </div>
                     </PopoverPanel>
                 </Popover>
@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { debounce, defer } from 'lodash-es';
-import { computed, ref, toRefs } from 'vue';
+import { computed, defineAsyncComponent, ref, toRefs } from 'vue';
 import { useSessionStorage } from '@vueuse/core';
 import { tryOnMounted } from '@vueuse/shared';
 import { apiCall } from '@vnuge/vnlib.browser';
@@ -78,8 +78,8 @@ import { Popover, PopoverButton, PopoverPanel, Switch } from '@headlessui/vue'
 import { Converter } from 'showdown'
 import { useCkConfig } from './build.ts'
 import { useUploadAdapter } from './uploadAdapter';
-import ContentSearch from '../components/ContentSearch.vue';
 import { useStore } from '../../../store';
+const ContentSearch = defineAsyncComponent(() => import('../components/ContentSearch.vue'));
 
 const emit = defineEmits(['change', 'load', 'mode-change'])
 

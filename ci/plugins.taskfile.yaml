@@ -131,6 +131,8 @@ tasks:
       ignore_error: true
     - cmd: powershell -Command "rm ./lib/argon2/argon2-specs.pdf"
       ignore_error: true
+    - cmd: powershell -Command "rm ./lib/argon2/package.json"
+      ignore_error: true
 
   install-plugin:
     cmds:

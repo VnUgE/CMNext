@@ -71,7 +71,7 @@
 </template>
 <script setup lang="ts">
 
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, defineAsyncComponent } from 'vue';
 import { PodcastEntity, getPodcastForm } from './podcast-form'
 import {
     Dialog,
@@ -83,10 +83,10 @@ import {
     Popover,
     Switch
 } from '@headlessui/vue'
-import ContentSearch from '../ContentSearch.vue'
 import { apiCall, debugLog } from '@vnuge/vnlib.browser';
 import { ContentMeta } from '@vnuge/cmnext-admin';
 import { useStore } from '../../../../store';
+const ContentSearch = defineAsyncComponent(() => import('../ContentSearch.vue'));
 
 const emit = defineEmits(['submit'])
 const store = useStore()

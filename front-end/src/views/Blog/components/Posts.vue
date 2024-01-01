@@ -11,7 +11,7 @@
             <template #editor>
                 <PostEditor 
                     @submit="onSubmit"
-                    @close="closeEdit"
+                    @close="closeEdit(true)"
                     @delete="onDelete"
                 />
             </template>
@@ -97,9 +97,10 @@ const onSubmit = async ({post, content } : { post: PostMeta, content: string }) 
                 title: 'Saved',
                 text: `Post '${post.title}' updated`,
             })
+
+            refresh();
         })
     }
-    refresh();
 }
 
 const onDelete = async (post: PostMeta) => {

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -13,7 +13,7 @@
     <Company>Vaughn Nugent</Company>
     <Product>CMNext.Admin</Product>
     <Description>A VNLib.Plugins.Essentials administration plugin for the CMNext content publishing platform.</Description>
-    <Copyright>Copyright © 2023 Vaughn Nugent</Copyright>
+    <Copyright>Copyright © 2024 Vaughn Nugent</Copyright>
     <PackageProjectUrl>https://www.vaughnnugent.com/resources/software/modules/CMNext.Admin</PackageProjectUrl>
     <RepositoryUrl>https://github.com/VnUgE/CMNext/tree/master/</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="48.0.3" />
+    <PackageReference Include="FluentFTP" Version="49.0.1" />
     <PackageReference Include="Minio" Version="6.0.1" />
     <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0044" />
     <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0044" />
