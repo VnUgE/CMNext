@@ -35,8 +35,8 @@
   <ItemGroup>
     <PackageReference Include="FluentFTP" Version="49.0.1" />
     <PackageReference Include="Minio" Version="6.0.1" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0044" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0044" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0045" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0045" />
   </ItemGroup>
 
   <ItemGroup>
