@@ -97,7 +97,7 @@ createVnApp({
         //Enable mfa with totp settings plugin (optional pki config)
         .use(mfaSettingsPlugin('/account/mfa', '/account/pki'))
         //Setup social mfa plugin
-        .use(socialMfaPlugin)
+        .use(socialMfaPlugin())
         //Setup blog state
         .use(cmnextAdminPlugin(router, 'https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js', 15))
         

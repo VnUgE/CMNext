@@ -64,7 +64,8 @@ tryOnMounted(() => defer(() => {
   apiCall(async ({ toaster }) => {
     try{
         //Complete the login
-        await store.socialOauth.completeLogin();
+        const { completeLogin } = await store.socialOauth();
+        await completeLogin()
         
         toaster.general.success({
           title:'Login Successful',

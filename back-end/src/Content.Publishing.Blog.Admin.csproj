@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>Content.Publishing.Blog.Admin</RootNamespace>
@@ -35,8 +35,8 @@
   <ItemGroup>
     <PackageReference Include="FluentFTP" Version="49.0.1" />
     <PackageReference Include="Minio" Version="6.0.1" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0045" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0045" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0047" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0047" />
   </ItemGroup>
 
   <ItemGroup>

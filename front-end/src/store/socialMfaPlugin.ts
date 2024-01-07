@@ -1,42 +1,70 @@
-
 import 'pinia'
-import {  } from 'vue';
-import { useSocialOauthLogin, createSocialMethod, useUser } from '@vnuge/vnlib.browser'
-import {  } from '@vueuse/core';
+import { MaybeRef } from 'vue';
+import { useSocialOauthLogin, useUser, SocialOAuthPortal, fromPortals, useAxios } from '@vnuge/vnlib.browser'
+import { get } from '@vueuse/core';
 import { PiniaPluginContext, PiniaPlugin, storeToRefs } from 'pinia'
-import {  } from 'lodash-es';
+import { defer } from 'lodash-es';
+
+type SocialMfaPlugin = ReturnType<typeof useSocialOauthLogin>
 
 declare module 'pinia' {
     export interface PiniaCustomProperties {
-        socialOauth: ReturnType<typeof useSocialOauthLogin>
+        socialOauth(): Promise<SocialMfaPlugin>
     }
 }
 
-export const socialMfaPlugin: PiniaPlugin = ({ store }: PiniaPluginContext) => {
+export const socialMfaPlugin = (portalEndpoint?: MaybeRef<string>): PiniaPlugin => {
 
-    const { } = storeToRefs(store)
-    const { logout } = useUser()
+    return ({ store }: PiniaPluginContext) => {
 
-    //Setup social providers
-    const socialOauth = useSocialOauthLogin([
-        //createSocialMethod('github', '/login/social/github'),
-        //createSocialMethod('discord', '/login/social/discord'),
-    ])
+        const { } = storeToRefs(store)
+        const { logout } = useUser()
 
-    /**
-     * Override the logout function to default to a social logout,
-     * if the social logout fails, then we will logout the user
-     */
+        /**
+         * Override the logout function to default to a social logout,
+         * if the social logout fails, then we will logout the user
+         */
+        const setLogoutMethod = (socialOauth: SocialMfaPlugin) => {
+            const logoutFunc = socialOauth.logout;
 
-    const logoutFunc = socialOauth.logout;
-
-    (socialOauth as any).logout = async () => {
-        if (await logoutFunc() === false) {
-            await logout()
+            (socialOauth as any).logout = async () => {
+                if (await logoutFunc() === false) {
+                    await logout()
+                }
+            }
         }
-    }
 
-    return {
-        socialOauth
+        const _loadPromise = new Promise<SocialMfaPlugin>((resolve, reject) => {
+
+            if(get(portalEndpoint) == null) {
+                const socialOauth = useSocialOauthLogin([])
+                setLogoutMethod(socialOauth)
+                return resolve(socialOauth)
+            }
+
+            defer(async () => {
+                try {
+                    //Get axios instance
+                    const axios = useAxios(null)
+
+                    //Get all enabled portals
+                    const { data } = await axios.get<SocialOAuthPortal[]>(get(portalEndpoint));
+                    //Setup social providers from server portals
+                    const socialOauth = useSocialOauthLogin(fromPortals(data));
+                    setLogoutMethod(socialOauth);
+
+                    resolve(socialOauth)
+
+                } catch (error) {
+                    reject(error)
+                }
+            })
+        })
+
+        const socialOauth = () => _loadPromise
+
+        return {
+            socialOauth,
+        }
     }
 }

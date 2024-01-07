@@ -62,7 +62,9 @@ const submitLogout = async () => {
   //Submit logout request
   await apiCall(async ({ toaster }) => {
     // Attempt to logout
-    await store.socialOauth.logout()
+    const { logout } = await store.socialOauth()
+    await logout()
+    
     // Push a new toast message
     toaster.general.success({
       id: 'logout-success',

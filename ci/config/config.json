@@ -124,7 +124,8 @@
     //Hot-reload creates collectable assemblies that allow full re-load support in the host application, should only be used for development purposes!
     "hot_reload": false,
     "reload_delay_sec": 2,
-    "path": "plugins"
+    "path": "plugins",
+    "config_dir": "config"
   },
 
   "disabled sys_log": {

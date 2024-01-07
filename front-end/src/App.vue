@@ -3,7 +3,7 @@
     <title>{{ metaTile }}</title>
   </head>
   <!-- Import environment component top level as the entrypoint -->
-  <Environment @logout="store.socialOauth.logout">
+  <Environment @logout="logout">
     <template #main>
       <router-view />
     </template>
@@ -15,12 +15,20 @@ import { computed } from 'vue';
 import { useStore } from './store';
 import { storeToRefs } from 'pinia';
 import Environment from './bootstrap/Environment.vue';
+import { apiCall } from '@vnuge/vnlib.browser';
 
 const store = useStore()
 const { siteTitle, pageTitle } = storeToRefs(store)
 
 //Compute meta title from the default site title and the page title
 const metaTile = computed(() => `${pageTitle.value} | ${siteTitle.value}`)
+
+const logout = () => {
+  apiCall(async () => {
+    const { logout } = await store.socialOauth()
+    await logout()
+  })
+}
 
 store.setSiteTitle('CMNext Admin')
 store.setPageTitle('Blog')

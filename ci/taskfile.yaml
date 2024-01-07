@@ -78,12 +78,14 @@ tasks:
 
     #copy libraries
     - cmd: powershell -Command "cp -Recurse -Force lib {{.BUILD_DIR}}"
+
+    #copy config
+    - cmd: powershell -Command "cp -Recurse -Force config {{.BUILD_DIR}}"
     
     - task: get-webserver
       vars:
         TARGET_OS: '{{.TARGET_OS}}'
         BUILD_DIR: '{{.BUILD_DIR}}'
-  
 
   get-webserver:
     internal: true
@@ -91,7 +93,6 @@ tasks:
     #install accounts plugin
     - task: install
       vars:
-        NAME: 'webserver'
         PROJECT_NAME: 'VNLib.Webserver'
         MODULE_NAME: "VNLib.Webserver"
         FILE_NAME: "{{.TARGET_OS}}-release.tgz"
@@ -108,7 +109,7 @@ tasks:
     - cmd: powershell -Command "mkdir {{.DIR}} -Force"
       ignore_error: true
     - cd {{.DIR}} && powershell "{{.USER_WORKING_DIR}}/install.ps1" -BaseUrl {{.BUILDS_URL}} -ModuleName {{.MODULE_NAME}} -ProjectName {{.PROJECT_NAME}} -FileName {{.FILE_NAME}}
-    - cd {{.DIR}} && tar -xzf {{.FILE_NAME}}    
+    - cd {{.DIR}} && tar -xzf {{.FILE_NAME}}
     #remove the tar file
     - cd {{.DIR}} && powershell -Command "rm {{.FILE_NAME}}"
  

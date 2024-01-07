@@ -29,16 +29,13 @@ tasks:
     #move dist files to web root
     - powershell -Command "cp -Recurse -Force ../front-end/dist {{.USER_WORKING_DIR}}"
     #move the plugin output
-    - powershell -Command "cp -Recurse -Force ../back-end/src/bin/release/net6.0/publish/* ./plugins/CMNext"
-    #move cmnext config file
-    - powershell -Command "cp -Force config/CMNext.json ./plugins/CMNext/CMNext.json"
+    - powershell -Command "cp -Recurse -Force ../back-end/src/bin/release/net8.0/publish/* ./plugins/CMNext"
 
   install-accounts:
     cmds:
     #install accounts plugin
     - task: install-plugin
       vars:
-        NAME: 'Essentials.Accounts'
         PROJECT_NAME: 'VNLib.Plugins.Essentials.Accounts'
         MODULE_NAME: "Plugins.Essentials"
         FILE_NAME: "release.tgz"
@@ -49,7 +46,6 @@ tasks:
     #install router plugin
     - task: install-plugin
       vars:
-        NAME: 'PageRouter'
         PROJECT_NAME: 'VNLib.Plugins.Essentials.Content.Routing'
         MODULE_NAME: "Plugins.Essentials"
         FILE_NAME: "release.tgz"
@@ -60,7 +56,6 @@ tasks:
     #install sessions plugin
     - task: install-plugin
       vars:
-        NAME: 'SessionProvider'
         PROJECT_NAME: 'SessionProvider'
         MODULE_NAME: "VNLib.Plugins.Sessions"
         FILE_NAME: "release.tgz"
@@ -71,21 +66,16 @@ tasks:
     #install users plugin
     - task: install-plugin
       vars:
-        NAME: 'VNLib.Plugins.Essentials.Users'
         PROJECT_NAME: 'VNLib.Plugins.Essentials.Users'
         MODULE_NAME: "VNLib.Plugins.Essentials.Users"
         FILE_NAME: "release.tgz"
         DIR: './plugins/assets/VNLib.Plugins.Essentials.Users'
-
-    #move routes xml files
-    - cmd: powershell -Command "cp -Force config/routes.xml ./plugins/routes.xml"
 
   install-vncache:
     cmds:
     #install vncache global cache provider plugin
     - task: install-plugin
       vars:
-        NAME: 'VNLib.Data.Caching.Providers.VNCache'
         PROJECT_NAME: 'VNLib.Data.Caching.Providers.VNCache'
         MODULE_NAME: "VNLib.Data.Caching"
         FILE_NAME: "release.tgz"
@@ -96,7 +86,6 @@ tasks:
     #install vncache-web-sessions plugin
     - task: install-plugin
       vars:
-        NAME: 'VNLib.Plugins.Sessions.VNCache'
         PROJECT_NAME: 'VNLib.Plugins.Sessions.VNCache'
         MODULE_NAME: "VNLib.Plugins.Sessions"
         FILE_NAME: "release.tgz"
@@ -107,7 +96,6 @@ tasks:
     #install the argon2 binary for Windows
     - task: install-plugin
       vars:
-        NAME: 'argon2'
         PROJECT_NAME: 'phc-winner-argon2'
         MODULE_NAME: "VNLib.Core"
         FILE_NAME: "win-x64-release-Argon2.tgz"
@@ -116,7 +104,6 @@ tasks:
     #install the argon2 source code package for Linux and Mac
     - task: install-plugin
       vars:
-        NAME: 'argon2'
         PROJECT_NAME: 'phc-winner-argon2'
         MODULE_NAME: "VNLib.Core"
         FILE_NAME: "src.tgz"
@@ -143,6 +130,3 @@ tasks:
     - cd {{.DIR}} && tar -xzf {{.FILE_NAME}} 
     #remove the archive file 
     - cd {{.DIR}} && powershell -Command "rm {{.FILE_NAME}}"
-    #copy config file from config dir
-    - cmd: powershell -Command "cp -Force ./config/{{.NAME}}.json {{.DIR}}/{{.NAME}}.json"
-      ignore_error: true

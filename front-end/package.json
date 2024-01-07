@@ -29,7 +29,7 @@
     "@headlessui/vue": "^1.7.12",
     "@kyvg/vue3-notification": "^3.0.x",
     "@vnuge/cmnext-admin": "../lib/admin",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/vnlib.browser/0b1acb55ae395723772251318254ba131e987107/@vnuge-vnlib.browser/release.tgz",
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/d773afa32ac58be36a82fcdd7bb41ac2629f8c2c/@vnuge-vnlib.browser/release.tgz",
     "@vuelidate/core": "^2.0.2",
     "@vuelidate/validators": "^2.0.2",
     "@vueuse/core": "^10.3.x",
@@ -42,7 +42,7 @@
     "otpauth": "^9.1.2",
     "showdown": "^2.1.0",
     "pinia": "^2.1.7",
-    "universal-cookie": "^6.1.x",
+    "universal-cookie": "^7.0.x",
     "vue": "^3.2.47",
     "vue3-otp-input": "^0.4.1"
   },
