@@ -29,7 +29,7 @@ tasks:
     #move dist files to web root
     - powershell -Command "cp -Recurse -Force ../front-end/dist {{.USER_WORKING_DIR}}"
     #move the plugin output
-    - powershell -Command "cp -Recurse -Force ../back-end/src/bin/release/net8.0/publish/* ./plugins/CMNext"
+    - powershell -Command "cp -Recurse -Force ../back-end/src/bin/release/net8.0/publish/* plugins/CMNext/"
 
   install-accounts:
     cmds:

@@ -7,7 +7,6 @@ version: "3"
 
 vars:
   BUILDS_URL: https://www.vaughnnugent.com/public/resources/software/builds
- 
 
 includes:
   plugins:
@@ -81,7 +80,7 @@ tasks:
 
     #copy config
     - cmd: powershell -Command "cp -Recurse -Force config {{.BUILD_DIR}}"
-    
+
     - task: get-webserver
       vars:
         TARGET_OS: '{{.TARGET_OS}}'
@@ -90,20 +89,19 @@ tasks:
   get-webserver:
     internal: true
     cmds:
-    #install accounts plugin
     - task: install
       vars:
         PROJECT_NAME: 'VNLib.Webserver'
         MODULE_NAME: "VNLib.Webserver"
         FILE_NAME: "{{.TARGET_OS}}-release.tgz"
-        BUILD_DIR: '{{.BUILD_DIR}}'
+        BUILD_DIR: '{{.BUILD_DIR}}/webserver'
 
     - cmd: powershell -Command "cp -Force ./config/config.json {{.BUILD_DIR}}/config.json"
 
   install:
     internal: true
     vars:
-      DIR: '"{{.BUILD_DIR}}"/"{{.NAME}}"'
+      DIR: '"{{.BUILD_DIR}}"'
     cmds:
     #make the plugin directory
     - cmd: powershell -Command "mkdir {{.DIR}} -Force"

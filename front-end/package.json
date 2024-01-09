@@ -49,7 +49,7 @@
   "devDependencies": {
     "@types/showdown": "^2.0.1",
     "@types/lodash-es": "^4.14.194",
-    "@vitejs/plugin-vue": "^4.1.0",
+    "@vitejs/plugin-vue": "^5.0.x",
     "@volar-plugins/vetur": "latest",
     "autoprefixer": "^10.4.14",
     "dotenv": "^16.0.3",
