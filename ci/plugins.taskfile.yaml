@@ -28,7 +28,11 @@ tasks:
     - cd ../front-end && npm install && npm run build
     #move dist files to web root
     - powershell -Command "cp -Recurse -Force ../front-end/dist {{.USER_WORKING_DIR}}"
-    #move the plugin output
+
+    #build the plugin 
+    - cmd: cd ../back-end/src && task build
+    - powershell -Command "mkdir plugins/CMNext -Force"
+    #copy the plugin output
     - powershell -Command "cp -Recurse -Force ../back-end/src/bin/release/net8.0/publish/* plugins/CMNext/"
 
   install-accounts:
