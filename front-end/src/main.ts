@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2024 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -35,7 +35,7 @@ import { faGithub, faDiscord, faMarkdown } from '@fortawesome/free-brands-svg-ic
 library.add(faSignInAlt, faGithub, faDiscord, faSpinner, faCertificate, faKey, faSync, faPlus, faMinusCircle, faUser, faCheck, faTrash, faCopy, 
     faPencil, faLink, faPhotoFilm, faRotateLeft, faMarkdown, faBullhorn, faFolderOpen, faComment, faChevronLeft, faChevronRight, faFileDownload,
     faCode, faFile, faVideo, faImage, faHeadphones, faFileZipper
-    );
+);
 
 //Add icons to library
 import router from './router'
@@ -47,6 +47,7 @@ import SiteLogo from './components/Site-Logo.vue'
 import DynamicFormVue from './components/DynamicForm.vue'
 
 import { globalStatePlugin } from './store/globalState'
+import { oauth2AppsPlugin } from './store/oauthAppsPlugin'
 import { profilePlugin } from './store/userProfile'
 import { mfaSettingsPlugin } from './store/mfaSettingsPlugin'
 import { pageProtectionPlugin } from './store/pageProtectionPlugin'
@@ -90,16 +91,18 @@ createVnApp({
         app.use(router)
 
         store.use(globalStatePlugin)
+        //Add page protection plugin
+        .use(pageProtectionPlugin(router))
         //User-profile plugin
         .use(profilePlugin('/account/profile'))
-        //setup page protection plugin with the router
-        .use(pageProtectionPlugin(router))
         //Enable mfa with totp settings plugin (optional pki config)
         .use(mfaSettingsPlugin('/account/mfa', '/account/pki'))
-        //Setup social mfa plugin
-        .use(socialMfaPlugin())
+        //Setup social oauth
+        .use(socialMfaPlugin("/login/social/portals"))
         //Setup blog state
         .use(cmnextAdminPlugin(router, 'https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js', 15))
+        //Use the oauth2 plugin store (disabled for now)
+        //.use(oauth2AppsPlugin('/oauth/apps', '/oauth/scopes'))
         
         //Add the home-page component
         router.addRoute({

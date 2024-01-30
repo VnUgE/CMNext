@@ -1,68 +1,9 @@
-<template>
-  <div id="pwreset-settings" class="container">
-    <div class="panel-content">
-
-      <div v-if="!pwResetShow" class="">
-        <div class="flex flex-wrap items-center justify-between">
-          
-          <div class="">
-             <h5>Password Reset</h5>
-          </div>
-
-          <div class="flex justify-end">
-            <button class="btn xs" @click="showForm">
-              <fa-icon icon="sync" />
-              <span class="pl-2">Reset Password</span>
-            </button>
-          </div>
-        </div>
-
-        <p class="mt-3 text-sm text-color-background">
-          You may only reset your password if you have an internal user account. If you exclusivly use an external
-          authentication provider (like GitHub or Discord), you will need to reset your password externally.
-        </p>
-      </div>
-
-      <div v-else class="px-2 my-2">
-
-        <p class="my-3 text-center">
-          Enter your current password, new password, and confirm the new password.
-        </p>
-
-        <dynamic-form
-          id="password-reset-form" 
-          class="pwreset-form primary"
-          :form="formSchema"
-          :disabled="waiting"
-          :validator="v$"
-          @submit="onSubmit"
-          @input="onInput"
-        />
-        
-        <div class="flex flex-row justify-end my-2">
-          <div class="button-group">
-            <button type="submit" form="password-reset-form" class="btn primary sm" :disabled="waiting">
-              <fa-icon v-if="!waiting" icon="check" />
-              <fa-icon v-else class="animate-spin" icon="spinner" />
-              Update
-            </button>
-            <button class="btn sm cancel-btn" :disabled="waiting" @click="resetForm">
-              Cancel
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { isEmpty, toSafeInteger } from 'lodash-es';
 import { useVuelidate } from '@vuelidate/core'
 import { required, maxLength, minLength, helpers } from '@vuelidate/validators'
-import { useUser, apiCall, useMessage, useWait, useConfirm, useVuelidateWrapper } from '@vnuge/vnlib.browser'
-import { computed, reactive, ref, toRefs, watch } from 'vue'
+import { useUser, apiCall, useMessage, useWait, useConfirm, useVuelidateWrapper, VuelidateInstance } from '@vnuge/vnlib.browser'
+import { MaybeRef, computed, reactive, ref, toRefs, watch } from 'vue'
 
 const props = defineProps<{
   totpEnabled: boolean,
@@ -136,7 +77,7 @@ const rules = computed(() =>{
 })
 
 const v$ = useVuelidate(rules, vState, { $lazy: true })
-const { validate } = useVuelidateWrapper(v$)
+const { validate } = useVuelidateWrapper(v$ as MaybeRef<VuelidateInstance>)
 
 const showTotpCode = computed(() => totpEnabled.value && !fidoEnabled.value)
 
@@ -207,6 +148,58 @@ const resetForm = () => {
 }
 
 </script>
+
+<template>
+  <div id="pwreset-settings" class="container">
+    <div class="panel-content">
+
+      <div v-if="!pwResetShow" class="">
+        <div class="flex flex-wrap items-center justify-between">
+
+          <div class="">
+            <h5>Password Reset</h5>
+          </div>
+
+          <div class="flex justify-end">
+            <button class="btn xs" @click="showForm">
+              <fa-icon icon="sync" />
+              <span class="pl-2">Reset Password</span>
+            </button>
+          </div>
+        </div>
+
+        <p class="mt-3 text-sm text-color-background">
+          You may only reset your password if you have an internal user account. If you exclusivly use an external
+          authentication provider (like GitHub or Discord), you will need to reset your password externally.
+        </p>
+      </div>
+
+      <div v-else class="px-2 my-2">
+
+        <p class="my-3 text-center">
+          Enter your current password, new password, and confirm the new password.
+        </p>
+
+        <dynamic-form id="password-reset-form" class="pwreset-form primary" :form="formSchema" :disabled="waiting"
+          :validator="v$" @submit="onSubmit" @input="onInput" />
+
+        <div class="flex flex-row justify-end my-2">
+          <div class="button-group">
+            <button type="submit" form="password-reset-form" class="btn primary sm" :disabled="waiting">
+              <fa-icon v-if="!waiting" icon="check" />
+              <fa-icon v-else class="animate-spin" icon="spinner" />
+              Update
+            </button>
+            <button class="btn sm cancel-btn" :disabled="waiting" @click="resetForm">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss">
 

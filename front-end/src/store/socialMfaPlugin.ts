@@ -1,3 +1,4 @@
+
 import 'pinia'
 import { MaybeRef } from 'vue';
 import { useSocialOauthLogin, useUser, SocialOAuthPortal, fromPortals, useAxios } from '@vnuge/vnlib.browser'
@@ -34,30 +35,42 @@ export const socialMfaPlugin = (portalEndpoint?: MaybeRef<string>): PiniaPlugin 
             }
         }
 
-        const _loadPromise = new Promise<SocialMfaPlugin>((resolve, reject) => {
+        const _loadPromise = new Promise<SocialMfaPlugin>((resolve, _) => {
 
-            if(get(portalEndpoint) == null) {
+            if (get(portalEndpoint) == null) {
                 const socialOauth = useSocialOauthLogin([])
                 setLogoutMethod(socialOauth)
                 return resolve(socialOauth)
             }
 
+            /*
+            Try to load social methods from server, if it fails, then we will 
+            fall back to default
+             */
+
             defer(async () => {
+
+                let portals: SocialOAuthPortal[] = []
+
                 try {
                     //Get axios instance
                     const axios = useAxios(null)
 
                     //Get all enabled portals
-                    const { data } = await axios.get<SocialOAuthPortal[]>(get(portalEndpoint));
-                    //Setup social providers from server portals
-                    const socialOauth = useSocialOauthLogin(fromPortals(data));
-                    setLogoutMethod(socialOauth);
-
-                    resolve(socialOauth)
+                    const { data, headers } = await axios.get<SocialOAuthPortal[]>(get(portalEndpoint)!);
+                    
+                    if(headers['content-type'] === 'application/json') {
+                        portals = data
+                    }
 
                 } catch (error) {
-                    reject(error)
+                    //Let failure fall back to default
                 }
+
+                //Create social login from available portals
+                const socialOauth = useSocialOauthLogin(fromPortals(portals));
+                setLogoutMethod(socialOauth);
+                resolve(socialOauth)
             })
         })
 

@@ -1,3 +1,152 @@
+<script setup lang="ts">
+import { includes, isEmpty } from 'lodash-es'
+import { apiCall, useConfirm, useSession, debugLog, useFormToaster, type PkiPublicKey, MfaMethod } from '@vnuge/vnlib.browser'
+import { computed, ref, watch } from 'vue'
+import { Dialog, DialogPanel } from '@headlessui/vue'
+import { useStore } from '../../../../store'
+import { useToggle } from '@vueuse/core'
+
+const store = useStore()
+const { reveal } = useConfirm()
+const { isLocalAccount } = useSession()
+const { error } = useFormToaster()
+const { refresh, pkiConfig } = store.pki!
+
+const pkiEnabled = computed(() => isLocalAccount.value && includes(store.mfa.enabledMethods, "pki" as MfaMethod) && window.crypto.subtle)
+const pkiPublicKeys = computed(() => store.pki!.publicKeys)
+
+const [isOpen, toggleOpen] = useToggle()
+const keyData = ref('')
+const pemFormat = ref(false)
+const explicitCurve = ref("")
+
+watch(isOpen, () => {
+    keyData.value = ''
+    pemFormat.value = false
+    explicitCurve.value = ""
+    //Reload status
+    refresh()
+})
+
+const onRemoveKey = async (single: PkiPublicKey) => {
+    const { isCanceled } = await reveal({
+        title: 'Are you sure?',
+        text: `This will remove key ${single.kid} from your account.`
+    })
+    if (isCanceled) {
+        return;
+    }
+
+    //Delete pki
+    await apiCall(async ({ toaster }) => {
+
+        //TODO: require password or some upgrade to disable
+        const { success } = await pkiConfig.removeKey(single.kid);
+
+        if (success) {
+            toaster.general.success({
+                title: 'Success',
+                text: 'Key was removed successfully.'
+            })
+        }
+        else {
+            toaster.general.error({
+                title: 'Error',
+                text: 'Your single PKI key could not be removed.'
+            })
+        }
+
+        //Refresh the status
+        refresh()
+    });
+}
+
+const onDisable = async () => {
+    const { isCanceled } = await reveal({
+        title: 'Are you sure?',
+        text: 'This will disable PKI authentication for your account.'
+    })
+    if (isCanceled) {
+        return;
+    }
+
+    //Delete pki
+    await apiCall(async ({ toaster }) => {
+
+        //Disable pki
+        //TODO: require password or some upgrade to disable
+        const { success } = await pkiConfig.disable();
+
+        if (success) {
+            toaster.general.success({
+                title: 'Success',
+                text: 'PKI authentication has been disabled.'
+            })
+        }
+        else {
+            toaster.general.error({
+                title: 'Error',
+                text: 'PKI authentication could not be disabled.'
+            })
+        }
+
+        //Refresh the status
+        refresh()
+    });
+}
+
+const onSubmitKeys = async () => {
+
+    if (window.crypto.subtle == null) {
+        error({ title: "Your browser does not support PKI authentication." })
+        return;
+    }
+
+    //Validate key data
+    if (isEmpty(keyData.value)) {
+        error({ title: "Please enter key data" })
+        return;
+    }
+
+    let jwk: PkiPublicKey & JsonWebKey;
+    try {
+        //Try to parse as jwk
+        jwk = JSON.parse(keyData.value)
+        if (isEmpty(jwk.use)
+            || isEmpty(jwk.kty)
+            || isEmpty(jwk.alg)
+            || isEmpty(jwk.kid)
+            || isEmpty(jwk.x)
+            || isEmpty(jwk.y)) {
+            throw new Error("Invalid JWK");
+        }
+    }
+    catch (e) {
+        //Write error to debug log
+        debugLog(e)
+        error({ title: "The key is not a valid Json Web Key (JWK)" })
+        return;
+    }
+
+    //Send to server
+    await apiCall(async ({ toaster }) => {
+
+        //init/update the key
+        //TODO: require password or some upgrade to disable
+        const { getResultOrThrow } = await pkiConfig.addOrUpdate(jwk);
+
+        const result = getResultOrThrow();
+
+        toaster.general.success({
+            title: 'Success',
+            text: result
+        })
+        toggleOpen(false)
+    })
+}
+
+</script>
+
 <template>
     <div id="pki-settings" class="container">
         <div class="panel-content">
@@ -6,7 +155,7 @@
                 <h5>PKI Authentication</h5>
                 <div class="">
                     <div v-if="pkiEnabled" class="button-group">
-                        <button class="btn xs" @click.prevent="setIsOpen(true)">
+                        <button class="btn xs" @click.prevent="toggleOpen(true)">
                             <fa-icon icon="plus" />
                             <span class="pl-2">Add Key</span>
                         </button>
@@ -16,14 +165,14 @@
                         </button>
                     </div>
                       <div v-else class="">
-                        <button class="btn primary xs" @click.prevent="setIsOpen(true)">
+                        <button class="btn primary xs" @click.prevent="toggleOpen(true)">
                             <fa-icon icon="plus" />
                             <span class="pl-2">Add Key</span>
                         </button>
                     </div>
                 </div>
 
-                <div v-if="store.pkiPublicKeys && store.pkiPublicKeys.length > 0" class="w-full mt-4">
+                <div v-if="pkiPublicKeys && pkiPublicKeys.length > 0" class="w-full mt-4">
                     <table class="min-w-full text-sm divide-y-2 divide-gray-200 dark:divide-dark-500">
                         <thead class="text-left">
                             <tr>
@@ -41,7 +190,7 @@
                         </thead>
 
                         <tbody class="divide-y divide-gray-200 dark:divide-dark-500">
-                            <tr v-for="key in store.pkiPublicKeys">
+                            <tr v-for="key in pkiPublicKeys">
                                 <td class="p-2 t font-medium truncate max-w-[8rem] whitespace-nowrap dark:text-white">
                                     {{ key.kid }}
                                 </td>
@@ -70,7 +219,7 @@
             </div>
         </div>
     </div>
-    <Dialog :open="isOpen" @close="setIsOpen" class="relative z-30">
+    <Dialog :open="isOpen" @close="toggleOpen(false)" class="relative z-30">
         <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
 
         <div class="fixed inset-0 flex justify-center">
@@ -84,162 +233,11 @@
             </div>
             <div class="flex justify-end gap-2 mt-4">
                 <button class="rounded btn sm primary" @click.prevent="onSubmitKeys">Submit</button>
-                <button class="rounded btn sm" @click.prevent="setIsOpen(false)">Cancel</button>
+                <button class="rounded btn sm" @click.prevent="toggleOpen(false)">Cancel</button>
             </div>
           </DialogPanel>
         </div>
       </Dialog>
 </template>
 
-<script setup lang="ts">
-import { includes, isEmpty } from 'lodash-es'
-import { apiCall, useConfirm, useSession, debugLog, useFormToaster, PkiPublicKey } from '@vnuge/vnlib.browser'
-import { computed, ref, watch } from 'vue'
-import { Dialog, DialogPanel } from '@headlessui/vue'
-import { useStore } from '../../../../store'
-import { } from 'pinia'
 
-const store = useStore()
-const { reveal } = useConfirm()
-const { isLocalAccount } = useSession()
-const { error } = useFormToaster()
-
-const pkiEnabled = computed(() => isLocalAccount.value && includes(store.mfaEndabledMethods, "pki") && window.crypto.subtle)
-
-const isOpen = ref(false)
-const keyData = ref('')
-const pemFormat = ref(false)
-const explicitCurve = ref("")
-
-watch(isOpen, () =>{
-    keyData.value = ''
-    pemFormat.value = false
-    explicitCurve.value = ""
-    //Reload status
-    store.mfaRefreshMethods()
-})
-
-const setIsOpen = (value : boolean) => isOpen.value = value
-
-const onRemoveKey = async (single: PkiPublicKey) =>{
-      const { isCanceled } = await reveal({
-        title: 'Are you sure?',
-        text: `This will remove key ${single.kid} from your account.`
-    })
-    if (isCanceled) {
-        return;
-    }
-
-      //Delete pki
-    await apiCall(async ({ toaster }) => {
-       
-        //TODO: require password or some upgrade to disable
-        const { success } = await store.pkiConfig.removeKey(single.kid);
-
-        if (success) {
-            toaster.general.success({
-                title: 'Success',
-                text: 'Key was removed successfully.'
-            })
-        }
-        else {
-            toaster.general.error({
-                title: 'Error',
-                text: 'Your single PKI key could not be removed.'
-            })
-        }
-
-        //Refresh the status
-       store.mfaRefreshMethods()
-    });
-}
-
-const onDisable = async () => {
-     const { isCanceled } = await reveal({
-        title: 'Are you sure?',
-        text: 'This will disable PKI authentication for your account.'
-    })
-    if (isCanceled) {
-       return;
-    }
-
-    //Delete pki
-    await apiCall(async ({ toaster }) =>{
-
-        //Disable pki
-        //TODO: require password or some upgrade to disable
-        const { success } = await store.pkiConfig.disable();
-        
-        if(success){
-            toaster.general.success({
-                title: 'Success',
-                text: 'PKI authentication has been disabled.'
-            })
-        }
-        else{
-            toaster.general.error({
-                title: 'Error',
-                text: 'PKI authentication could not be disabled.'
-            })
-        }
-
-        //Refresh the status
-        store.mfaRefreshMethods()
-    });
-}
-
-const onSubmitKeys = async () =>{
-    
-    if(window.crypto.subtle == null){
-        error({ title: "Your browser does not support PKI authentication." })
-        return;
-    }
-    
-    //Validate key data
-    if(isEmpty(keyData.value)){
-        error({ title: "Please enter key data" })
-        return;
-    }
-
-    let jwk : PkiPublicKey & JsonWebKey;
-    try {
-        //Try to parse as jwk
-        jwk = JSON.parse(keyData.value)
-        if(isEmpty(jwk.use) 
-        || isEmpty(jwk.kty) 
-        || isEmpty(jwk.alg) 
-        || isEmpty(jwk.kid)
-        || isEmpty(jwk.x) 
-        || isEmpty(jwk.y)){
-            throw new Error("Invalid JWK");
-        }
-    }
-    catch (e) {
-        //Write error to debug log
-        debugLog(e)
-        error({ title:"The key is not a valid Json Web Key (JWK)"})
-        return;
-    }
-
-    //Send to server
-    await apiCall(async ({ toaster }) => {
-
-        //init/update the key
-        //TODO: require password or some upgrade to disable
-        const { getResultOrThrow } = await store.pkiConfig.addOrUpdate(jwk);
-
-        const result = getResultOrThrow();
-
-        toaster.general.success({
-            title: 'Success',
-            text: result
-        })
-        setIsOpen(false)
-    })
-}
-
-</script>
-
-<style>
-
-</style>

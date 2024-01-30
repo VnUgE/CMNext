@@ -1,3 +1,25 @@
+<script setup lang="ts">
+import { MfaMethod } from '@vnuge/vnlib.browser'
+import { computed } from 'vue'
+import { Switch } from '@headlessui/vue'
+import { includes, isNil } from 'lodash-es'
+import { useStore } from '../../../../store'
+import Fido from './Fido.vue'
+import Pki from './Pki.vue'
+import TotpSettings from './TotpSettings.vue'
+import PasswordReset from './PasswordReset.vue'
+
+const store = useStore();
+
+//Load mfa methods
+store.mfa.refresh();
+
+const fidoEnabled = computed(() => includes(store.mfa.enabledMethods, 'fido' as MfaMethod))
+const totpEnabled = computed(() => includes(store.mfa.enabledMethods, MfaMethod.TOTP))
+const pkiEnabled = computed(() => !isNil(store.pki))
+
+</script>
+
 <template>
   <div id="account-security-settings">
     <div class="panel-container">
@@ -20,20 +42,20 @@
         </div>
       </div>
 
-      <Pki />
+      <Pki v-if="pkiEnabled" />
 
       <div id="browser-poll-settings" class="panel-content" >
         <div class="flex justify-between">
           <h5>Keep me logged in</h5>
           <div class="pl-1">
               <Switch
-                v-model="autoHeartbeat"
-                :class="autoHeartbeat ? 'bg-primary-500 dark:bg-primary-600' : 'bg-gray-200 dark:bg-dark-500'"
+                v-model="store.autoHeartbeat"
+                :class="store.autoHeartbeat ? 'bg-primary-500 dark:bg-primary-600' : 'bg-gray-200 dark:bg-dark-500'"
                 class="relative inline-flex items-center h-6 rounded-full w-11"
               >
                 <span class="sr-only">Enable auto heartbeat</span>
                 <span
-                  :class="autoHeartbeat ? 'translate-x-6' : 'translate-x-1'"
+                  :class="store.autoHeartbeat ? 'translate-x-6' : 'translate-x-1'"
                   class="inline-block w-4 h-4 transition transform bg-white rounded-full"
                 />
               </Switch>
@@ -50,29 +72,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { MfaMethod } from '@vnuge/vnlib.browser'
-import { computed } from 'vue'
-import { Switch } from '@headlessui/vue'
-import { includes } from 'lodash-es'
-import { storeToRefs } from 'pinia'
-import { useStore } from '../../../../store'
-import Fido from './Fido.vue'
-import Pki from './Pki.vue'
-import TotpSettings from './TotpSettings.vue'
-import PasswordReset from './PasswordReset.vue'
-
-const store = useStore();
-const { autoHeartbeat } = storeToRefs(store);
-
-//Load mfa methods
-store.mfaRefreshMethods();
-
-const fidoEnabled = computed(() => includes(store.mfaEndabledMethods, 'fido' as MfaMethod))
-const totpEnabled = computed(() => includes(store.mfaEndabledMethods, MfaMethod.TOTP))
-
-</script>
 
 <style>
 

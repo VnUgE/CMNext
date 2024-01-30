@@ -3,7 +3,8 @@ import { MaybeRef, watch } from 'vue';
 import { ServerDataBuffer, ServerObjectBuffer, UserProfile, WebMessage, apiCall, useAxios, useDataBuffer, useUser } from '@vnuge/vnlib.browser';
 import { get, useToggle } from '@vueuse/core';
 import { PiniaPlugin, PiniaPluginContext, storeToRefs } from 'pinia'
-import { defer } from 'lodash-es';
+import { defer, noop } from 'lodash-es';
+import { storeExport } from './index';
 
 export interface OAuth2Application {
     readonly Id: string,
@@ -24,17 +25,21 @@ interface ExUserProfile extends UserProfile {
     created: string | Date
 }
 
+export interface UserProfileStore{
+    userProfile: ServerDataBuffer<ExUserProfile, WebMessage<string>>
+    userName: string | undefined
+    refreshProfile(): void;
+}
+
 declare module 'pinia' {
-    export interface PiniaCustomProperties {
-        userProfile: ServerDataBuffer<ExUserProfile, WebMessage<string>>
-        userName: string | undefined
-        refreshProfile(): void;
+    export interface PiniaCustomProperties extends UserProfileStore {
+      
     }
 }
 
 export const profilePlugin = (accountsUrl:MaybeRef<string>) :PiniaPlugin => {
 
-    return ({ store }: PiniaPluginContext) => {
+    return ({ store }: PiniaPluginContext): UserProfileStore => {
 
         const { loggedIn } = storeToRefs(store)
         const { getProfile, userName } = useUser()
@@ -64,19 +69,16 @@ export const profilePlugin = (accountsUrl:MaybeRef<string>) :PiniaPlugin => {
             userProfile.apply(profile)
         }
 
-        watch([loggedIn, onRefresh], ([li]) => {
-            //If the user is logged in, load the profile buffer
-            if (li) {
-                apiCall(loadProfile)
-            }
-        })
+        //If the user is logged in, load the profile buffer
+        watch([loggedIn, onRefresh], ([li]) => li ? apiCall(loadProfile) : noop())
 
+        //Defer intiial profile load
         defer(refreshProfile);
 
-        return {
+        return storeExport({
             userProfile,
             refreshProfile,
             userName
-        }
+        })
     }
 }

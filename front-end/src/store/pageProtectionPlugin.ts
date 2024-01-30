@@ -60,14 +60,12 @@ export const pageProtectionPlugin = (router: ReturnType<typeof useRouter>): Pini
             return true;
         })
 
-        router.afterEach(() => {
-            //scroll window back to top
-            window.scrollTo(0, 0)
-        })
+        //scroll window back to top
+        router.afterEach(() => window.scrollTo(0, 0))
 
-        watch(loggedIn, (loggedIn) => {
+        watch(loggedIn, (li) => {
             //If the user gets logged out, redirect to login
-            if(loggedIn === false && router.currentRoute.value.name !== 'Login'){
+            if(li === false && router.currentRoute.value.name !== 'Login'){
                 router.push({ name: 'Login' })
             }
         })

@@ -1,3 +1,62 @@
+
+<script setup lang="ts">
+import { defaultTo } from 'lodash-es'
+import { useVuelidate } from '@vuelidate/core'
+import { ref, computed, watch, type Ref } from 'vue'
+import { Rules, FormSchema } from './profile-schema.ts'
+import { apiCall, useMessage, useWait, useVuelidateWrapper, type VuelidateInstance } from '@vnuge/vnlib.browser'
+import { useStore } from '../../../../store'
+
+const { waiting } = useWait()
+const { onInput, clearMessage } = useMessage()
+
+const store = useStore()
+const editMode = ref(false)
+
+// Create validator based on the profile buffer as a data model
+const v$ = useVuelidate(Rules, store.userProfile.buffer as any, { $lazy: true })
+
+// Setup the validator wrapper
+const { validate } = useVuelidateWrapper(v$ as Ref<VuelidateInstance>);
+
+//const modified = computed(() => profile.value.Modified)
+const createdTime = computed(() => defaultTo(store.userProfile.data.created?.toLocaleString(), ''))
+
+const revertProfile = () => {
+  //Revert the buffer
+  store.userProfile.revert()
+  clearMessage()
+  editMode.value = false
+}
+
+const onSubmit = async () => {
+  if (waiting.value) {
+    return;
+  }
+  // Validate the form
+  if (!await validate()) {
+    return
+  }
+  // Init the api call
+  await apiCall(async ({ toaster }) => {
+    const res = await store.userProfile.update();
+
+    const successm = res.getResultOrThrow();
+
+    //No longer in edit mode
+    editMode.value = false
+
+    //Show success message
+    toaster.general.success({
+      title: 'Update successful',
+      text: successm,
+    })
+  })
+}
+
+watch(editMode, () => v$.value.$reset())
+
+</script>
 <template>
   <div id="account-profile" class="acnt-content-container panel-container">
     <div class="acnt-content profile-container panel-content">
@@ -57,66 +116,6 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { defaultTo } from 'lodash-es'
-import useVuelidate  from '@vuelidate/core'
-import { ref, computed, watch } from 'vue'
-import { Rules, FormSchema } from './profile-schema.ts'
-import { apiCall, useMessage, useWait, useVuelidateWrapper, WebMessage } from '@vnuge/vnlib.browser'
-import { useStore } from '../../../../store'
-
-const { waiting } = useWait()
-const { onInput, clearMessage } = useMessage()
-
-const store = useStore()
-
-const editMode = ref(false)
-
-// Create validator based on the profile buffer as a data model
-const v$ = useVuelidate(Rules, store.userProfile.buffer, { $lazy:true })
-
-// Setup the validator wrapper
-const { validate } = useVuelidateWrapper(v$);
-
-//const modified = computed(() => profile.value.Modified)
-const createdTime = computed(() => defaultTo(store.userProfile.data.created?.toLocaleString(), ''))
-
-const revertProfile = () => {
-  //Revert the buffer
-  store.userProfile.revert()
-  clearMessage()
-  editMode.value = false
-}
-
-const onSubmit = async () => {
-  if(waiting.value){
-    return;
-  }
-  // Validate the form
-  if (!await validate()) {
-    return
-  }
-  // Init the api call
-  await apiCall(async ({ toaster }) => {
-    const res = await store.userProfile.update();
-
-    const successm = (res as WebMessage<string>).getResultOrThrow();
-  
-    //No longer in edit mode
-    editMode.value = false
-
-    //Show success message
-    toaster.general.success({
-      title: 'Update successful',
-      text: successm,
-    })
-  })
-}
-
-watch(editMode, () => v$.value.$reset())
-
-
-</script>
 
 <style lang="scss">
 

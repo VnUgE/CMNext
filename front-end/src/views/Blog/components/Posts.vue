@@ -1,24 +1,3 @@
-<template>
-    <div id="post-editor" class="">
-        <EditorTable title="Manage posts" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
-            <template #table>
-                <PostTable 
-                    :items="items"
-                    @open-edit="openEdit"
-                    @delete="onDelete"
-                />
-            </template> 
-            <template #editor>
-                <PostEditor 
-                    @submit="onSubmit"
-                    @close="closeEdit(true)"
-                    @delete="onDelete"
-                />
-            </template>
-        </EditorTable>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue';
 import { isEmpty } from 'lodash-es';
@@ -49,7 +28,7 @@ const closeEdit = (update?: boolean) => {
     //reload channels
     if (update) {
         //must refresh content and posts when a post is updated
-       refresh();
+        refresh();
     }
     //Reset page to top
     window.scrollTo(0, 0);
@@ -62,14 +41,14 @@ const openNew = () => {
     window.scrollTo(0, 0)
 }
 
-const onSubmit = async ({post, content } : { post: PostMeta, content: string }) => {
+const onSubmit = async ({ post, content }: { post: PostMeta, content: string }) => {
 
     debugLog('submitting', post, content);
 
     //Check for new channel, or updating old channel
     if (store.posts.selectedId === 'new') {
         //Exec create call
-        await apiCall(async ({toaster}) => {
+        await apiCall(async ({ toaster }) => {
 
             //endpoint returns the content
             const newMeta = await store.posts.add(post);
@@ -86,9 +65,9 @@ const onSubmit = async ({post, content } : { post: PostMeta, content: string }) 
     }
     else if (!isEmpty(store.posts.selectedId)) {
         //Exec update call
-        await apiCall(async ( {toaster} ) => {
+        await apiCall(async ({ toaster }) => {
             await store.posts.update(post);
-           
+
             //Publish the content
             await store.content.updatePostContent(post, content)
 
@@ -129,6 +108,26 @@ const onDelete = async (post: PostMeta) => {
 }
 
 </script>
+<template>
+    <div id="post-editor" class="">
+        <EditorTable title="Manage posts" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
+            <template #table>
+                <PostTable 
+                    :items="items"
+                    @open-edit="openEdit"
+                    @delete="onDelete"
+                />
+            </template> 
+            <template #editor>
+                <PostEditor 
+                    @submit="onSubmit"
+                    @close="closeEdit(true)"
+                    @delete="onDelete"
+                />
+            </template>
+        </EditorTable>
+    </div>
+</template>
 
 <style lang="scss">
 
