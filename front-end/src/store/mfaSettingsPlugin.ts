@@ -1,62 +1,99 @@
 import 'pinia'
-import { MaybeRef, shallowRef, watch } from 'vue';
-import { MfaMethod, PkiPublicKey, apiCall, useMfaConfig, usePkiConfig, usePkiAuth } from '@vnuge/vnlib.browser';
-import { useToggle, get } from '@vueuse/core';
+import { MaybeRef, ref, shallowRef, watch } from 'vue';
+import { MfaMethod, PkiPublicKey, apiCall, useMfaConfig, usePkiConfig, usePkiAuth, MfaApi } from '@vnuge/vnlib.browser';
+import { useToggle, get, set } from '@vueuse/core';
 import { PiniaPluginContext, PiniaPlugin, storeToRefs } from 'pinia'
 import { includes } from 'lodash-es';
+import { storeExport, } from './index';
+
+interface PkiStore {
+    publicKeys: PkiPublicKey[]
+    pkiConfig: ReturnType<typeof usePkiConfig>
+    pkiAuth: ReturnType<typeof usePkiAuth>
+    refresh: () => void
+}
+
+export interface MfaSettingsStore{
+    mfa:{
+        enabledMethods: MfaMethod[]
+        refresh: () => void
+    } & MfaApi
+    pki?: PkiStore
+}
 
 declare module 'pinia' {
-    export interface PiniaCustomProperties {
-        mfaEndabledMethods: MfaMethod[]
-        mfaConfig: ReturnType<typeof useMfaConfig>
-        pkiConfig: ReturnType<typeof usePkiConfig>
-        pkiAuth: ReturnType<typeof usePkiAuth>
-        pkiPublicKeys: PkiPublicKey[]
-        mfaRefreshMethods: () => void
+    export interface PiniaCustomProperties extends MfaSettingsStore {
+       
     }
 }
 
 export const mfaSettingsPlugin = (mfaEndpoint: MaybeRef<string>, pkiEndpoint?:MaybeRef<string>): PiniaPlugin => {
 
-    return ({ store }: PiniaPluginContext) => {
+    return ({ store }: PiniaPluginContext): MfaSettingsStore => {
 
         const { loggedIn } = storeToRefs(store)
         const mfaConfig = useMfaConfig(mfaEndpoint)
-        const pkiConfig = usePkiConfig(pkiEndpoint || '/')
-        const pkiAuth = usePkiAuth(pkiEndpoint || '/')
-        const [onRefresh, mfaRefreshMethods] = useToggle()
+       
+        const [onRefresh, refresh] = useToggle()
 
-        const mfaEndabledMethods = shallowRef<MfaMethod[]>([])
-        const pkiPublicKeys = shallowRef<PkiPublicKey[]>([])
+        const enabledMethods = ref<MfaMethod[]>([])
+
+        const usePki = () => {
+
+            const publicKeys = shallowRef<PkiPublicKey[]>([])
+
+            const pkiConfig = usePkiConfig(pkiEndpoint || '/')
+            const pkiAuth = usePkiAuth(pkiEndpoint || '/')
+
+            //Watch for changes to mfa methods (refresh) and update the pki keys
+            watch([enabledMethods], ([methods]) => {
+                if (!includes(methods, 'pki' as MfaMethod) || !get(pkiEndpoint)) {
+                    set(publicKeys, [])
+                    return
+                }
+
+                //load the pki keys if pki is enabled
+                apiCall(async () => publicKeys.value = await pkiConfig.getAllKeys())
+            })
+
+            return{
+                publicKeys,
+                pkiConfig,
+                pkiAuth,
+                refresh
+            } 
+        }
 
         watch([loggedIn, onRefresh], ([ li ]) => {
             if(!li){
-                mfaEndabledMethods.value = []
+                set(enabledMethods, [])
                 return
             }
 
             //load the mfa methods if the user is logged in
-            apiCall(async () => mfaEndabledMethods.value = await mfaConfig.getMethods())
+            apiCall(async () => enabledMethods.value = await mfaConfig.getMethods())
         })
 
-        //Watch for changes to mfa methods (refresh) and update the pki keys
-        watch([mfaEndabledMethods], ([ methods ]) => {
-            if(!includes(methods, 'pki' as MfaMethod) || !get(pkiEndpoint)){
-                pkiPublicKeys.value = []
-                return
-            }
-
-            //load the pki keys if pki is enabled
-            apiCall(async () => pkiPublicKeys.value = await pkiConfig.getAllKeys())
-        })
-
-        return{
-            mfaRefreshMethods,
-            mfaEndabledMethods,
-            mfaConfig,
-            pkiConfig,
-            pkiAuth,
-            pkiPublicKeys
+        //Only return the pki store if pki is enabled
+        if(get(pkiEndpoint)){
+            return storeExport({
+                mfa:{
+                    enabledMethods,
+                    refresh,
+                    ...mfaConfig
+                },
+                pki: usePki()
+            })   
+        }
+        else{
+            return storeExport({
+                mfa:{
+                    enabledMethods,
+                    refresh,
+                    ...mfaConfig
+                },
+            })
+        
         }
     }
 }

@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import Security from './Security.vue'
+</script>
+
 <template>
   <div id="account-settings" class="container">
     <div class="acnt-content-container">
@@ -5,12 +9,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import Security from './Security.vue'
-
-</script>
-
-<style>
-
-</style>

@@ -1,3 +1,35 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRouteQuery } from '@vueuse/router';
+import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
+import { defer, first } from 'lodash-es';
+import { useStore, SortType } from '../../store';
+import Channels from './components/Channels.vue';
+import Posts from './components/Posts.vue';
+import Content from './components/Content.vue';
+
+//Protect page
+const store = useStore()
+store.setPageTitle('Blog Admin')
+
+const firstLetter = computed(() => first(store.userName))
+const tabIdQ = useRouteQuery<string>('tabid', '', { mode: 'push' })
+
+//Map queries to their respective computed values
+const tabId = computed(() => tabIdQ.value ? parseInt(tabIdQ.value) : 0);
+const lastModified = computed({
+    get: () => store.queryState.sort === SortType.ModifiedTime,
+    set: (value: boolean) => {
+        store.queryState.sort = value ? SortType.ModifiedTime : SortType.CreatedTime
+    }
+})
+
+const onTabChange = (id: number) => tabIdQ.value = id.toString(10)
+
+//Load channels on page load
+defer(() => store.channels.refresh());
+
+</script>
 <template>
     <div class="container mx-auto mt-10 mb-[10rem]">
         <div id="blog-admin-template" class="">
@@ -106,40 +138,6 @@
         </div>
     </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-import { useRouteQuery } from '@vueuse/router';
-import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
-import { defer, first } from 'lodash-es';
-import { useStore, SortType } from '../../store';
-import Channels from './components/Channels.vue';
-import Posts from './components/Posts.vue';
-import Content from './components/Content.vue';
-
-
-//Protect page
-const store = useStore()
-store.setPageTitle('Blog Admin')
-
-const firstLetter = computed(() => first(store.userName))
-const tabIdQ = useRouteQuery<string>('tabid', '', { mode: 'push' })
-
-//Map queries to their respective computed values
-const tabId = computed(() => tabIdQ.value ? parseInt(tabIdQ.value) : 0);
-const lastModified = computed({
-    get :() => store.queryState.sort === SortType.ModifiedTime,
-    set: (value:boolean) => {
-        store.queryState.sort = value ? SortType.ModifiedTime : SortType.CreatedTime
-    }
-})
-
-const onTabChange = (id:number) => tabIdQ.value = id.toString(10)
-
-//Load channels on page load
-defer(() => store.channels.refresh());
-
-</script>
 
 <style lang="scss">
 

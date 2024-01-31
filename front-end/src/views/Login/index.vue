@@ -1,3 +1,38 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { apiCall, useWait } from '@vnuge/vnlib.browser'
+import { isNil } from 'lodash-es'
+import { useStore } from '../../store'
+import { storeToRefs } from 'pinia'
+import UserPass from './components/UserPass.vue'
+import Social from './components/Social.vue'
+
+const store = useStore();
+const { loggedIn } = storeToRefs(store)
+const pkiEnabled = computed(() => !isNil(store.pki?.pkiAuth))
+
+store.setPageTitle('Login')
+
+const { waiting } = useWait()
+
+const submitLogout = async () => {
+  //Submit logout request
+  await apiCall(async ({ toaster }) => {
+    const { logout } = await store.socialOauth()
+    // Attempt to logout
+    await logout()
+    // Push a new toast message
+    toaster.general.success({
+      id: 'logout-success',
+      title: 'Success',
+      text: 'You have been logged out',
+      duration: 5000
+    })
+  })
+}
+
+</script>
+
 <template>
   <div id="login-template" class="app-component-entry">
     <div class="login-container">
@@ -25,7 +60,7 @@
         <Social />
 
         <!-- pki button, forward to the pki route -->
-        <div v-if="pkiEnabled" class="mt-3">
+        <div v-if="pkiEnabled" class="mt-4">
           <router-link to="/login/pki">
             <button type="submit" class="btn red social-button" :disabled="waiting">
               <fa-icon :icon="['fa','certificate']" size="xl" />
@@ -38,44 +73,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import {  } from 'vue'
-import { apiCall, useWait } from '@vnuge/vnlib.browser'
-import { isNil } from 'lodash-es'
-import { useStore } from '../../store'
-import { storeToRefs } from 'pinia'
-import UserPass from './components/UserPass.vue'
-import Social from './components/Social.vue'
-
-//pki enabled flag from env
-const pkiEnabled = !isNil(import.meta.env.VITE_PKI_ENABLED);
-
-const store = useStore();
-const { loggedIn } = storeToRefs(store)
-
-store.setPageTitle('Login')
-
-const { waiting } = useWait()
-
-const submitLogout = async () => {
-  //Submit logout request
-  await apiCall(async ({ toaster }) => {
-    // Attempt to logout
-    const { logout } = await store.socialOauth()
-    await logout()
-    
-    // Push a new toast message
-    toaster.general.success({
-      id: 'logout-success',
-      title: 'Success',
-      text: 'You have been logged out',
-      duration: 5000
-    })
-  })
-}
-
-</script>
 
 <style lang="scss">
 #login-template {

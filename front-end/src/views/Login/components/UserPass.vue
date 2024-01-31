@@ -55,14 +55,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, reactive, defineAsyncComponent, type Ref } from 'vue'
+import { ref, shallowRef, reactive, defineAsyncComponent, Ref } from 'vue'
 import { useTimeoutFn, set } from '@vueuse/core'
 import { useVuelidate } from '@vuelidate/core'
 import { isEqual } from 'lodash-es'
 import { required, maxLength, minLength, email, helpers } from '@vuelidate/validators'
 import { 
     useVuelidateWrapper, useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation, MfaMethod,
-    apiCall, useMessage, useWait, debugLog, WebMessage
+    apiCall, useMessage, useWait, debugLog, WebMessage,
+    type VuelidateInstance
 } from '@vnuge/vnlib.browser'
 const Totp = defineAsyncComponent(() => import('./Totp.vue'))
 
@@ -97,7 +98,7 @@ const rules = {
 }
 
 const v$ = useVuelidate(rules, vState)
-const { validate } = useVuelidateWrapper(v$);
+const { validate } = useVuelidateWrapper(v$ as Ref<VuelidateInstance>);
 
 const SubmitLogin = async () => {
 

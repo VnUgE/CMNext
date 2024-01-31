@@ -1,3 +1,19 @@
+<script setup lang="ts">
+import { useSession } from '@vnuge/vnlib.browser'
+import { toRefs } from 'vue';
+
+const props = defineProps<{
+  fidoEnabled?: boolean
+}>()
+
+const { fidoEnabled } = toRefs(props)
+const { isLocalAccount } = useSession()
+
+const Disable = () => { }
+const Setup = () => { }
+
+</script>
+
 <template>
   <div id="account-fido-settings">
     <div v-if="!isLocalAccount" class="flex flex-row justify-between">
@@ -30,24 +46,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { useSession } from '@vnuge/vnlib.browser'
-import { toRefs } from 'vue';
-
-const props = defineProps<{
-  fidoEnabled?: boolean
-}>()
-
-const { fidoEnabled } = toRefs(props)
-
-const { isLocalAccount } = useSession()
-
-const Disable = () => {}
-const Setup = () => {}
-
-</script>
-
-<style>
-
-</style>

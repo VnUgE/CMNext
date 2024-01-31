@@ -1,4 +1,84 @@
 <!-- eslint-disable vue/max-attributes-per-line -->
+<script setup lang="ts">
+
+import { debounce, find } from 'lodash-es'
+import { useElementSize, onClickOutside, useElementHover } from '@vueuse/core'
+import { computed, ref, toRefs } from 'vue'
+import { useEnvSize } from '@vnuge/vnlib.browser'
+import { RouteLocation, useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useStore } from '../../store';
+
+const emit = defineEmits(['logout'])
+const props = defineProps<{
+  routes: RouteLocation[]
+}>()
+
+const { routes } = toRefs(props)
+
+const store = useStore();
+const { loggedIn, siteTitle } = storeToRefs(store);
+const { headerHeight } = useEnvSize()
+
+//Get the router for navigation
+const router = useRouter()
+
+const sideMenuActive = ref(false)
+
+const userDrop = ref(null)
+const sideMenu = ref(null)
+const userMenu = ref(null)
+
+const dropMenuSize = useElementSize(userDrop)
+const sideMenuSize = useElementSize(sideMenu)
+const userMenuHovered = useElementHover(userMenu)
+
+const uname = computed(() => (store as any).userName || 'Visitor')
+const sideMenuStyle = computed(() => {
+  // Side menu should be the exact height of the page and under the header,
+  // So menu height is the height of the page minus the height of the header
+  return {
+    height: `calc(100vh - ${headerHeight.value}px)`,
+    left: sideMenuActive.value ? '0' : `-${sideMenuSize.width.value}px`,
+    top: `${headerHeight.value}px`
+  }
+})
+
+const dropStyle = computed(() => {
+  return {
+    'margin-top': userMenuHovered.value ? `${headerHeight.value}px` : `-${(dropMenuSize.height.value - headerHeight.value)}px`
+  }
+})
+
+const closeSideMenu = debounce(() => sideMenuActive.value = false, 50)
+const openSideMenu = debounce(() => sideMenuActive.value = true, 50)
+
+//Close side menu when clicking outside of it
+onClickOutside(sideMenu, closeSideMenu)
+
+//Redirect to the route when clicking on it
+const gotoRoute = (route: string) => {
+
+  //Get all routes from the router
+  const allRoutes = router.getRoutes();
+
+  //Try to find the route by its path
+  const goto = find(allRoutes, { path: route });
+
+  if (goto) {
+    //navigate to the route manually
+    router.push(goto);
+  }
+  else {
+    //Fallback to full navigation
+    window.location.assign(route);
+  }
+}
+
+//Emit logout event
+const OnLogout = () => emit('logout')
+
+</script>
 <template>
   <header class="sticky top-0 left-0 z-40">
     <div class="flex header-container">
@@ -72,87 +152,3 @@
     </div>
   </header>
 </template>
-
-<script setup lang="ts">
-
-import { debounce, find } from 'lodash-es'
-import { useElementSize, onClickOutside, useElementHover } from '@vueuse/core'
-import { computed, ref, toRefs } from 'vue'
-import { useEnvSize } from '@vnuge/vnlib.browser'
-import { RouteLocation, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia'; 
-import { useStore } from '../../store';
-
-const emit = defineEmits(['logout'])
-const props = defineProps<{
-  routes: RouteLocation[]
-}>()
-
-const { routes } = toRefs(props)
-
-const store = useStore();
-const { loggedIn, siteTitle } = storeToRefs(store);
-
-const { headerHeight } = useEnvSize()
-
-//Get the router for navigation
-const router = useRouter()
-
-const sideMenuActive = ref(false)
-
-const userDrop = ref(null)
-const sideMenu = ref(null)
-const userMenu = ref(null)
-
-const dropMenuSize = useElementSize(userDrop)
-const sideMenuSize = useElementSize(sideMenu)
-const userMenuHovered = useElementHover(userMenu)
-
-const uname = computed(() => (store as any).userName || 'Visitor')
-const sideMenuStyle = computed(() => {
-  // Side menu should be the exact height of the page and under the header,
-  // So menu height is the height of the page minus the height of the header
-  return {
-    height: `calc(100vh - ${headerHeight.value}px)`,
-    left: sideMenuActive.value ? '0' : `-${sideMenuSize.width.value}px`,
-    top: `${headerHeight.value}px`
-  }
-})
-
-const dropStyle = computed(() => {
-  return {
-    'margin-top': userMenuHovered.value ? `${headerHeight.value}px` : `-${(dropMenuSize.height.value - headerHeight.value)}px`
-  }
-})
-
-const closeSideMenu = debounce(() => sideMenuActive.value = false, 50)
-const openSideMenu = debounce(() => sideMenuActive.value = true, 50)
-
-//Close side menu when clicking outside of it
-onClickOutside(sideMenu, closeSideMenu)
-
-//Redirect to the route when clicking on it
-const gotoRoute = (route : string) =>{
-
-  //Get all routes from the router
-  const allRoutes = router.getRoutes();
-
-  //Try to find the route by its path
-  const goto = find(allRoutes, { path: route });
-
-  if(goto){
-    //navigate to the route manually
-    router.push(goto);
-  }
-  else{
-    //Fallback to full navigation
-    window.location.assign(route);
-  }
-}
-
-const OnLogout = () =>{
-  //Emit logout event
-  emit('logout')
-}
-
-</script>

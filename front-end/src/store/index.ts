@@ -16,9 +16,11 @@
 import { useSession } from "@vnuge/vnlib.browser";
 import { set } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { computed, shallowRef } from "vue";
+import { computed, shallowRef, type UnwrapNestedRefs } from "vue";
 
 export { SortType, QueryType } from './sharedTypes'
+
+export const storeExport = <T>(val: T): UnwrapNestedRefs<T> => val as UnwrapNestedRefs<T>;
 
 /**
  * Loads the main store for the application

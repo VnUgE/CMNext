@@ -1,9 +1,19 @@
+<script setup lang="ts">
+import { useDark } from '@vueuse/core'
+import { debounce } from 'lodash-es'
+
+const isDark = useDark()
+
+const Dark = debounce(() => isDark.value = true, 50)
+const Light = debounce(() => isDark.value = false, 50)
+</script>
+
 <template>
   <footer id="vn-footer" class="bottom-0 left-0 z-10 w-full">
     <div id="footer-content" class="footer-content" >
       <div class="footer-main-container">
         <div id="footer-text-container" class="col-span-4 sm:col-span-6 lg:col-span-3">
-          <p class="my-4 text-sm leading-normal">
+          <p class="my-4 text-xs leading-normal">
               CMNext ia a AGPL3 licensed free and open source content management system
           </p>
         </div>
@@ -50,19 +60,9 @@
           </p>
         </div>
         <div class="mb-6 text-left md:mb-0">
-          Copyright &copy; 2023 Vaughn Nugent. All Rights Reserved.
+          Copyright &copy; 2024 Vaughn Nugent.
         </div>
       </div>
     </div>
   </footer>
 </template>
-
-<script setup lang="ts">
-import { useDark } from '@vueuse/core'
-import { debounce } from 'lodash-es'
-
-const isDark = useDark()
-
-const Dark = debounce(() => isDark.value = true, 50)
-const Light = debounce(() => isDark.value = false, 50)
-</script>

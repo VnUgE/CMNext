@@ -1,7 +1,7 @@
 {
   "name": "@vnuge/cmnext-front-end",
   "private": true,
-  "version": "0.1.2",
+"version": "0.1.2",
   "type": "module",
   "copyright": "Copyright \u00A9 2024 Vaughn Nugent",
   "description": "The CMNext admin web UI, built with Tailwindcss and Vuejs",
@@ -10,7 +10,7 @@
   "output_dir": "bin",
 
   "main": "index.html",
-  "license": "agpl3",
+"license": "agpl3",
 
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,6 @@
   },
 
   "dependencies": {
-    "@chenfengyuan/vue-qrcode": "^2.0.0",
     "@fontsource/source-sans-pro": "^5.0.8",
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
     "@fortawesome/free-brands-svg-icons": "^6.4.0",
@@ -29,15 +28,16 @@
     "@headlessui/vue": "^1.7.12",
     "@kyvg/vue3-notification": "^3.0.x",
     "@vnuge/cmnext-admin": "../lib/admin",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/d773afa32ac58be36a82fcdd7bb41ac2629f8c2c/@vnuge-vnlib.browser/release.tgz",
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/df7dc615532d3441f527374d18664c1a5a336de6/@vnuge-vnlib.browser/release.tgz",
     "@vuelidate/core": "^2.0.2",
     "@vuelidate/validators": "^2.0.2",
     "@vueuse/core": "^10.3.x",
     "@vueuse/router": "^10.3.x",
+    "qrcode.vue": "^3.4.1",
     "axios": "^1.4.0",
     "base32-encode": "^2.0.0",
     "jose": "^5.0.x",
-    "json-editor-vue": "^0.11.0",
+    "json-editor-vue": "^0.12.0",
     "lodash-es": "^4.17.21",
     "otpauth": "^9.1.2",
     "showdown": "^2.1.0",
@@ -50,7 +50,6 @@
     "@types/showdown": "^2.0.1",
     "@types/lodash-es": "^4.14.194",
     "@vitejs/plugin-vue": "^5.0.x",
-    "@volar-plugins/vetur": "latest",
     "autoprefixer": "^10.4.14",
     "dotenv": "^16.0.3",
     "postcss": "^8.4.23",
@@ -58,7 +57,7 @@
     "tailwindcss": "^3.3.2",
     "typescript": "^5.0.2",
     "vite": "^5.0.x",
-    "unplugin-vue-router": "^0.7.0",   
+    "unplugin-vue-router": "^0.7.0",
     "vue-eslint-parser": "^9.3.0",
     "vue-router": "^4.2.0",
     "vue-tsc": "^1.4.2",
