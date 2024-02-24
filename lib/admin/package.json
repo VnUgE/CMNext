@@ -23,7 +23,7 @@
   "devDependencies": {
     "@types/lodash-es": "^4.14.194",
     "@babel/types":"^7.x",
-    "@typescript-eslint/eslint-plugin": "^6.4.x"
+    "@typescript-eslint/eslint-plugin": "^7.0.x"
   },
 
   "peerDependencies": {
@@ -33,7 +33,7 @@
     "axios": "^1.x",
     "jose": "^5.1.x",
     "universal-cookie": "^7.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/df7dc615532d3441f527374d18664c1a5a336de6/@vnuge-vnlib.browser/release.tgz"
+   "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/eb9752ab262522271ccaf1ff127658b7202289a4/@vnuge-vnlib.browser/release.tgz"
   },
 
   "eslintConfig": {

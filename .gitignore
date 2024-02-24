@@ -389,3 +389,4 @@ dist-ssr
 
 /back-end/*/CMNext.json
 front-end/typed-router.d.ts
+/front-end/vite.config.local.ts

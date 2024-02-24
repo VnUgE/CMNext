@@ -16,7 +16,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import postcss from './postcss.config.js'
-import { resolve } from 'path'
 import { server } from './vite.config.local.ts'
 
 //Pages setup
@@ -52,11 +51,6 @@ export default defineConfig({
     }),
     vue(), 
   ],
-  resolve: {
-    alias: {
-      "@": resolve(__dirname, "./src"),
-    }
-  },
   server: {
     ...server
   }
