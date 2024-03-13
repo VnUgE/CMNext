@@ -16,11 +16,11 @@ const submitLogin = (method: OAuthMethod) => apiCall(async () => {
 })
 
 const getIcon = (method: OAuthMethod): string[] => {
-    switch (method.Id) {
+    switch (method.id) {
         case 'auth0':
             return ['fa', 'certificate']
         default:
-            return ['fab', method.Id]
+            return ['fab', method.id]
     }
 }
 
@@ -32,7 +32,7 @@ store.socialOauth().then(m => methods.value = m.methods);
 <template>
 
     <div class="flex flex-col gap-3">
-        <div v-for="method in methods" :key="method.Id" class="">
+        <div v-for="method in methods" :key="method.id" class="">
             <button 
             type="submit" 
             class="btn social-button" 
@@ -40,7 +40,7 @@ store.socialOauth().then(m => methods.value = m.methods);
             @click.prevent="submitLogin(method)"
             >
                 <fa-icon :icon="getIcon(method)" size="xl" />
-                Login with {{ capitalize(method.Id) }}
+                Login with {{ capitalize(method.id) }}
             </button>
         </div>
     </div>

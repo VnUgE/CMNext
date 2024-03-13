@@ -33,7 +33,7 @@
     "axios": "^1.x",
     "jose": "^5.1.x",
     "universal-cookie": "^7.x",
-   "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/eb9752ab262522271ccaf1ff127658b7202289a4/@vnuge-vnlib.browser/release.tgz"
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/f2ac807486a00db4ba8486133d567e392f0fe98a/@vnuge-vnlib.browser/release.tgz"
   },
 
   "eslintConfig": {
