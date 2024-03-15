@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2024 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -71,9 +71,9 @@ export interface PostApiManualConfig {
  * @param channelId The id of the channel to get posts from
  * @returns A post api that can be used to get posts from the channel
  */
-export const createAutoPostApi = ({ cmsChannelIndexPath, channelId }: CMNextAutoConfig): AutoPostApi => {
+export const createAutoPostApi = ({ cmsChannelIndexPath, channelId, urlPrefix }: CMNextAutoConfig): AutoPostApi => {
     //Use scoped channel api
-    const channelApi = createScopedChannelApi(cmsChannelIndexPath, channelId);
+    const channelApi = createScopedChannelApi(cmsChannelIndexPath, channelId, urlPrefix);
 
     const getIndex = async (): Promise<CMNextIndex<PostMeta>> => {
         //Await the selected channel index
@@ -99,16 +99,16 @@ export const createAutoPostApi = ({ cmsChannelIndexPath, channelId }: CMNextAuto
             return ""
         }
 
-        const itemId = defaultTo(post.id, post)
+        const itemId = defaultTo((post as PostMeta).id, post)
 
         //Fetch the content as text because it is html
-        const res = await fetch(`${baseDir}${contentDir}/${itemId}${extension}`)
+        const res = await fetch(`${urlPrefix}${baseDir}${contentDir}/${itemId}${extension}`)
         return await res.text()
     }
 
     const getIndexFilePath = async () : Promise<string> => {
         const indexUrl = await channelApi.getPostIndexPath();
-        return indexUrl || ""
+        return defaultTo(indexUrl, "")
     }
 
     return{
@@ -147,7 +147,7 @@ export const createManualPostApi = ({ channelRootDir, contentDir, postIndexPath 
 
     const getPostContent = async (post: PostMeta | string, extension = '.html'): Promise<string> => {
         //Get the content url
-        const contentUrl = `${getItemPath(contentDir)}/${defaultTo(post.id, post)}${extension}`
+        const contentUrl = `${getItemPath(contentDir)}/${defaultTo((post as PostMeta).id, post)}${extension}`
 
         //Fetch the content as text because it is html
         const res = await fetch(contentUrl)

@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2024 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { startsWith } from 'lodash-es';
+import { defaultTo, startsWith } from 'lodash-es';
 import { CMNextApi, CMNextAutoConfig, CMNextEntity, CMNextIndex, ContentMeta } from "./types";
 import { createScopedChannelApi } from "./channels";
 
@@ -88,9 +88,11 @@ export const createManualContentApi = ({ channelRootDir, contentIndexPath, conte
  * @param param0 The CMNext configuration for the auto content api
  * @returns The automatic discovery content api
  */
-export const createAutoContentApi = ({ cmsChannelIndexPath, channelId }: CMNextAutoConfig): ContentApi => {
+export const createAutoContentApi = ({ cmsChannelIndexPath, channelId, urlPrefix }: CMNextAutoConfig): ContentApi => {
 
-    const channelApi = createScopedChannelApi(cmsChannelIndexPath, channelId);
+    urlPrefix = defaultTo(urlPrefix, '');
+
+    const channelApi = createScopedChannelApi(cmsChannelIndexPath, channelId, urlPrefix);
 
     const getIndex = async () : Promise<CMNextIndex<ContentMeta>> => {
         //Get the content index path from the channel api
@@ -106,7 +108,8 @@ export const createAutoContentApi = ({ cmsChannelIndexPath, channelId }: CMNextA
     const getContentUrl = async (item: ContentMeta): Promise<string> => {
         //Content resides in the content dir within the channel dir
         const contentDir = await channelApi.getContentDir();
-        return contentDir ? `${contentDir}/${item.path}` : ''
+        const baseDir = await channelApi.getBaseDir();
+        return contentDir ? `${urlPrefix}${baseDir}/${contentDir}/${item.path}` : ''
     }
 
     const getStringContent = async (item: ContentMeta): Promise<string> => {

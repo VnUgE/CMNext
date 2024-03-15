@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2024 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -22,6 +22,11 @@ export interface CMNextAutoConfig{
      * The id of the channel to load
      */
     readonly channelId: string;
+
+    /**
+     * Optional url prefix to use for the channel
+     */
+    readonly urlPrefix?: string
 }
 
 

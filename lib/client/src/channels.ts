@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2024 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { find, isEqual } from 'lodash-es';
+import { defaultTo, find, isEqual } from 'lodash-es';
 import { CMNextApi, CMNextIndex, ChannelMeta } from './types'
 
 export interface ChannelApi extends CMNextApi<ChannelMeta> {
@@ -56,9 +56,11 @@ export interface ScopedChannelApi extends ChannelApi {
     getContentDir(): Promise<string | undefined>;
 }
 
-export const createScopedChannelApi = (channelFile: string, channelId: string): ScopedChannelApi => {
+export const createScopedChannelApi = (channelFile: string, channelId: string, urlPrefix? :string): ScopedChannelApi => {
 
     const channelApi = createChannelApi(channelFile);
+    
+    urlPrefix = defaultTo(urlPrefix, '');
 
     const getSelectedChannel = async (): Promise<ChannelMeta | undefined> => {
         const index = await channelApi.getIndex()
@@ -72,7 +74,7 @@ export const createScopedChannelApi = (channelFile: string, channelId: string): 
     const getPostIndexPath = async (): Promise<string | undefined> => {
         //Await the selected channel index
         const channel = await index
-        return channel ? `${channel.path}/${channel.index}` : undefined;
+        return channel ? `${urlPrefix}${channel.path}/${channel.index}` : undefined;
     }
 
     const getContentDir = async (): Promise<string | undefined> => {
@@ -91,7 +93,7 @@ export const createScopedChannelApi = (channelFile: string, channelId: string): 
         //Await the selected channel index
         const channel = await index
         //Get the post index from the channel
-        return channel ? `${channel.path}/content.json` : undefined;
+        return channel ? `${urlPrefix}${channel.path}/content.json` : undefined;
     }
 
     return{
