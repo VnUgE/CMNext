@@ -119,7 +119,7 @@ createVnApp({
          * An array of named routes to protect from 
          * unauthenticated access.
          */
-        guardRoutes(router, ['Account', 'account/:comp'])
+        guardRoutes(router, ['Account', 'account/:comp', 'Blog'])
       
         //Add the footer nav components
         app.component('FooterNav1', FooterNav1)

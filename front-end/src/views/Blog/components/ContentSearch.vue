@@ -1,39 +1,3 @@
-<template>
-    <div id="content-search" class="my-4">
-        <div class="">
-            <div class="">
-                <input class="w-full input primary" placeholder="Search..." v-model="search" />
-            </div>
-        </div>
-        <div class="search-results">
-            <div v-if="searchResults.length == 0" class="result">
-                No results found.
-            </div>
-            <div v-else v-for="result in searchResults" :key="result.id" @click.prevent="onSelected(result)" class="result">
-                <div class="flex-auto result name">
-                    {{ result.shortName }}
-                </div>
-                <div class="result id">
-                    {{ result.shortId }}
-                </div>
-                <div class="rseult controls">
-                    <div v-if="waiting">
-                        <fa-icon icon="spinner" spin />
-                    </div>
-                    <div v-else-if="result.copied.value" class="text-sm text-amber-500">
-                        copied
-                    </div>
-                    <div v-else class="">
-                         <button class="btn secondary sm borderless" @click="result.copyLink()">
-                            <fa-icon icon="link" />
-                         </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core';
 import { apiCall, useWait } from '@vnuge/vnlib.browser';
@@ -88,6 +52,42 @@ const onSelected = (result: ContentResult) => {
 }
 
 </script>
+
+<template>
+    <div id="content-search" class="my-4">
+        <div class="">
+            <div class="">
+                <input class="w-full input primary" placeholder="Search..." v-model="search" />
+            </div>
+        </div>
+        <div class="search-results">
+            <div v-if="searchResults.length == 0" class="result">
+                No results found.
+            </div>
+            <div v-else v-for="result in searchResults" :key="result.id" @click.prevent="onSelected(result)" class="result">
+                <div class="flex-auto result name">
+                    {{ result.shortName }}
+                </div>
+                <div class="result id">
+                    {{ result.shortId }}
+                </div>
+                <div class="rseult controls">
+                    <div v-if="waiting">
+                        <fa-icon icon="spinner" spin />
+                    </div>
+                    <div v-else-if="result.copied.value" class="text-sm text-amber-500">
+                        copied
+                    </div>
+                    <div v-else class="">
+                         <button class="btn secondary sm borderless" @click="result.copyLink()">
+                            <fa-icon icon="link" />
+                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
 <style lang="scss">
 

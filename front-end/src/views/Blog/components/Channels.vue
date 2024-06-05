@@ -1,22 +1,4 @@
-<template>
-    <div id="channel-editor">
-        <EditorTable title="Manage channels" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
-            <template #table>
-                <ChannelTable 
-                    :items="items"
-                    @open-edit="openEdit" 
-                />
-            </template>
-            <template #editor>
-                <ChannelEdit 
-                    @close="closeEdit"
-                    @on-submit="onSubmit"
-                    @on-delete="onDelete"
-                />
-            </template>
-        </EditorTable>
-    </div>
-</template>
+
 
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -33,7 +15,7 @@ const emit = defineEmits(['close'])
 const store = useStore()
 const { items, pagination } = store.channels.createPages()
 
-const showEdit = computed(() => !isEmpty(store.channels.editChannel))
+const showEdit = computed(() => !isEmpty(store.channels.editId))
 
 const openEdit = (channel: BlogChannel) => store.channels.editId = channel.id;
 
@@ -44,13 +26,13 @@ const closeEdit = (update?:boolean) => {
         store.channels.refresh()
     }
     //Reset page to top
-    window.scrollTo(0, 0)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const openNew = () => {
-     store.channels.editId = 'new'
+    store.channels.editId = 'new'
     //Reset page to top
-    window.scrollTo(0, 0)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const onSubmit = async ({channel, feed} : { channel:BlogChannel, feed? : ChannelFeed}) => {
@@ -86,6 +68,15 @@ const onDelete = async (channel : BlogChannel) => {
 
 </script>
 
-<style lang="scss">
-
-</style>
+<template>
+    <div id="channel-editor">
+        <EditorTable title="Manage channels" :show-edit="showEdit" :pagination="pagination" @open-new="openNew">
+            <template #table>
+                <ChannelTable :items="items" @open-edit="openEdit" />
+            </template>
+            <template #editor>
+                <ChannelEdit @close="closeEdit" @on-submit="onSubmit" @on-delete="onDelete" />
+            </template>
+        </EditorTable>
+    </div>
+</template>

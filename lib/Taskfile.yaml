@@ -25,7 +25,5 @@ tasks:
     dir: '{{.USER_WORKING_DIR}}'
     ignore_error: true
     cmds:
-    - cmd: powershell -Command "Remove-Item -Recurse node_modules"
-    - cmd: powershell -Command "Remove-Item -Recurse dist"
-    - cmd: powershell -Command "Remove-Item -Recurse -Force bin"
-    - cmd: powershell -Command "Remove-Item release.tgz"
+    - for: [node_modules/, dist/, bin/]
+      cmd: powershell -Command "Remove-Item -Recurse -Force {{.ITEM}}"

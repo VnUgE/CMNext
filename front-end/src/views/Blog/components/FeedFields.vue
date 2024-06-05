@@ -1,40 +1,3 @@
-<template>
-    <div id="feed-custom-fields">
-        <div class="my-3 text-center">
-            <h4>Feed custom fields</h4>
-        </div>
-
-        <div v-if="cleanXml" class="w-full max-w-2xl mx-auto">
-            <pre class="xml">
-{{ cleanXml }}
-            </pre>
-        </div>
-
-        
-        <div class="my-2 ml-auto w-fit">
-            <div v-if="!editMode"  class="button-group">
-                <button class="btn" @click="edit">Edit</button>
-            </div>
-            <div v-else class="button-group">
-                <button class="btn primary" @click="save" >Update</button>
-                <button class="btn" @click="cancel">Cancel</button>
-            </div>
-        </div>
-
-
-        <div v-if="editMode" class="flex flex-col">
-            <div v-if="$props.showEpAdder" class="mb-2">
-                <EpAdder @submit="onAddEnclosure" />
-            </div>
-
-            <div class="">
-                <JsonEditorVue :ask-to-format="true" class="json" v-model="jsonFeedData"/>
-            </div>
-        </div>
-
-    </div>
-</template>
-
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref } from 'vue';
 import { FeedProperty, UseXmlProperties } from '@vnuge/cmnext-admin';
@@ -99,6 +62,44 @@ const onAddEnclosure = (props: FeedProperty[]) =>{
 }
 
 </script>
+
+<template>
+    <div id="feed-custom-fields">
+        <div class="my-3 text-center">
+            <h4>Feed custom fields</h4>
+        </div>
+
+        <div v-if="cleanXml" class="w-full max-w-2xl mx-auto">
+            <pre class="xml">
+{{ cleanXml }}
+            </pre>
+        </div>
+
+        
+        <div class="my-2 ml-auto w-fit">
+            <div v-if="!editMode"  class="button-group">
+                <button class="btn" @click="edit">Edit</button>
+            </div>
+            <div v-else class="button-group">
+                <button class="btn primary" @click="save" >Update</button>
+                <button class="btn" @click="cancel">Cancel</button>
+            </div>
+        </div>
+
+
+        <div v-if="editMode" class="flex flex-col">
+            <div v-if="$props.showEpAdder" class="mb-2">
+                <EpAdder @submit="onAddEnclosure" />
+            </div>
+
+            <div class="">
+                <JsonEditorVue :ask-to-format="true" class="json" v-model="jsonFeedData"/>
+            </div>
+        </div>
+
+    </div>
+</template>
+
 
 <style lang="scss">
 
