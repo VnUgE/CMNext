@@ -1,67 +1,13 @@
-<template>
-    <div class="">
-        <h3>Login</h3>
 
-        <div v-if="mfaUpgrade?.type === MfaMethod.TOTP">
-            <Totp @clear="totpClear" :upgrade="mfaUpgrade" />
-        </div>
-
-        <form v-else id="user-pass-submit-form" method="post" action="/login" @submit.prevent="SubmitLogin">
-            <fieldset class="" :disabled="waiting" >
-                <div>
-                    <div class="float-label">
-                        <input
-                            id="username"
-                            v-model="v$.username.$model"
-                            type="email"
-                            class="w-full primary input"
-                            placeholder="Email"
-                            :class="{ 'data-invalid': v$.username.$invalid }"
-                            @input="onInput"
-                        >
-                        <label for="username">Email</label>
-                    </div>
-                </div>
-                    <div class="py-3">
-                    <div class="mb-2 float-label">
-                        <input
-                            id="password"
-                            v-model="v$.password.$model"
-                            type="password"
-                            class="w-full primary input"
-                            placeholder="Password"
-                            :class="{ 'data-invalid': v$.password.$invalid }"
-                            @input="onInput"
-                        >
-                        <label for="password">Password</label>
-                    </div>
-                </div>
-            </fieldset>
-            <button type="submit" form="user-pass-submit-form" class="btn primary" :disabled="waiting">
-                <!-- Display spinner if waiting, otherwise the sign-in icon -->
-                <fa-icon :class="{'animate-spin':waiting}" :icon="waiting ? 'spinner' : 'sign-in-alt'"/>
-                Log-in
-            </button>
-            <div class="flex flex-row justify-between gap-3 pt-3 pb-2 form-links">
-                <router-link to="/pwreset">
-                    Forgot password
-                </router-link>
-                <router-link to="/register">
-                    Register a new account
-                </router-link>
-            </div>
-        </form>
-    </div>
-</template>
 
 <script setup lang="ts">
 import { ref, shallowRef, reactive, defineAsyncComponent, Ref } from 'vue'
 import { useTimeoutFn, set } from '@vueuse/core'
 import { useVuelidate } from '@vuelidate/core'
-import { isEqual } from 'lodash-es'
+import { isEmpty } from 'lodash-es'
 import { required, maxLength, minLength, email, helpers } from '@vuelidate/validators'
 import { 
-    useVuelidateWrapper, useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation, MfaMethod,
+    useVuelidateWrapper, useMfaLogin, totpMfaProcessor, IMfaFlowContinuiation,
     apiCall, useMessage, useWait, debugLog, WebMessage,
     type VuelidateInstance
 } from '@vnuge/vnlib.browser'
@@ -126,12 +72,21 @@ const SubmitLogin = async () => {
         //Try to get response as a flow continuation
         const mfa = response as IMfaFlowContinuiation
 
-        // Response is a totp upgrade request
-        if (isEqual(mfa.type, MfaMethod.TOTP)) {
-            //Store the upgrade message
+        // Response is an mfa upgrade
+        if (!isEmpty(mfa.type)) {
+
+            /**
+             * If mfa has a type assicated, then we should have a handler matched 
+             * with it to continue the flow
+             * 
+             * All mfa upgrades will have a token expiration, and an assoicated 
+             * type string name (string) 
+             */
+           
             set(mfaUpgrade, mfa);
-            //Setup timeout timer
+          
             set(mfaTimeout, mfa.expires! * 1000);
+            
             mfaTimer.start();
         }
         //If login without mfa was successful
@@ -145,11 +100,51 @@ const SubmitLogin = async () => {
     })
 }
 
-const totpClear = () => {
-    //Clear timer
+const mfaClear = () => {
     mfaTimer.stop();
-    //Clear upgrade message
     set(mfaUpgrade, undefined);
 }
 
 </script>
+
+<template>
+    <div class="">
+        <h3>Login</h3>
+
+        <div v-if="mfaUpgrade?.type === 'totp'">
+            <Totp @clear="mfaClear()" :upgrade="mfaUpgrade" />
+        </div>
+      
+        <form v-else id="user-pass-submit-form" method="post" action="/login" @submit.prevent="SubmitLogin">
+            <fieldset class="" :disabled="waiting">
+                <div>
+                    <div class="float-label">
+                        <input id="username" v-model="v$.username.$model" type="email" class="w-full primary input"
+                            placeholder="Email" :class="{ 'data-invalid': v$.username.$invalid }" @input="onInput">
+                        <label for="username">Email</label>
+                    </div>
+                </div>
+                <div class="py-3">
+                    <div class="mb-2 float-label">
+                        <input id="password" v-model="v$.password.$model" type="password" class="w-full primary input"
+                            placeholder="Password" :class="{ 'data-invalid': v$.password.$invalid }" @input="onInput">
+                        <label for="password">Password</label>
+                    </div>
+                </div>
+            </fieldset>
+            <button type="submit" form="user-pass-submit-form" class="btn primary" :disabled="waiting">
+                <!-- Display spinner if waiting, otherwise the sign-in icon -->
+                <fa-icon :class="{ 'animate-spin': waiting }" :icon="waiting ? 'spinner' : 'sign-in-alt'" />
+                Log-in
+            </button>
+            <div class="flex flex-row justify-between gap-3 pt-3 pb-2 form-links">
+                <router-link to="/pwreset">
+                    Forgot password
+                </router-link>
+                <router-link to="/register">
+                    Register a new account
+                </router-link>
+            </div>
+        </form>
+    </div>
+</template>

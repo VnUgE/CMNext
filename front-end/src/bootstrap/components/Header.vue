@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/max-attributes-per-line -->
 <script setup lang="ts">
 
-import { debounce, find } from 'lodash-es'
+import { debounce, find, isEqual, toLower } from 'lodash-es'
 import { useElementSize, onClickOutside, useElementHover, get } from '@vueuse/core'
 import { computed, ref, toRefs } from 'vue'
 import { useEnvSize } from '@vnuge/vnlib.browser'
@@ -67,7 +67,7 @@ const gotoRoute = (route: string) => {
   const allRoutes = router.getRoutes();
 
   //Try to find the route by its path
-  const goto = find(allRoutes, { path: route });
+  const goto = find(allRoutes, r => isEqual(toLower(r.path), toLower(route)));
 
   if (goto) {
     //navigate to the route manually
