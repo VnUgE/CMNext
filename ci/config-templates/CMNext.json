@@ -1,6 +1,6 @@
 {
   //Enables debug logging
-  "debug": false,
+  "debug": ${DEBUG_PLUGINS},
 
   "post_endpoint": {
     "path": "/api/blog/posts"
@@ -12,12 +12,12 @@
 
   "content_endpoint": {
     "path": "/api/blog/content",
-    "max_content_length": 50000000
+    "max_content_length": ${MAX_CONTENT_LENGTH}
   },
 
   "blog_channels": {
     //The index file for storing channel configuration
-    "index_file_name": "blogs/channels.json"
+    "index_file_name": "${CHANNEL_INDEX_FILE}"
   },
 
   //S3 setup with vault secrets

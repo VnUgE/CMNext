@@ -7,10 +7,22 @@ version: "3"
 
 vars:
   BUILDS_URL: https://www.vaughnnugent.com/public/resources/software/builds
+  SQLITE_OUT_DIR: "plugins/assets/VNLib.Plugins.Extensions.Loading.Sql.SQLite"
+  WEBSERVER_VERSION: 'a54c9d0da36ee15b5a1b6852b843bc0a40694ce5'
 
 includes:
+  install:
+    taskfile: install.taskfile.yaml
+
   plugins:
     taskfile: plugins.taskfile.yaml
+
+  container:
+    dir: container  #always run from the container directory
+    taskfile: container/Taskfile.yaml
+    vars:
+      BUILDS_URL: '{{.BUILDS_URL}}'
+      PACKAGE_FILE_NAME: "{{ lower .PROJECT_NAME }}-alpine3.19-oci.tgz"  #the name of the output package file
 
 tasks:
 
@@ -19,48 +31,87 @@ tasks:
     #clean out dist dir before building
     - cmd: powershell -Command "rm -Recurse -Force ./dist"
       ignore_error: true
-      
-    - task: install-plugins
+
+    - cmd: powershell -Command "mkdir lib -Force"
+      ignore_error: true
+
+    - task: compile-config
+  
+    - task: plugins:all
+     #remove runtime-shared libs before they are copied
+    - task: prune-plugin-libs  
     - task: install-webserver
+
+    #runtimes must be pruned for specific targets
+    - task: prune-runtimes
+    
+    #run container build last
+    - task: container:build
 
   install-webserver:
     cmds:
-    #setup env
-    - task: create-env
+    - cmd : powershell -Command "mkdir webserver -Force"
+      ignore_error: true
+    
+    #clone the webserver (it's cross platform when using dotnet command so just grab the linux version)
+    - task: install:install
       vars:
-        TARGET_OS: win-x64
+        PROJECT_NAME: 'VNLib.Webserver'
+        MODULE_NAME: "VNLib.Webserver"
+        FILE_NAME: "linux-x64-release.tgz"
+        DIR: 'webserver/'
+        VERSION: '{{.WEBSERVER_VERSION}}'
 
-    - task: create-env
-      vars:
-        TARGET_OS: linux-x64
+    #remove the executable since its not needed
+    - cmd: cd webserver/ && powershell -Command "rm VNlib.WebServer"
 
-    - task: create-env
-      vars:
-        TARGET_OS: osx-x64
+    - task: parallel-envs
 
+  parallel-envs:
+    deps:
+     - task: create-env
+       vars: { TARGET_OS: 'windows-x86_64' }
+     - task: create-env
+       vars: { TARGET_OS: 'linux-x86_64' }
+     - task: create-env
+       vars: { TARGET_OS: 'osx-x86_64' }
+     - task: create-env
+       vars: { TARGET_OS: 'windows-arm' }
+     - task: create-env
+       vars: { TARGET_OS: 'linux-arm' }
+     - task: create-env
+       vars: { TARGET_OS: 'osx-arm' }
 
   postbuild_success:
     cmds:
-    #make bin dir
     - cmd: powershell -Command "mkdir bin -Force"
+    - task: pb-parallel  
+
+    #cleanup unnecessary build files that clog up the pipeline
+    - for: [ build, plugins, dist, lib, webserver, config ]
+      cmd: powershell -Command "rm -Recurse '{{.ITEM}}'"
       ignore_error: true
 
-    - task: pack
-      vars:
-        TARGET_OS: win-x64
-    - task: pack
-      vars:
-        TARGET_OS: linux-x64
-    - task: pack
-      vars:
-        TARGET_OS: osx-x64
+    - task: container:postbuild_success
 
-
-  install-plugins:
+  pb-parallel:
+    internal: true
+    deps:
+     - task: pack
+       vars: { TARGET_OS: 'windows-x86_64' }
+     - task: pack
+       vars: { TARGET_OS: 'linux-x86_64' }
+     - task: pack
+       vars: { TARGET_OS: 'osx-x86_64' }
+     - task: pack
+       vars: { TARGET_OS: 'windows-arm' }
+     - task: pack
+       vars: { TARGET_OS: 'linux-arm' }
+     - task: pack
+       vars: { TARGET_OS: 'osx-arm' }
     cmds:
-    #add plugins
-    - task: plugins:all
-    
+    - echo "Packing complete"
+
   create-env:
     vars:
       BUILD_DIR: './build/{{.TARGET_OS}}'
@@ -69,61 +120,88 @@ tasks:
     - cmd: powershell -Command "mkdir {{.BUILD_DIR}} -Force"
       ignore_error: true
     
-    #copy plugins
-    - cmd: powershell -Command "cp -Recurse -Force plugins {{.BUILD_DIR}}"
+    #copy build files for target os
+    - for: [ plugins, dist, lib, config, webserver, config ]
+      cmd: powershell -Command "cp -Recurse -Force {{.ITEM}} {{.BUILD_DIR}}"
 
-    #copy wwwroot
-    - cmd: powershell -Command "cp -Recurse -Force dist {{.BUILD_DIR}}"
-
-    #copy libraries
-    - cmd: powershell -Command "cp -Recurse -Force lib {{.BUILD_DIR}}"
-
-    #copy config
-    - cmd: powershell -Command "cp -Recurse -Force config {{.BUILD_DIR}}"
-
-    - task: get-webserver
-      vars:
-        TARGET_OS: '{{.TARGET_OS}}'
-        BUILD_DIR: '{{.BUILD_DIR}}'
-
-  get-webserver:
-    internal: true
-    cmds:
-    - task: install
-      vars:
-        PROJECT_NAME: 'VNLib.Webserver'
-        MODULE_NAME: "VNLib.Webserver"
-        FILE_NAME: "{{.TARGET_OS}}-release.tgz"
-        BUILD_DIR: '{{.BUILD_DIR}}/webserver'
-
-    - cmd: powershell -Command "cp -Force ./config/config.json {{.BUILD_DIR}}/config.json"
-
-  install:
-    internal: true
-    vars:
-      DIR: '"{{.BUILD_DIR}}"'
-    cmds:
-    #make the plugin directory
-    - cmd: powershell -Command "mkdir {{.DIR}} -Force"
-      ignore_error: true
-    - cd {{.DIR}} && powershell "{{.USER_WORKING_DIR}}/install.ps1" -BaseUrl {{.BUILDS_URL}} -ModuleName {{.MODULE_NAME}} -ProjectName {{.PROJECT_NAME}} -FileName {{.FILE_NAME}}
-    - cd {{.DIR}} && tar -xzf {{.FILE_NAME}}
-    #remove the tar file
-    - cd {{.DIR}} && powershell -Command "rm {{.FILE_NAME}}"
+    #copy release taskfile and rename it
+    - cmd: powershell -Command "cp -Force release.taskfile.yaml {{.BUILD_DIR}}/Taskfile.yaml"
  
   pack:
     internal: true
     cmds:
     - cmd: powershell -Command "mkdir build/{{.TARGET_OS}}/ -Force"
       ignore_error: true
-    - cd build/{{.TARGET_OS}} && tar -czf ../../bin/{{.TARGET_OS}}-release.tgz .
+    - cd build/{{.TARGET_OS}} && tar -czf ../../bin/{{.TARGET_OS}}-release.tgz . 
+
+  compile-config:
+    internal: false
+    dotenv: ['build.env']  #use the local .env file when compiling config variables
+    cmds:
+      - echo "$CACHE_ASM_PATH"
+      - cmd: powershell mkdir config/ -Force
+        ignore_error: true
+      - cmd: powershell './compile.ps1' -InputDir config-templates/ -OutputDir config/
+      - cmd: powershell cp config-templates/routes.xml config/routes.xml -Force
+
+  prune-plugin-libs:
+    cmds:
+    - for: ['vnlib.utils.dll' , 'vnlib.net.http.dll', 'VNLib.Hashing.Portable.dll', 'VNLib.Plugins.Essentials.dll', 'VNLib.Plugins.dll', 'Serilog.dll', 'Serilog.Sinks.Console.dll', 'Serilog.Sinks.File.dll']
+      cmd: cd plugins && powershell 'Get-ChildItem -Path . -Recurse -File -Filter "{{.ITEM}}" | Remove-Item -Force'
+
+  prune-runtimes:
+    deps:
+    #prune sqlite runtime native libraries that Im not targeting
+    #windows
+    - task: prune-files 
+      vars: 
+        ITEMS: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-arm,win-arm64'
+        DIR: 'windows-x86_64'
+      
+    #windows arm
+    - task: prune-files 
+      vars: 
+        ITEMS: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-x86,win-x64'
+        DIR: 'windows-arm'
+
+    #linux x64
+    - task: prune-files
+      vars: 
+        ITEMS: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-musl-arm,linux-musl-arm64,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-arm,win-arm64,win-x86,win-x64'
+        DIR: 'linux-x86_64'
  
+    #linux arm
+    - task: prune-files
+      vars: 
+        ITEMS: 'browser-wasm,linux-mips64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-arm,win-arm64,win-x86,win-x64'
+        DIR: 'linux-arm'
+
+    #osx x64
+    - task: prune-files
+      vars: 
+        ITEMS: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,win-arm,win-arm64,win-x86,win-x64'
+        DIR: 'osx-x86_64'
+
+    #osx arm
+    - task: prune-files
+      vars: 
+        ITEMS: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-x64,osx-x64,win-arm,win-arm64,win-x86,win-x64'
+        DIR: 'osx-arm'
+
+    cmds:
+     - echo "Pruning runtime files"
+
+  prune-files:
+    internal: true
+    cmds:
+     - for: { var: ITEMS, split: ','}
+       cmd: cd build/{{.DIR}}/{{.SQLITE_OUT_DIR}}/runtimes && powershell -Command "rm {{.ITEM}} -Recurse -Force"
+       ignore_error: true
 
   clean:
     ignore_error: true
     cmds:
-    - cmd: powershell -Command "rm -Recurse -Force ./build"
-    - cmd: powershell -Command "rm -Recurse -Force ./bin"
-    - cmd: powershell -Command "rm -Recurse -Force ./dist"
-    - cmd: powershell -Command "rm -Recurse -Force ./plugins"
-    - cmd: powershell -Command "rm -Recurse -Force ./lib"
+    - for: [ build/, bin/, dist/, plugins/, lib/, webserver/, config/ ]
+      cmd: powershell -Command "rm -Recurse -Force '{{.ITEM}}'"
+    
+    - task: container:clean
