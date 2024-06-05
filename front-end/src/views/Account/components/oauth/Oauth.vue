@@ -51,7 +51,7 @@ store.oauth2.refresh();
       </div>
     </div>
     <div class="px-2 my-10">
-      <div class="m-auto text-sm">
+      <div class="m-auto text-sm text-bg">
         OAuth2 applications allow you grant api access to OAuth2 clients using the Client Credentials grant type.
         <a class="link" href="https://oauth.net" target="_blank">
           Learn more

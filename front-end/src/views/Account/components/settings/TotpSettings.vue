@@ -191,7 +191,7 @@ const CloseQrWindow = () => {
         </span>
       </p>
 
-      <p class="py-2 text-color-background">
+      <p class="py-2 text-bg">
         Please enter your code from your authenticator app to continue.
       </p>
 
@@ -236,7 +236,7 @@ const CloseQrWindow = () => {
           <span class="pl-2">Setup</span>
         </button>
       </div>
-      <p class="p-1 pt-3 text-sm text-color-background">
+      <p class="p-1 pt-3 text-sm text-bg">
         TOTP is a time based one time password. You can use it as a form of Multi Factor Authentication when
         using another device such as a smart phone or TOTP hardware device. You can use TOTP with your smart
         phone

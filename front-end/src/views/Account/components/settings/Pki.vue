@@ -211,7 +211,7 @@ const onSubmitKeys = async () => {
                     </table>
                 </div>
                 
-                <p v-else class="p-1 pt-3 text-sm text-color-background">
+                <p v-else class="p-1 pt-3 text-sm bg">
                   PKI authentication is a method of authenticating your user account with signed messages and a shared public key. This method implementation 
                   uses client signed Json Web Tokens to authenticate user generated outside this website as a One Time Password (OTP). This allows for you to
                   use your favorite hardware or software tools, to generate said OTPs to authenticate your user.

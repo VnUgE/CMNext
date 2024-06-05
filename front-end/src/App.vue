@@ -3,7 +3,7 @@
     <title>{{ metaTile }}</title>
   </head>
   <!-- Import environment component top level as the entrypoint -->
-  <Environment @logout="logout">
+  <Environment @logout="logout()">
     <template #main>
       <router-view />
     </template>
@@ -14,8 +14,8 @@
 import { computed } from 'vue';
 import { useStore } from './store';
 import { storeToRefs } from 'pinia';
-import Environment from './bootstrap/Environment.vue';
 import { apiCall } from '@vnuge/vnlib.browser';
+import Environment from './bootstrap/Environment.vue';
 
 const store = useStore()
 const { siteTitle, pageTitle } = storeToRefs(store)

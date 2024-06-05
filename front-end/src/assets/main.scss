@@ -1,4 +1,4 @@
-#footer-content .footer-lower{
+#footer-content .footer-lower {
     @apply hidden;
 }
 
@@ -15,4 +15,8 @@
     background: -moz-linear-gradient(bottom right, #98E4C8, #2C6BC3);
     background: linear-gradient(to top left, #98E4C8, #2C6BC3);
     @apply text-gray-700;
+}
+
+.text-bg{
+    @apply text-gray-700 dark:text-gray-400;
 }

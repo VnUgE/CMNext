@@ -40,7 +40,7 @@ const Setup = () => { }
           </button>
         </div>
       </div>
-      <p class="p-1 pt-3 text-sm text-color-background">
+      <p class="p-1 pt-3 text-sm text-bg">
         WebAuthN/FIDO is not yet supported, due to complexity and browser support. 
       </p>
     </div>

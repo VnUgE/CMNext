@@ -62,7 +62,7 @@ const pkiEnabled = computed(() => !isNil(store.pki))
           </div>
         </div>
 
-        <p class="p-1 text-sm text-color-background">
+        <p class="p-1 text-sm text-bg">
           When enabled, continuously regenerates your login credentials to keep you logged in. The longer you are logged in,
           the easier session fixation attacks become. If disabled, you will need to log when your credentials have expired.
           It is recommneded that you leave this <strong>off</strong>.

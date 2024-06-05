@@ -68,6 +68,9 @@
     "otp_time_diff_sec": 30,
     "otp_key_size": 64,
     "pubkey_cookie_name": "client-id",
-    "pubkey_signing_key_size": 32
+    "pubkey_signing_key_size": 32,
+    "strict_origin": false,
+    "strict_path": true,  //Can be enabled if front-end is running on the same server
+    //"allowed_origins": [""]
   }
 }

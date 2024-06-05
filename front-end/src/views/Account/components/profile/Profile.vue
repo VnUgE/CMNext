@@ -87,7 +87,7 @@ watch(editMode, () => v$.value.$reset())
 
       <div>
         
-        <p class="profile-text text-color-background">
+        <p class="profile-text text-bg">
           You may set or change your profile information here. All fields are optional,
           but some features may not work without some information.
         </p>
