@@ -40,7 +40,7 @@ tasks:
   build-proj:
     cmds:
     #build front-end
-    - cd ../front-end && npm install && npm run build
+    - cd ../front-end && task ci-build
     #move dist files to web root
     - cmd: powershell -Command "cp -Recurse -Force ../front-end/dist {{.USER_WORKING_DIR}}"
 

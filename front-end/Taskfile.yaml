@@ -9,12 +9,15 @@ tasks:
     cmds:
     - cmd: npm version {{ .BUILD_VERSION }}
       ignore_error: true #error if run when version is not updated
-      
+    - task: ci-build
+
+  ci-build:
+    cmds:
     #build admin first
-    - cd ../lib/admin && npm install && npm run build
-    #install deps and run main build
-    - npm install 
-    - npm run build
+     - cd ../lib/admin && npm install && npm run build
+     #install deps and run main build
+     - npm install 
+     - npm run build
     
   #copy artifacts to temp directory
   postbuild_success:
