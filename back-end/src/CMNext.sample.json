@@ -20,25 +20,22 @@
     "index_file_name": "blogs/channels.json"
   },
 
-  //S3 setup with vault secrets
-  "disabled s3_config": {
+  "storage": {
+    //The custom storage assembly to use
+    "custom_storage_assembly": null,
+
+    "type": "s3", //s3 | ftp
+
+    //s3 config
     "server_address": "",
     "access_key": "",
     "bucket": "",
-    "use_ssl": true,
+    "use_ssl": false,
     "Region": null
-  },
-
-  "disabled ftp_config": {
-    "url": "",
-    "username": "",
-    //Base path within the ftp user's directory
-    "base_path": ""
   },
 
   "secrets": {
     //Set the vault path to the s3 secret
-    "s3_secret": "",
-    "ftp_password": ""
+    "storage_secret": "",
   }
 }

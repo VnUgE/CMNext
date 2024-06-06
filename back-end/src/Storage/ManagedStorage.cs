@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2024 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -30,28 +30,27 @@ using VNLib.Plugins.Extensions.Loading;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
-    [ConfigurationName("storage", Required = false)]
+    [ConfigurationName("storage")]
     internal sealed class ManagedStorage : ISimpleFilesystem
     {
-        private readonly ISimpleFilesystem _backingStorage;
+        private readonly ISimpleFilesystem _backingStorage;      
 
-        public ManagedStorage(PluginBase plugin) : this(plugin, null)
-        { }
-
-        public ManagedStorage(PluginBase plugin, IConfigScope? config)
+        public ManagedStorage(PluginBase plugin, IConfigScope config)
         {
+            string type = config.GetRequiredProperty("type", p => p.GetString()!);
+
             //try to get custom storage assembly
-            if (config != null && config.ContainsKey("custom_storage_assembly"))
+            if (config.TryGetProperty("custom_storage_assembly", p => p.GetString(), out string? storageAssembly) 
+                && !string.IsNullOrWhiteSpace(storageAssembly))
             {
-                string storageAssembly = config.GetRequiredProperty("custom_storage_assembly", p => p.GetString()!);
-                _backingStorage = plugin.CreateServiceExternal<ISimpleFilesystem>(storageAssembly);
+                _backingStorage = plugin.CreateServiceExternal<ISimpleFilesystem>(storageAssembly!);
             }
-            else if (plugin.HasConfigForType<MinioClientManager>())
+            else if (string.Equals(type, "s3", StringComparison.OrdinalIgnoreCase))
             {
                 //Use minio storage
                 _backingStorage = plugin.GetOrCreateSingleton<MinioClientManager>();
             }
-            else if (plugin.HasConfigForType<FtpStorageManager>())
+            else if (string.Equals(type, "ftp", StringComparison.OrdinalIgnoreCase))
             {
                 //Use ftp storage
                 _backingStorage = plugin.GetOrCreateSingleton<FtpStorageManager>();

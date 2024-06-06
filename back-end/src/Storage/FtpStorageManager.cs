@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2024 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -24,7 +24,6 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using FluentFTP;
 using FluentFTP.Exceptions;
@@ -36,40 +35,47 @@ using VNLib.Plugins.Extensions.Loading;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
-    [ConfigurationName("ftp_config")]
+
+    [ConfigurationName("storage")]
     internal class FtpStorageManager : StorageBase, IDisposable
     {
         private readonly AsyncFtpClient _client;
-        private readonly string _username;
-        private readonly string? _baasePath;
+        private readonly S3Config _storageConf;
 
-        protected override string? BasePath => _baasePath;
+        protected override string? BasePath => _storageConf.BaseBucket;
 
         public FtpStorageManager(PluginBase plugin, IConfigScope config)
         {
-            string? url = config["url"].GetString();
-            _username = config["username"].GetString() ?? throw new KeyNotFoundException("Missing required username in config");
-            _baasePath = config["base_path"].GetString();
+            _storageConf = config.Deserialze<S3Config>();
 
-            Uri uri = new (url!);
+            Uri uri = new (_storageConf.ServerAddress!);
 
             //Init new client
             _client = new(
                 uri.Host, 
                 uri.Port, 
                 //Logger in debug mode
-                logger:plugin.IsDebug() ? new FtpDebugLogger(plugin.Log) : null
+                logger: plugin.IsDebug() ? new FtpDebugLogger(plugin.Log) : null
             );
         }
 
         public override async Task ConfigureServiceAsync(PluginBase plugin)
         {
-            using ISecretResult password = await plugin.GetSecretAsync("ftp_password");
+            using ISecretResult password = await plugin.Secrets().GetSecretAsync("storage_secret");
 
             //Init client credentials
-            _client.Credentials = new NetworkCredential(_username, password?.Result.ToString());
-            _client.Config.EncryptionMode = FtpEncryptionMode.Auto;
-            _client.Config.ValidateAnyCertificate = true;
+            _client.Credentials = new NetworkCredential(_storageConf.ClientId, password?.Result.ToString());
+
+            //If the user forces ssl, then assume it's an implicit connection and force certificate checking
+            if(_storageConf.UseSsl == true)
+            {
+                _client.Config.EncryptionMode = FtpEncryptionMode.Implicit;
+            }
+            else
+            {
+                _client.Config.EncryptionMode = FtpEncryptionMode.Auto;
+                _client.Config.ValidateAnyCertificate = true;
+            }
 
             plugin.Log.Information("Connecting to ftp server");
 
@@ -115,7 +121,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         ///<inheritdoc/>
         public override string GetExternalFilePath(string filePath)
         {
-            return string.IsNullOrWhiteSpace(_baasePath) ? filePath : $"{_baasePath}/{filePath}";
+            return string.IsNullOrWhiteSpace(BasePath) ? filePath : $"{BasePath}/{filePath}";
         }
 
         public void Dispose()
@@ -123,7 +129,7 @@ namespace Content.Publishing.Blog.Admin.Storage
             _client?.Dispose();
         }
 
-        sealed record class FtpDebugLogger(ILogProvider Log) : IFtpLogger
+        sealed class FtpDebugLogger(ILogProvider Log) : IFtpLogger
         {
             void IFtpLogger.Log(FtpLogEntry entry)
             {

@@ -56,14 +56,21 @@ ENV VNLIB_ARGON2_DLL_PATH=/app/lib/libargon2.so
 
 #set default env variables
 ENV MAX_CONTENT_LENGTH=204800000   \
- REG_TOKEN_DURATION_MIN=360
+ REG_TOKEN_DURATION_MIN=360     \
+ MAX_LOGIN_ATTEMPS=10
 
 #SQL Config
 ENV SQL_LIB_PATH=VNLib.Plugins.Extensions.Sql.SQLite.dll
 ENV SQL_CONNECTION_STRING="Data Source=data/cmnext.db;"
 
-#ACCOUNTS
-ENV MAX_LOGIN_ATTEMPS=10
+#STORAGE 
+ENV STORAGE_TYPE="s3"           \
+ STORAGE_CUSTOM_ASSEMBLY=""     \
+ STORAGE_SERVER_ADDRESS=""      \
+ STORAGE_USERNAME=""            \
+ STORAGE_BUCKET=""              \
+ STORAGE_USE_SSL=true           \
+ S3_REGION=""
 
 #HC Vault
 ENV HC_VAULT_ADDR=""            \
@@ -81,7 +88,8 @@ ENV PASSWORD_PEPPER=""          \
  DATABASE_PASSWORD=""           \
  REDIS_PASSWORD=""              \
  VNCACHE_CLIENT_PRIVATE_KEY=""  \
- VNCACHE_CACHE_PUBLIC_KEY=""
+ VNCACHE_CACHE_PUBLIC_KEY=""    \
+ STORAGE_SECRET=""
 
 
 #HTTP/PROXY Config

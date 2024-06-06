@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2024 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -37,18 +37,11 @@ using static Content.Publishing.Blog.Admin.Model.PostManager;
 namespace Content.Publishing.Blog.Admin.Storage
 {
 
-    [ConfigurationName("s3_config")]
-    internal sealed class MinioClientManager : StorageBase
+    [ConfigurationName("storage")]
+    internal sealed class MinioClientManager(PluginBase pbase, IConfigScope s3Config) : StorageBase
     {
-        private readonly MinioClient Client;
-        private readonly S3Config Config;
-
-        public MinioClientManager(PluginBase pbase, IConfigScope s3Config)
-        {
-            //Deserialize the config
-            Config = s3Config.Deserialze<S3Config>();
-            Client = new();
-        }
+        private readonly MinioClient Client = new();
+        private readonly S3Config Config = s3Config.Deserialze<S3Config>();
 
         ///<inheritdoc/>
         protected override string? BasePath => Config.BaseBucket;
@@ -56,12 +49,11 @@ namespace Content.Publishing.Blog.Admin.Storage
         ///<inheritdoc/>
         public override async Task ConfigureServiceAsync(PluginBase plugin)
         {
-            using ISecretResult? secret = await plugin.GetSecretAsync("s3_secret");
+            using ISecretResult? secret = await plugin.GetSecretAsync("storage_secret");
 
             Client.WithEndpoint(Config.ServerAddress)
-                    .WithCredentials(Config.ClientId, secret.Result.ToString());
-
-            Client.WithSSL(Config.UseSsl.HasValue && Config.UseSsl.Value);
+                    .WithCredentials(Config.ClientId, secret.Result.ToString())
+                    .WithSSL(Config.UseSsl == true);
 
             //Accept optional region
             if (!string.IsNullOrWhiteSpace(Config.Region))

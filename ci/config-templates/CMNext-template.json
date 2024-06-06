@@ -20,25 +20,22 @@
     "index_file_name": "${CHANNEL_INDEX_FILE}"
   },
 
-  //S3 setup with vault secrets
-  "disabled s3_config": {
-    "server_address": "",
-    "access_key": "",
-    "bucket": "",
-    "use_ssl": true,
-    "Region": null
-  },
+  "storage": {
 
-  "disabled ftp_config": {
-    "url": "",
-    "username": "",
-    //Base path within the ftp user's directory
-    "base_path": ""
+    "custom_storage_assembly": "${STORAGE_CUSTOM_ASSEMBLY}",
+
+    "type": "${STORAGE_TYPE}", //s3 | ftp
+
+    //storage config
+    "server_address": "${STORAGE_SERVER_ADDRESS}",
+    "access_key": "${STORAGE_USERNAME}",
+    "bucket": "${STORAGE_BUCKET}",
+    "use_ssl": ${STORAGE_USE_SSL},
+    "Region": "${S3_REGION}"
   },
 
   "secrets": {
     //Set the vault path to the s3 secret
-    "s3_secret": "",
-    "ftp_password": ""
+    "storage_secret": "${STORAGE_SECRET}"
   }
 }
