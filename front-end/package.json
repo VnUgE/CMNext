@@ -8,10 +8,8 @@
   "repository": "https://github.com/VnUgE/CMNext/tree/master/front-end",
   "author": "Vaughn Nugent",
   "output_dir": "bin",
-
   "main": "index.html",
   "license": "agpl3",
-
   "scripts": {
     "dev": "vite",
     "watch": "vite build --watch --mode development --minify false",
@@ -20,7 +18,6 @@
     "update": "npm update",
     "outdated": "npm outdated"
   },
-
   "dependencies": {
     "@fontsource/source-sans-pro": "^5.0.8",
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
@@ -35,22 +32,25 @@
     "@vuelidate/validators": "^2.0.2",
     "@vueuse/core": "^10.3.x",
     "@vueuse/router": "^10.3.x",
-    "qrcode.vue": "^3.4.1",
     "axios": "^1.4.0",
     "base32-encode": "^2.0.0",
     "jose": "^5.0.x",
     "json-editor-vue": "^0.15.1",
     "lodash-es": "^4.17.21",
     "otpauth": "^9.1.2",
-    "showdown": "^2.1.0",
     "pinia": "^2.1.7",
+    "qrcode.vue": "^3.4.1",
+    "showdown": "^2.1.0",
     "universal-cookie": "^7.0.x",
     "vue": "^3.2.47",
     "vue3-otp-input": "^0.5.2"
   },
   "devDependencies": {
-    "@types/showdown": "^2.0.1",
+    "@ckeditor/ckeditor5-core": "^40.0.0",
+    "@ckeditor/ckeditor5-upload": "^40.0.0",
     "@types/lodash-es": "^4.14.194",
+    "@types/node": "^20.14.2",
+    "@types/showdown": "^2.0.1",
     "@vitejs/plugin-vue": "^5.0.x",
     "autoprefixer": "^10.4.14",
     "dotenv": "^16.0.3",
@@ -58,12 +58,10 @@
     "sass": "^1.62.1",
     "tailwindcss": "^3.3.2",
     "typescript": "^5.0.2",
-    "vite": "^5.0.x",
     "unplugin-vue-router": "^0.9.0",
+    "vite": "^5.0.x",
     "vue-eslint-parser": "^9.3.0",
     "vue-router": "^4.2.0",
-    "vue-tsc": "^2.0.6",
-    "@ckeditor/ckeditor5-upload": "^40.0.0",
-    "@ckeditor/ckeditor5-core": "^40.0.0"
+    "vue-tsc": "^2.0.6"
   }
 }

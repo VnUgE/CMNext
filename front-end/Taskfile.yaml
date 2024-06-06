@@ -7,23 +7,25 @@ tasks:
 
   build:
     cmds:
+    - cmd: npm version {{ .BUILD_VERSION }}
+      ignore_error: true #error if run when version is not updated
+      
     #build admin first
     - cd ../lib/admin && npm install && npm run build
-    #install deps and run build
-    - npm install && npm run build
+    #install deps and run main build
+    - npm install 
+    - npm run build
     
   #copy artifacts to temp directory
   postbuild_success:
     cmds:
-    - powershell -Command "mkdir bin -Force"
+    - powershell mkdir bin -Force
     #tar the dist output and put it in the output dir
-    - cd dist && tar -czf '../bin/release.tgz' .
+    - cd dist/ && tar -czf '../bin/release.tgz' .
 
   #clean hook
   clean:
     ignore_error: true
     cmds:
-    - cmd: powershell -Command "Remove-Item -Recurse -Force node_modules"
-    - cmd: powershell -Command "Remove-Item -Recurse -Force dist"
-    - cmd: powershell -Command "Remove-Item -Recurse -Force bin"
-    - cmd: powershell -Command "Remove-Item release.tgz"
+    - for: [ node_modules/, dist/, bin/ ]
+      cmd: powershell -Command "Remove-Item -Recurse -Force {{.ITEM}}"

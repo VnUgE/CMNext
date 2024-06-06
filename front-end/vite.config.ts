@@ -16,42 +16,50 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import postcss from './postcss.config.js'
-import { server } from './vite.config.local.ts'
 
 //Pages setup
 import VueRouter from 'unplugin-vue-router/vite'
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  build: {
-    cssCodeSplit: true,
-    rollupOptions: {
-      plugins: [],
-      output: {
-       
-      }
-    },
-  },
-  css: {
-    postcss: postcss
-  },
-  plugins: [
-    //Setup the vite pages plugin
-    VueRouter({
-      extensions: ['vue'],
-      routesFolder: 'src/views',
-      exclude: ['**/components/**'],
-      logs: true,
-      getRouteName:(node) => {
-        const trimSlashes = /^\/|\/$/g
-        const name = node.fullPath.replace(trimSlashes, '')
-        return name
+export default defineConfig(async () => { 
+
+  let server = {};
+
+  try {
+    //try to import the local config for development
+    server = await import('./vite.config.local.ts')
+  }
+  catch { }
+
+  return {
+    build: {
+      cssCodeSplit: true,
+      rollupOptions: {
+        plugins: [],
+        output: {
+        
+        }
       },
-      importMode: 'async',
-    }),
-    vue(), 
-  ],
-  server: {
-    ...server
+    },
+    css: {
+      postcss: postcss
+    },
+    plugins: [
+      //Setup the vite pages plugin
+      VueRouter({
+        extensions: ['vue'],
+        routesFolder: 'src/views',
+        exclude: ['**/components/**'],
+        logs: true,
+        getRouteName:(node) => {
+          const trimSlashes = /^\/|\/$/g
+          const name = node.fullPath.replace(trimSlashes, '')
+          return name
+        },
+        importMode: 'async',
+      }),
+      vue(), 
+    ],
+    server
   }
 })

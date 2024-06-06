@@ -138,7 +138,6 @@ tasks:
     internal: false
     dotenv: ['build.env']  #use the local .env file when compiling config variables
     cmds:
-      - echo "$CACHE_ASM_PATH"
       - cmd: powershell mkdir config/ -Force
         ignore_error: true
       - cmd: powershell './compile.ps1' -InputDir config-templates/ -OutputDir config/
