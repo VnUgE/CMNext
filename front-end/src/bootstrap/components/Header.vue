@@ -1,8 +1,8 @@
 <!-- eslint-disable vue/max-attributes-per-line -->
 <script setup lang="ts">
 
-import { debounce, find } from 'lodash-es'
-import { useElementSize, onClickOutside, useElementHover } from '@vueuse/core'
+import { debounce, find, isEqual, toLower } from 'lodash-es'
+import { useElementSize, onClickOutside, useElementHover, get } from '@vueuse/core'
 import { computed, ref, toRefs } from 'vue'
 import { useEnvSize } from '@vnuge/vnlib.browser'
 import { RouteLocation, useRouter } from 'vue-router';
@@ -35,6 +35,10 @@ const userMenuHovered = useElementHover(userMenu)
 
 const uname = computed(() => (store as any).userName || 'Visitor')
 const sideMenuStyle = computed(() => {
+
+  const { width } = sideMenuSize;
+  if(get(width) === 0) return { left: '-100vw' }
+
   // Side menu should be the exact height of the page and under the header,
   // So menu height is the height of the page minus the height of the header
   return {
@@ -63,7 +67,7 @@ const gotoRoute = (route: string) => {
   const allRoutes = router.getRoutes();
 
   //Try to find the route by its path
-  const goto = find(allRoutes, { path: route });
+  const goto = find(allRoutes, r => isEqual(toLower(r.path), toLower(route)));
 
   if (goto) {
     //navigate to the route manually

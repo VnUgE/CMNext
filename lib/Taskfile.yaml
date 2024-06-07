@@ -8,9 +8,12 @@ tasks:
   build:
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
+    
+    - cmd: npm version {{ .BUILD_VERSION }}
+      ignore_error: true #error if run when version is not updated
     #install deps and run build
+    - npm version 
     - npm install
-    - npm run build
     
   #copy artifacts to temp directory
   postbuild_success:
@@ -25,7 +28,5 @@ tasks:
     dir: '{{.USER_WORKING_DIR}}'
     ignore_error: true
     cmds:
-    - cmd: powershell -Command "Remove-Item -Recurse node_modules"
-    - cmd: powershell -Command "Remove-Item -Recurse dist"
-    - cmd: powershell -Command "Remove-Item -Recurse -Force bin"
-    - cmd: powershell -Command "Remove-Item release.tgz"
+    - for: [node_modules/, dist/, bin/]
+      cmd: powershell -Command "Remove-Item -Recurse -Force {{.ITEM}}"

@@ -1,11 +1,10 @@
-
 import 'pinia'
 import { MaybeRef } from 'vue';
 import {
     useUser,
     useOauthLogin,
-    useSocialDefaultLogout, 
-    fetchSocialPortals, 
+    useSocialDefaultLogout,
+    fetchSocialPortals,
     fromSocialPortals,
     fromSocialConnections,
 } from '@vnuge/vnlib.browser'
@@ -41,25 +40,22 @@ export const socialMfaPlugin = (portalEndpoint?: MaybeRef<string>): PiniaPlugin 
             }
 
             /*
-            Try to load social methods from server, if it fails, then we will 
-            fall back to default
+                Try to load social methods from server, if it fails, then we will 
+                fall back to default
              */
 
             defer(async () => {
 
                 try {
-                    
+
                     const portals = await fetchSocialPortals(get(portalEndpoint)!);
                     const social = fromSocialPortals(portals);
                     const methods = fromSocialConnections(social);
 
                     //Create social login from available portals
                     const login = useOauthLogin(methods);
-                    
+
                     const socialOauth = useSocialDefaultLogout(login, logout);
-
-                    console.log(login.methods)
-
                     resolve(socialOauth)
 
                 } catch (error) {

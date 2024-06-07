@@ -26,18 +26,20 @@
     <path>/assets/*</path>
   </route>
 
-  <!--Overwrite all other requests to the index file (catch all) using the ServeOther routine (4)-->
+  <!--Show the index file when navigating to /-->
   <route routine="4" privilege="0">
-
-    <!--Wildcard hostname-->
     <hostname>*</hostname>
+    <path>/</path>
+    <alternate>index.html</alternate>
+  </route>
 
-    <!--Declares that all files after / will be matched by this rule-->
+  <!--Redirect all other pages back to the app (homepage)-->
+  <route routine="2" privilege="0">
+    <hostname>*</hostname>
     <path>/*</path>
-
-    <!--Return to the root path, lets the file processor handle extension searching-->
     <alternate>/</alternate>
   </route>
+
 
   <!--All routes that do not match will be allowed, this is only / since it does not have a matching rule-->
 

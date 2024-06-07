@@ -1,12 +1,12 @@
 {
-  "debug": false,
+  "debug": ${DEBUG_PLUGINS},
 
   //endpoints
 
   "login_endpoint": {
     "path": "/api/account/login",
-    "max_login_attempts": 10, //10 failed attempts in 10 minutes
-    "failed_attempt_timeout_sec": 600 //10 minutes
+    "max_login_attempts": ${MAX_LOGIN_ATTEMPS},   //10 failed attempts in 10 minutes
+    "failed_attempt_timeout_sec": 600             //10 minutes
   },
 
   "keepalive_endpoint": {
@@ -63,11 +63,14 @@
     //Path/domain for all security cookies
     "cookie_domain": "",
     "cookie_path": "/",
-    "status_cookie_name": "li", //front-end cookie name must match to detect login status
+    "status_cookie_name": "cmnli", //front-end cookie name must match to detect login status
     "otp_header_name": "X-Web-Token", //Front-end header name must match
     "otp_time_diff_sec": 30,
     "otp_key_size": 64,
-    "pubkey_cookie_name": "client-id",
-    "pubkey_signing_key_size": 32
+    "pubkey_cookie_name": "cmn-id",
+    "pubkey_signing_key_size": 32,
+    "strict_origin": false,
+    "strict_path": true,  //Can be enabled if front-end is running on the same server
+    //"allowed_origins": [""]
   }
 }

@@ -38,7 +38,7 @@ library.add(faSignInAlt, faGithub, faDiscord, faSpinner, faCertificate, faKey, f
 );
 
 //Add icons to library
-import router from './router'
+import router, { guardRoutes } from './router'
 
 //Import nav components
 import FooterNav1 from './components/FooterNav1.vue'
@@ -50,7 +50,6 @@ import { globalStatePlugin } from './store/globalState'
 import { oauth2AppsPlugin } from './store/oauthAppsPlugin'
 import { profilePlugin } from './store/userProfile'
 import { mfaSettingsPlugin } from './store/mfaSettingsPlugin'
-import { pageProtectionPlugin } from './store/pageProtectionPlugin'
 import { socialMfaPlugin } from './store/socialMfaPlugin'
 import { cmnextAdminPlugin } from './store/cmnextAdminPlugin'
 
@@ -58,7 +57,7 @@ import { cmnextAdminPlugin } from './store/cmnextAdminPlugin'
 configureApi({
     session: {
         //The identifier of the login cookie, see Essentials.Accounts docs
-        loginCookieName: 'li',
+        loginCookieName: import.meta.env.VITE_LOGIN_COOKIE_ID,
         browserIdSize: 32,
     },
     user: {
@@ -91,8 +90,6 @@ createVnApp({
         app.use(router)
 
         store.use(globalStatePlugin)
-        //Add page protection plugin
-        .use(pageProtectionPlugin(router))
         //User-profile plugin
         .use(profilePlugin('/account/profile'))
         //Enable mfa with totp settings plugin (optional pki config)
@@ -117,6 +114,12 @@ createVnApp({
             name: 'Account',
             redirect: { path: '/account/profile' }
         })
+
+        /**
+         * An array of named routes to protect from 
+         * unauthenticated access.
+         */
+        guardRoutes(router, ['Account', 'account/:comp', 'Blog'])
       
         //Add the footer nav components
         app.component('FooterNav1', FooterNav1)

@@ -126,7 +126,7 @@ const closeNewSecret = () => set(newSecret, null);
         <button class="btn no-border xs" @click="toggleEdit(true)">Edit</button>
       </div>
     </div>
-    <div class="px-3 py-1 text-color-background">
+    <div class="px-3 py-1 text-bg">
       <div class="my-1">
         <span> Client ID: </span>
         <span class="font-mono text-color-foreground">{{ clientId }}</span>

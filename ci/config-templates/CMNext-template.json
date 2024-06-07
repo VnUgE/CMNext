@@ -1,0 +1,41 @@
+{
+  //Enables debug logging
+  "debug": ${DEBUG_PLUGINS},
+
+  "post_endpoint": {
+    "path": "/api/blog/posts"
+  },
+
+  "channel_endpoint": {
+    "path": "/api/blog/channels"
+  },
+
+  "content_endpoint": {
+    "path": "/api/blog/content",
+    "max_content_length": ${MAX_CONTENT_LENGTH}
+  },
+
+  "blog_channels": {
+    //The index file for storing channel configuration
+    "index_file_name": "${CHANNEL_INDEX_FILE}"
+  },
+
+  "storage": {
+
+    "custom_storage_assembly": "${STORAGE_CUSTOM_ASSEMBLY}",
+
+    "type": "${STORAGE_TYPE}", //s3 | ftp
+
+    //storage config
+    "server_address": "${STORAGE_SERVER_ADDRESS}",
+    "access_key": "${STORAGE_USERNAME}",
+    "bucket": "${STORAGE_BUCKET}",
+    "use_ssl": ${STORAGE_USE_SSL},
+    "Region": "${S3_REGION}"
+  },
+
+  "secrets": {
+    //Set the vault path to the s3 secret
+    "storage_secret": "${STORAGE_SECRET}"
+  }
+}

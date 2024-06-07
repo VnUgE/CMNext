@@ -2,8 +2,9 @@
 import { isEmpty, toSafeInteger } from 'lodash-es';
 import { useVuelidate } from '@vuelidate/core'
 import { required, maxLength, minLength, helpers } from '@vuelidate/validators'
-import { useUser, apiCall, useMessage, useWait, useConfirm, useVuelidateWrapper, VuelidateInstance } from '@vnuge/vnlib.browser'
+import { useUser, apiCall, useMessage, useWait, useVuelidateWrapper, VuelidateInstance } from '@vnuge/vnlib.browser'
 import { MaybeRef, computed, reactive, ref, toRefs, watch } from 'vue'
+import { set } from '@vueuse/core';
 
 const props = defineProps<{
   totpEnabled: boolean,
@@ -37,7 +38,6 @@ const formSchema = ref({
 
 const { waiting } = useWait()
 const { onInput } = useMessage()
-const { reveal } = useConfirm()
 const { resetPassword } = useUser()
 
 const pwResetShow = ref(false)
@@ -93,13 +93,7 @@ watch(showTotpCode, (val) => {
   }
 })
 
-const showForm = async function () {
-  const { isCanceled } = await reveal({
-    title: 'Reset Password',
-    text: 'Are you sure you want to reset your password? This cannot be reversed.'
-  })
-  pwResetShow.value = !isCanceled
-}
+const showForm = () => set(pwResetShow, true)
 
 const onSubmit = async () => {
 
@@ -168,7 +162,7 @@ const resetForm = () => {
           </div>
         </div>
 
-        <p class="mt-3 text-sm text-color-background">
+        <p class="mt-3 text-sm text-bg">
           You may only reset your password if you have an internal user account. If you exclusivly use an external
           authentication provider (like GitHub or Discord), you will need to reset your password externally.
         </p>

@@ -119,10 +119,6 @@ const onTabChange = (tabid: number) => {
     @apply dark:text-white text-black;
   }
 
-  .text-color-background{
-    @apply text-gray-500;
-  }
-
   .panel-container .panel-header{
     @apply flex flex-row px-2;
   }

@@ -1,5 +1,4 @@
 import 'pinia'
-import { shallowRef } from 'vue';
 import { useAutoHeartbeat } from '@vnuge/vnlib.browser';
 import { toRefs, useLocalStorage } from '@vueuse/core';
 import { PiniaPluginContext, PiniaPlugin } from 'pinia'
@@ -22,7 +21,7 @@ export const globalStatePlugin: PiniaPlugin = ({ store }: PiniaPluginContext) =>
     const { ahEnabled } = toRefs(mainState)
 
     //Setup heartbeat for 5 minutes
-    useAutoHeartbeat(shallowRef(5 * 60 * 1000), ahEnabled)
+    useAutoHeartbeat(5 * 60 * 1000, ahEnabled)
     
     return{
         autoHeartbeat: ahEnabled,
