@@ -13,6 +13,8 @@ tasks:
 
   ci-build:
     cmds:
+     - cmd: powershell rm dist/ -Recurse -Force
+       ignore_error: true
     #build admin first
      - cd ../lib/admin && npm install && npm run build
      #install deps and run main build
