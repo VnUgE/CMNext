@@ -52,7 +52,8 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=0
 
 #add helper/required libraries
 #ENV VNLIB_SHARED_HEAP_FILE_PATH=/app/lib/libvn_rpmalloc.so		not ready yet, still need to debug
-ENV VNLIB_ARGON2_DLL_PATH=/app/lib/libargon2.so
+ENV VNLIB_ARGON2_DLL_PATH=/app/lib/libargon2.so \
+  COMPRESSION_LIB_PATH=/app/lib/libvn_compress.so 
 
 #set default env variables
 ENV MAX_CONTENT_LENGTH=204800000   \

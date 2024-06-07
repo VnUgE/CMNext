@@ -20,7 +20,7 @@ services:
       CHANNEL_INDEX_FILE: "channels.json"   #required, should leave default unless you know what you are doing
       MAX_CONTENT_LENGTH: 204800000         #200MB max upload size
       MAX_LOGIN_ATTEMPS: "10"               #max login attempts before user account is locked out
-      
+
       #SQL Config
       SQL_LIB_PATH: "VNLib.Plugins.Extensions.Sql.SQLite.dll"
       SQL_CONNECTION_STRING: "Data Source=data/cmnext.db;"    #when using a password, simply leave the password field blank
@@ -69,5 +69,5 @@ services:
       #Very Verbose plugin logging, required --debug CLI flag, prints literally everything to the logger (it's annoying)
       DEBUG_PLUGINS: "false"
 
-      SERVER_ARGS: "--setup" #remove the setup flag after you are done setting up the server
+      SERVER_ARGS: ""
 

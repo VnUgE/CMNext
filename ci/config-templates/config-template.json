@@ -41,7 +41,7 @@
 
   //Setup the native lib
   "vnlib.net.compression": {
-    "lib_path": "lib/vnlib_compress.dll",
+    "lib_path": "${COMPRESSION_LIB_PATH}",
     "level": 1
   },
 

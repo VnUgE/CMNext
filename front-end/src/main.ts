@@ -57,7 +57,7 @@ import { cmnextAdminPlugin } from './store/cmnextAdminPlugin'
 configureApi({
     session: {
         //The identifier of the login cookie, see Essentials.Accounts docs
-        loginCookieName: 'li',
+        loginCookieName: import.meta.env.VITE_LOGIN_COOKIE_ID,
         browserIdSize: 32,
     },
     user: {
