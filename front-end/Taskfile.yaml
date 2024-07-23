@@ -5,6 +5,11 @@ version: '3'
 
 tasks:
 
+  package-update:
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+     - npm update
+
   build:
     cmds:
     - cmd: npm version {{ .BUILD_VERSION }}
