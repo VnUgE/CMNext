@@ -63,7 +63,7 @@
     //Path/domain for all security cookies
     "cookie_domain": "",
     "cookie_path": "/",
-    "status_cookie_name": "cmnli", //front-end cookie name must match to detect login status
+    "status_cookie_name": "li", //front-end cookie name must match to detect login status
     "otp_header_name": "X-Web-Token", //Front-end header name must match
     "otp_time_diff_sec": 30,
     "otp_key_size": 64,

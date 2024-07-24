@@ -5,6 +5,8 @@ version: '3.6'
 
 services:
   cmnext:
+    build:
+      context: .
     image: vnuge/cmnext
     container_name: cmnext
     restart: unless-stopped
