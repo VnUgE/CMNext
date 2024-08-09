@@ -17,16 +17,24 @@ tasks:
     - cmd: npm version {{ .BUILD_VERSION }}
       ignore_error: true #error if run when version is not updated
     #install deps and run build
-    - npm version 
     - npm install
+    - npm run build
     
   #copy artifacts to temp directory
   postbuild_success:
     dir: '{{.USER_WORKING_DIR}}'
+    vars:
+      PACKAGE_FILES:
+        dist/*
+        package.json
+        package-lock.json
+        README.md
+        tsconfig.json
+
     cmds:
-    - powershell -Command "mkdir bin -Force"
+    - cmd: powershell mkdir bin/ -Force
     #tar the package and put it in the output dir
-    - tar --exclude="./node_modules" --exclude="./src" --exclude="./.git" --exclude="./bin" --exclude=".gitignore" --exclude="*.yaml" -czf bin/release.tgz .
+    - tar -czf bin/release.tgz {{ .PACKAGE_FILES }}
 
   #clean hook
   clean:

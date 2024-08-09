@@ -14,9 +14,7 @@
     "dev": "vite",
     "watch": "vite build --watch --mode development --minify false",
     "build": "vite build",
-    "preview": "vite preview",
-    "update": "npm update",
-    "outdated": "npm outdated"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fontsource/source-sans-pro": "^5.0.8",
