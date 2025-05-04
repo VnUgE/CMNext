@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Vaughn Nugent
+// Copyright (C) 2025 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -15,18 +15,20 @@
 
 
 //Get the create app from boostrap dir
-import { createVnApp } from './bootstrap'
-import { configureApi } from '@vnuge/vnlib.browser'
+import App from './App.vue'
+import { configureApi, configureNotifier } from '@vnuge/vnlib.browser'
+import Notifications, { notify } from '@kyvg/vue3-notification'
+import { createApp } from "vue";
+import { createPinia } from "pinia";
 
 //Import all styles
-import './bootstrap/style/all.scss'
-//Import your main style file
-import './assets/main.scss'
+import './assets/main.css'
 
 //Import font data
 import "@fontsource/source-sans-pro"
 
 /* FONT AWESOME CONFIG */
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faBullhorn, faCertificate, faCheck, faChevronLeft, faChevronRight, faCode, faComment, faCopy, faFile, faFileDownload, faFileZipper, faFolderOpen, faHeadphones, faImage, faKey, faLink, faMinusCircle, faPencil, faPhotoFilm, faPlus, faRotateLeft, faSignInAlt, faSpinner, faSync, faTrash, faUser, faVideo } from '@fortawesome/free-solid-svg-icons'
 import { faGithub, faDiscord, faMarkdown } from '@fortawesome/free-brands-svg-icons'
@@ -38,19 +40,19 @@ library.add(faSignInAlt, faGithub, faDiscord, faSpinner, faCertificate, faKey, f
 );
 
 //Add icons to library
-import router, { guardRoutes } from './router'
+import router from './router'
 
 //Import nav components
+import Dialog from './components/Dialog.vue';
 import FooterNav1 from './components/FooterNav1.vue'
 import FooterNav2 from './components/FooterNav2.vue'
-import SiteLogo from './components/Site-Logo.vue'
 import DynamicFormVue from './components/DynamicForm.vue'
 
-import { globalStatePlugin } from './store/globalState'
 import { oauth2AppsPlugin } from './store/oauthAppsPlugin'
 import { profilePlugin } from './store/userProfile'
 import { mfaSettingsPlugin } from './store/mfaSettingsPlugin'
-import { socialMfaPlugin } from './store/socialMfaPlugin'
+import { pageGuardPlugin } from './store/routeGuard'
+import { accountStatePlugin } from './store/accountStatePlugin'
 import { cmnextAdminPlugin } from './store/cmnextAdminPlugin'
 
 //Setup the vnlib api
@@ -60,8 +62,8 @@ configureApi({
         loginCookieName: import.meta.env.VITE_LOGIN_COOKIE_ID,
         browserIdSize: 32,
     },
-    user: {
-        accountBasePath: '/account',
+    account: {
+        endpointUrl: '/account',
     },
     axios: {
         //The base url to make api requests against
@@ -73,62 +75,41 @@ configureApi({
     storage: localStorage
 })
 
-createVnApp({
-    //The app mount point
-    mountElement: '#app',
+const store = createPinia();
 
-    //Enable dark mode support
-    useDarkMode: true,
+store.use(accountStatePlugin())
+    //Protect desired routes
+    .use(pageGuardPlugin(router, ['Account', 'Blog']))
+    //Use the oauth2 plugin store
+    .use(oauth2AppsPlugin('/oauth/apps', '/oauth/scopes'))
+    //User-profile plugin
+    .use(profilePlugin())
+    //Enable mfa with totp settings plugin
+    .use(mfaSettingsPlugin())
+     //Setup blog state
+     .use(cmnextAdminPlugin(router, 'https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js', 15))
 
-    //Add the font awesome library
-    faLibrary: library,
-
-    //Called when the app is created for you to add custom elements
-    onCreate(app, store) {
-
-        //Add the router
-        app.use(router)
-
-        store.use(globalStatePlugin)
-        //User-profile plugin
-        .use(profilePlugin('/account/profile'))
-        //Enable mfa with totp settings plugin (optional pki config)
-        .use(mfaSettingsPlugin('/account/mfa', '/account/pki'))
-        //Setup social oauth
-        .use(socialMfaPlugin("/login/social/portals"))
-        //Setup blog state
-        .use(cmnextAdminPlugin(router, 'https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js', 15))
-        //Use the oauth2 plugin store (disabled for now)
-        //.use(oauth2AppsPlugin('/oauth/apps', '/oauth/scopes'))
-        
-        //Add the home-page component
-        router.addRoute({
-            path: '/',
-            name: 'Home',
-            redirect: { path: '/' }
-        })
-
-        //Configure account page redirect to profile
-        router.addRoute({
-            path: '/account',
-            name: 'Account',
-            redirect: { path: '/account/profile' }
-        })
-
-        /**
-         * An array of named routes to protect from 
-         * unauthenticated access.
-         */
-        guardRoutes(router, ['Account', 'account/:comp', 'Blog'])
-      
-        //Add the footer nav components
-        app.component('FooterNav1', FooterNav1)
-        app.component('FooterNav2', FooterNav2)
-
-        //Register site-logo component
-        app.component('SiteLogo', SiteLogo)
-
-        //Register the dynamic form component
-        app.component('dynamic-form', DynamicFormVue)
-    },
+// Redirect the homepage to the blog page
+router.addRoute({
+    path: '/',
+    name: 'Home',
+    redirect: { path: '/' }
 })
+
+const app = createApp(App)
+
+app.use(Notifications) 
+    .use(store)
+    .use(router)
+    .component('Dialog', Dialog)
+    //Add the footer nav components
+    .component('fa-icon', FontAwesomeIcon)
+    .component('FooterNav1', FooterNav1)
+    .component('FooterNav2', FooterNav2)
+    //Register the dynamic form component
+    .component('dynamic-form', DynamicFormVue)
+
+    //MOUNT
+    .mount('#app');
+
+configureNotifier({ notify, close: notify.close });

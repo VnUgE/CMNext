@@ -2,24 +2,24 @@
 import { defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useStore } from '../../../../store'
-const CreateApp = defineAsyncComponent(() => import('./CreateApp.vue'))
-
-import SingleApplication from './SingleApplication.vue'
 import { useToggle } from '@vueuse/core';
+import SingleApplication from './SingleApplication.vue'
+const CreateApp = defineAsyncComponent(() => import('./CreateApp.vue'))
 
 const store = useStore()
 const { isLocalAccount } = storeToRefs(store)
+const { refresh } = store.oauth2!
 
 const [editNew, toggleEdit] = useToggle()
 
 const newAppClose = () => {
   toggleEdit(false);
   //Reload apps on close
-  store.oauth2.refresh();
+  refresh();
 }
 
 //Load apps
-store.oauth2.refresh();
+refresh();
 
 </script>
 <template>
@@ -33,19 +33,19 @@ store.oauth2.refresh();
         </div>
         <div class="ml-auto mr-0">
           <div class="button-container">
-            <button class="btn primary sm" :disabled="!isLocalAccount" @click="toggleEdit(true)">
+            <button class="btn btn-primary" :disabled="!isLocalAccount" @click="toggleEdit(true)">
               Create App
             </button>
           </div>
         </div>
       </div>
-      <div v-if="store.oauth2.apps.length == 0" class="no-apps-container">
+      <div v-if="store.oauth2!.apps.length == 0" class="no-apps-container">
         <div class="m-auto">
           You dont have any OAuth2 client applications yet.
         </div>
       </div>
       <div v-else>
-        <div v-for="app in store.oauth2.apps" :key="app.Id" class="panel-content">
+        <div v-for="app in store.oauth2!.apps" :key="app.Id" class="panel-content">
           <SingleApplication :application="app" :allow-edit="isLocalAccount" />
         </div>
       </div>
@@ -64,15 +64,3 @@ store.oauth2.refresh();
     <CreateApp :is-open="editNew" @close="newAppClose" />
   </div>
 </template>
-
-<style>
-
-#oauth-apps {
-  @apply m-auto max-w-3xl;
-}
-
-#oauth-apps .app-container .no-apps-container {
-  @apply w-full flex h-36 sm:border sm:rounded-md mt-4 mb-20 dark:border-dark-500 border-gray-300;
-}
-
-</style>

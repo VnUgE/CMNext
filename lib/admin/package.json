@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "author": "Vaughn Nugent",
   "description": "A browser client library for CMNext admin UI development",
-  "copyright": "Copyright \u00A9 2024 Vaughn Nugent",
+  "copyright": "Copyright \u00A9 2025 Vaughn Nugent",
   "repository": "https://github.com/VnUgE/CMNext/tree/master/lib/admin",
   "output_dir": "bin",
   "type": "module",
@@ -22,18 +22,17 @@
 
   "devDependencies": {
     "@types/lodash-es": "^4.14.194",
-    "@babel/types":"^7.x",
+    "@babel/types": "^7.x",
     "@typescript-eslint/eslint-plugin": "^7.0.x"
   },
 
   "peerDependencies": {
-    "@vueuse/core": "^10.x",
+    "@vueuse/core": "^13.x",
     "lodash-es": "^4.x",
     "vue": "^3.x",
     "axios": "^1.x",
-    "jose": "^5.1.x",
-    "universal-cookie": "^7.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/451091e93b5feee7a5e01d3a81f5d63efa7ea8be/@vnuge-vnlib.browser/release.tgz"
+    "jose": "^6.0.x",
+     "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/451091e93b5feee7a5e01d3a81f5d63efa7ea8be/@vnuge-vnlib.browser/release.tgz"
   },
 
   "eslintConfig": {

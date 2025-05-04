@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2025 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -15,7 +15,8 @@
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import postcss from './postcss.config.js'
+import tailwindcss from '@tailwindcss/vite'
+import { capitalize } from 'lodash-es'
 
 //Pages setup
 import VueRouter from 'unplugin-vue-router/vite'
@@ -41,25 +42,23 @@ export default defineConfig(async () => {
         }
       },
     },
-    css: {
-      postcss: postcss
-    },
-    plugins: [
-      //Setup the vite pages plugin
-      VueRouter({
-        extensions: ['vue'],
-        routesFolder: 'src/views',
-        exclude: ['**/components/**'],
-        logs: true,
-        getRouteName:(node) => {
-          const trimSlashes = /^\/|\/$/g
-          const name = node.fullPath.replace(trimSlashes, '')
-          return name
-        },
-        importMode: 'async',
-      }),
-      vue(), 
-    ],
-    server
+  plugins: [
+    //Setup the vite pages plugin
+    VueRouter({
+      extensions: ['vue'],
+      routesFolder: 'src/views',
+      exclude: ['**/components/**'],
+      logs: true,
+      getRouteName:(node) => {
+        const trimSlashes = /^\/|\/$/g
+        const name = node.fullPath.replace(trimSlashes, '')
+        return capitalize(name)
+      },
+      importMode: 'async',
+    }),
+    vue(),
+    tailwindcss()
+  ],
+  server
   }
 })

@@ -5,6 +5,12 @@ version: '3'
 
 tasks:
 
+  default:
+    desc: 'Builds dependencies and the front-end app'
+    cmds:
+      - cmd: cd ../lib/admin && npm run build
+      - cmd: npm run build
+
   package-update:
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
@@ -21,21 +27,21 @@ tasks:
      - cmd: powershell rm dist/ -Recurse -Force
        ignore_error: true
     #build admin first
-     - cd ../lib/admin && npm install && npm run build
+     - cmd: cd ../lib/admin && npm install && npm run build
      #install deps and run main build
-     - npm install 
-     - npm run build
+     - cmd: npm install 
+     - cmd: npm run build
     
   #copy artifacts to temp directory
   postbuild_success:
     cmds:
-    - powershell mkdir bin -Force
+    - cmd: powershell mkdir bin -Force
     #tar the dist output and put it in the output dir
-    - cd dist/ && tar -czf '../bin/release.tgz' .
+    - cmd: cd dist/ && tar -czf '../bin/release.tgz' .
 
   #clean hook
   clean:
     ignore_error: true
     cmds:
     - for: [ node_modules/, dist/, bin/ ]
-      cmd: powershell -Command "Remove-Item -Recurse -Force {{.ITEM}}"
+      cmd: powershell rm -r -Force {{ .ITEM }}"

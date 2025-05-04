@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useRouteQuery } from '@vueuse/router';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
 import { defer, first } from 'lodash-es';
-import { useStore, SortType } from '../../store';
+import { useStore, type SortType } from '../../store';
 import Channels from './components/Channels.vue';
 import Posts from './components/Posts.vue';
 import Content from './components/Content.vue';

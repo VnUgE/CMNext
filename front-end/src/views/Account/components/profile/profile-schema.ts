@@ -1,4 +1,5 @@
 
+import type { IDynamicForm } from '../../../../components/DynamicForm.vue'
 import { maxLength, helpers, numeric, alpha, alphaNum } from '@vuelidate/validators'
 
 export const Rules = {
@@ -37,7 +38,7 @@ export const Rules = {
 }
 
 
-export const FormSchema = {
+export const FormSchema : IDynamicForm = {
   id: 'profile-edit-form',
   fields: [
     {

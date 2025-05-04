@@ -2,43 +2,56 @@
 import { isEmpty, toSafeInteger } from 'lodash-es';
 import { useVuelidate } from '@vuelidate/core'
 import { required, maxLength, minLength, helpers } from '@vuelidate/validators'
-import { useUser, apiCall, useMessage, useWait, useVuelidateWrapper, VuelidateInstance } from '@vnuge/vnlib.browser'
-import { MaybeRef, computed, reactive, ref, toRefs, watch } from 'vue'
+import { useAccount, apiCall, useMessage, useWait, useVuelidateWrapper, type VuelidateInstance } from '@vnuge/vnlib.browser'
+import { MaybeRef, computed, reactive, ref } from 'vue'
 import { set } from '@vueuse/core';
+import { useStore } from '../../../../store';
 
-const props = defineProps<{
-  totpEnabled: boolean,
-  fidoEnabled: boolean
-}>()
+const store = useStore()
+const totpEnabled = store.mfa.isEnabled('totp')
+const fidoEnabled = store.mfa.isEnabled('fido')
 
-const { totpEnabled, fidoEnabled } = toRefs(props)
+const formSchema = computed(() =>{
 
-const formSchema = ref({
-  fields: [
-    {
-      label: 'Current Password',
-      name: 'current',
-      type: 'password',
-      id: 'current-password'
-    },
-    {
-      label: 'New Password',
-      name: 'newPassword',
-      type: 'password',
-      id: 'new-password'
-    },
-    {
-      label: 'Confirm Password',
-      name: 'repeatPassword',
-      type: 'password',
-      id: 'confirm-password'
-    }
-  ]
+  const fields = {
+    fields: [
+      {
+        label: 'Current Password',
+        name: 'current',
+        type: 'password',
+        id: 'current-password'
+      },
+      {
+        label: 'New Password',
+        name: 'newPassword',
+        type: 'password',
+        id: 'new-password'
+      },
+      {
+        label: 'Confirm Password',
+        name: 'repeatPassword',
+        type: 'password',
+        id: 'confirm-password'
+      }
+    ]
+  }
+
+  if(totpEnabled.value){
+    //Add totp code field
+    fields.fields.push({
+      label: 'TOTP Code',
+      name: 'totpCode',
+      type: 'text',
+      id: 'totp-code'
+    })
+  }
+
+  return fields
 })
 
 const { waiting } = useWait()
 const { onInput } = useMessage()
-const { resetPassword } = useUser()
+const { resetPassword } = useAccount()
 
 const pwResetShow = ref(false)
 
@@ -69,7 +82,7 @@ const rules = computed(() =>{
       maxLength: helpers.withMessage('Repeast password must have less than 128 characters', maxLength(128))
     },
     totpCode:{
-      required: helpers.withMessage('TOTP code cannot be empty', (value:string) => showTotpCode.value ? !isEmpty(value) : true),
+      required: helpers.withMessage('TOTP code cannot be empty', (value: string) => totpEnabled.value ? !isEmpty(value) : true),
       minLength: helpers.withMessage('TOTP code must be at least 6 characters', minLength(6)),
       maxLength: helpers.withMessage('TOTP code must have less than 12 characters', maxLength(12))
     }
@@ -78,20 +91,6 @@ const rules = computed(() =>{
 
 const v$ = useVuelidate(rules, vState, { $lazy: true })
 const { validate } = useVuelidateWrapper(v$ as MaybeRef<VuelidateInstance>)
-
-const showTotpCode = computed(() => totpEnabled.value && !fidoEnabled.value)
-
-watch(showTotpCode, (val) => {
-  if(val){
-    //Add totp code field
-    formSchema.value.fields.push({
-      label: 'TOTP Code',
-      name: 'totpCode',
-      type: 'text',
-      id: 'totp-code'
-    })
-  }
-})
 
 const showForm = () => set(pwResetShow, true)
 
@@ -110,12 +109,16 @@ const onSubmit = async () => {
     const args : IResetPasswordArgs = {}
 
     //Add totp code if enabled
-    if(showTotpCode.value){
+    if(totpEnabled.value){
       args.totp_code = toSafeInteger(v$.value.totpCode.$model)
     }
 
     //Exec pw reset
-    const { getResultOrThrow } = await resetPassword(v$.value.current.$model, v$.value.newPassword.$model, args)
+    const { getResultOrThrow } = await resetPassword(
+        v$.value.current.$model, 
+        v$.value.newPassword.$model, 
+        args
+    )
 
     //Get result or raise exception to handler
     const result = getResultOrThrow()
@@ -178,13 +181,13 @@ const resetForm = () => {
           :validator="v$" @submit="onSubmit" @input="onInput" />
 
         <div class="flex flex-row justify-end my-2">
-          <div class="button-group">
-            <button type="submit" form="password-reset-form" class="btn primary sm" :disabled="waiting">
+          <div class="join">
+            <button type="submit" form="password-reset-form" class="btn btn-primary join-item" :disabled="waiting">
               <fa-icon v-if="!waiting" icon="check" />
               <fa-icon v-else class="animate-spin" icon="spinner" />
               Update
             </button>
-            <button class="btn sm cancel-btn" :disabled="waiting" @click="resetForm">
+            <button class="btn join-item" :disabled="waiting" @click="resetForm">
               Cancel
             </button>
           </div>
@@ -194,27 +197,3 @@ const resetForm = () => {
     </div>
   </div>
 </template>
-
-<style lang="scss">
-
-#password-reset-form{
-
-  .dynamic-form.input-container{
-    @apply flex flex-col sm:flex-row my-4 max-w-lg mx-auto;
-    
-    label{
-      flex-basis: 40%;
-      @apply pl-1 text-sm sm:text-right my-auto mr-2 mb-1 sm:mb-auto;
-    }
-  }
-  
-  .dynamic-form.dynamic-input.input {
-    @apply p-2 w-full border rounded-md;
-    @apply focus:border-primary-500 focus:dark:border-primary-600 dark:border-dark-400 bg-transparent dark:bg-dark-800;
-  }
-  .dirty.data-invalid.dynamic-form.input-container input{
-    @apply border-red-500 focus:border-red-500;
-  }
-}
-
-</style>

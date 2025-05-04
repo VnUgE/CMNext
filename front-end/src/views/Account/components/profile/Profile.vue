@@ -59,12 +59,13 @@ watch(editMode, () => v$.value.$reset())
 </script>
 <template>
   <div id="account-profile" class="acnt-content-container panel-container">
+
     <div class="acnt-content profile-container panel-content">
 
       <div id="profile-control-container" class="flex flex-row" :modified="store.userProfile.modified">
         <div class="m-0">
-          <div class="flex rounded-full w-14 h-14 bg-primary-500 dark:bg-primary-600">
-            <div class="m-auto text-white dark:text-dark-500">
+          <div class="flex rounded-full w-14 h-14 bg-primary">
+            <div class="m-auto text-base-200">
               <fa-icon :icon="['fas', 'user']" size="2xl" />
             </div>
           </div>
@@ -75,18 +76,19 @@ watch(editMode, () => v$.value.$reset())
         </div>
 
         <div class="gap-3 ml-auto">
-          <div v-if="editMode" class="button-group">
-             <button form="profile-edit-form" class="btn primary sm" :disabled="waiting" @click="onSubmit">Submit</button>
-             <button class="btn sm" @click="revertProfile">Cancel</button>
+          <div v-if="editMode" class="join">
+            <button form="profile-edit-form" class="btn btn-primary join-item" :disabled="waiting"
+              @click="onSubmit">Submit</button>
+            <button class="btn join-item" @click="revertProfile">Cancel</button>
           </div>
-          <div v-else class="">
-            <button class="btn no-border" @click="editMode = true">Edit</button>
+          <div v-else class="tooltip max-sm:tooltip-left tooltip-bottom" data-tip="Edit your profile">
+            <button class="btn" @click="editMode = true">Edit</button>
           </div>
         </div>
       </div>
 
       <div>
-        
+
         <p class="profile-text text-bg">
           You may set or change your profile information here. All fields are optional,
           but some features may not work without some information.
@@ -103,72 +105,16 @@ watch(editMode, () => v$.value.$reset())
           </div>
         </div>
 
-        <dynamic-form id="profile-edit-form"
-          :form="FormSchema"
-          :disabled="!editMode"
-          :validator="v$"
+        <dynamic-form 
+          id="profile-edit-form" 
+          :form="FormSchema" 
+          :disabled="!editMode" 
+          :validator="v$" 
           @submit="onSubmit"
-          @input="onInput"
+          @input="onInput" 
         />
       </div>
 
     </div>
   </div>
 </template>
-
-
-<style lang="scss">
-
-#account-profile {
-
-  p.profile-text{
-    @apply p-2 md:py-3 md:my-1 text-sm;
-  }
-  
-  .locked-info{
-    @apply w-full flex flex-col sm:flex-row sm:justify-evenly pt-3 sm:pb-1;
-  }
-
-  #profile-edit-form .input-group {
-    @apply pt-4;
-
-    .input-container{
-      @apply p-2 rounded-md flex sm:flex-row flex-col sm:gap-4;
-
-      &.dirty.data-invalid.dynamic-form .dynamic-input{
-        @apply border-red-600;
-      }
-
-      &.dirty.data-invalid.dynamic-form label.dynamic-form{
-        @apply text-red-500;
-      }
-
-      &.dirty.dynamic-form label.dynamic-form{
-        @apply text-primary-500;
-      }
-
-      select:disabled{
-        @apply appearance-none;
-      }
-    }
-
-    .input-container:nth-child(odd) {
-      @apply bg-slate-50 dark:bg-dark-700;
-    }
-
-    .dynamic-form.dynamic-input{
-      @apply py-2 w-full bg-transparent border-x-0 border-t-0 border-b border-gray-300 dark:border-dark-300 pl-2;
-      @apply focus:bg-gray-200 focus:dark:bg-transparent;
-
-      &:disabled{
-        @apply py-1 border-transparent; 
-      }
-    }
-
-    label.dynamic-form{
-      flex-basis: 15%;
-      @apply sm:text-right my-auto;
-    }
-  }
-}
-</style>

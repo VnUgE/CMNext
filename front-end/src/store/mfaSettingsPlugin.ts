@@ -1,99 +1,106 @@
 import 'pinia'
-import { MaybeRef, ref, shallowRef, watch } from 'vue';
-import { MfaMethod, PkiPublicKey, apiCall, useMfaConfig, usePkiConfig, usePkiAuth, MfaApi } from '@vnuge/vnlib.browser';
-import { useToggle, get, set } from '@vueuse/core';
-import { PiniaPluginContext, PiniaPlugin, storeToRefs } from 'pinia'
-import { includes } from 'lodash-es';
-import { storeExport, } from './index';
-
-interface PkiStore {
-    publicKeys: PkiPublicKey[]
-    pkiConfig: ReturnType<typeof usePkiConfig>
-    pkiAuth: ReturnType<typeof usePkiAuth>
-    refresh: () => void
-}
+import { computed, type Ref } from 'vue';
+import { 
+    useMfaApi,
+    type MfaMethod, 
+    type MfaApi,
+    type MfaGetResponse,
+    useGeneralToaster
+} from '@vnuge/vnlib.browser';
+import { useAsyncState } from '@vueuse/core';
+import { PiniaPluginContext, PiniaPlugin } from 'pinia'
+import { find, includes } from 'lodash-es';
+import { storeExport } from './index';
 
 export interface MfaSettingsStore{
-    mfa:{
-        enabledMethods: MfaMethod[]
+    readonly mfa: {
+        readonly data: MfaGetResponse
+        /**
+         * Checks if the given mfa method is enabled for the current user
+         * @param type The mfa method to check if it is enabled
+         * @returns 
+         */
+        readonly isEnabled: (type: MfaMethod) => Ref<boolean>
+        /**
+         * Checks if the server announced that the given mfa method is supported
+         * on the server
+         * @param type The mfa method to check if it is supported
+         * @returns A reactive ref that is true if the method is supported
+         */
+        readonly isSupported: (type: MfaMethod) => Ref<boolean>
+        /**
+         * Gets the MFA data slot returned by the server for the given mfa method
+         * This data is specific to the mfa method and does not have a fixed schema
+         * @param type The mfa method to get the data for
+         * @returns A reactive ref that contains the data for the mfa method
+         */
+        readonly getDataFor: <T>(type: MfaMethod) => Ref<T | undefined>
+        /**
+         * Refreshes the mfa data from the server
+         */
         refresh: () => void
     } & MfaApi
-    pki?: PkiStore
 }
 
 declare module 'pinia' {
     export interface PiniaCustomProperties extends MfaSettingsStore {
-       
     }
 }
 
-export const mfaSettingsPlugin = (mfaEndpoint: MaybeRef<string>, pkiEndpoint?:MaybeRef<string>): PiniaPlugin => {
+export const mfaSettingsPlugin = (): PiniaPlugin => {
 
     return ({ store }: PiniaPluginContext): MfaSettingsStore => {
+        const mfaConfig = useMfaApi()
 
-        const { loggedIn } = storeToRefs(store)
-        const mfaConfig = useMfaConfig(mfaEndpoint)
-       
-        const [onRefresh, refresh] = useToggle()
+        const { error } = useGeneralToaster();
 
-        const enabledMethods = ref<MfaMethod[]>([])
+        const { state: data, execute } = useAsyncState<MfaGetResponse>(async () => {
+            //Wait for the account rpc data to be loaded from the server
+            const accStatus = await store.account.wait();
 
-        const usePki = () => {
-
-            const publicKeys = shallowRef<PkiPublicKey[]>([])
-
-            const pkiConfig = usePkiConfig(pkiEndpoint || '/')
-            const pkiAuth = usePkiAuth(pkiEndpoint || '/')
-
-            //Watch for changes to mfa methods (refresh) and update the pki keys
-            watch([enabledMethods], ([methods]) => {
-                if (!includes(methods, 'pki' as MfaMethod) || !get(pkiEndpoint)) {
-                    set(publicKeys, [])
-                    return
-                }
-
-                //load the pki keys if pki is enabled
-                apiCall(async () => publicKeys.value = await pkiConfig.getAllKeys())
-            })
-
-            return{
-                publicKeys,
-                pkiConfig,
-                pkiAuth,
-                refresh
-            } 
-        }
-
-        watch([loggedIn, onRefresh], ([ li ]) => {
-            if(!li){
-                set(enabledMethods, [])
-                return
+            //Ensure the user is logged in and MFA is enabled
+            if (!accStatus.status.authenticated || !mfaConfig.isEnabled(accStatus)) {
+                return {} as MfaGetResponse
             }
 
-            //load the mfa methods if the user is logged in
-            apiCall(async () => enabledMethods.value = await mfaConfig.getMethods())
-        })
+            try{
 
-        //Only return the pki store if pki is enabled
-        if(get(pkiEndpoint)){
-            return storeExport({
-                mfa:{
-                    enabledMethods,
-                    refresh,
-                    ...mfaConfig
-                },
-                pki: usePki()
-            })   
-        }
-        else{
-            return storeExport({
-                mfa:{
-                    enabledMethods,
-                    refresh,
-                    ...mfaConfig
-                },
+                //errors are swallowed here
+                return await mfaConfig.getData()
+            }
+            catch(e){
+                error({ title: 'MFA Failure', text: "Failed to load MFA settings"});
+                return {} as MfaGetResponse
+            }
+        }, {} as any, { delay: 100, immediate: true })
+
+        const isEnabled = (type: MfaMethod): Ref<boolean> => {
+            return computed(() => {
+                const m = find(data.value.methods, m => m.type === type)
+                return m ? m.enabled : false
             })
-        
         }
+
+        const isSupported = (type: MfaMethod): Ref<boolean> => {
+            return computed(() => includes(data.value.supported_methods, type))
+        }
+
+        const getDataFor = <T>(type: MfaMethod): Ref<T | undefined> => {
+            return computed(() => {
+                const m = find(data.value.methods, m => m.type === type)
+                return m ? m.data as T : undefined
+            })
+        }
+
+        return storeExport({
+            mfa: {
+                ...mfaConfig,
+                data,
+                isEnabled,
+                isSupported,
+                getDataFor,
+                refresh: execute,
+            },
+        }) as unknown as MfaSettingsStore
     }
 }

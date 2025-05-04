@@ -14,12 +14,13 @@ const props = defineProps<{
 
 const store = useStore()
 const { application, allowEdit } = toRefs(props)
+const { updateAppMeta, refresh, deleteApp, updateAppSecret } = store.oauth2!
 
 //Init data buffer around application
 const { data, revert, modified, buffer, update, apply } = useDataBuffer(get(application),
   async (adb) => {
-    await store.oauth2.updateAppMeta(adb.buffer);
-    store.oauth2.refresh();
+    await updateAppMeta(adb.buffer);
+    refresh();
   })
 
 //Watch for store app changes and apply them to the buffer
@@ -76,8 +77,8 @@ const updateSecret = async function () {
   }
   await elevatedApiCall(async ({ password }) => {
     // Submit the secret update with the new challenge
-    newSecret.value = await store.oauth2.updateAppSecret(data, password)
-    store.oauth2.refresh()
+    newSecret.value = await updateAppSecret(data, password)
+    refresh()
   })
 }
 
@@ -86,18 +87,19 @@ const onDelete = async function () {
   const { isCanceled } = await reveal({
     title: 'Delete?',
     text: 'You are about to permanently delete this application. This will invalidate any active sessions.',
-    subtext: ''
+    subtext: '',
+    isWarning: true
   })
   if (isCanceled) {
     return
   }
   await elevatedApiCall(async ({ password, toaster }) => {
-    await store.oauth2.deleteApp(data, password)
+    await deleteApp(data, password)
     toaster.general.success({
       text: 'Application deleted successfully',
       title: 'Success'
     })
-    store.oauth2.refresh()
+    refresh()
   })
 }
 
@@ -109,8 +111,8 @@ const closeNewSecret = () => set(newSecret, null);
   <div :id="data.Id">
     <div class="flex flex-row">
       <div class="flex ml-0 mr-auto">
-        <div class="flex w-8 h-8 rounded-full bg-primary-500">
-          <div class="m-auto text-white dark:text-dark-500">
+        <div class="flex w-8 h-8 rounded-full bg-primary">
+          <div class="m-auto text-base-100">
             <fa-icon icon="key"></fa-icon>
           </div>
         </div>
@@ -118,9 +120,9 @@ const closeNewSecret = () => set(newSecret, null);
           <h5 class="m-0">{{ name }}</h5>
         </div>
       </div>
-      <div v-if="allowEdit && showEdit" class="button-group">
-        <button class="btn primary xs" :disabled="!modified" @click="onSubmit">Update</button>
-        <button class="btn xs" @click="onCancel">Cancel</button>
+      <div v-if="allowEdit && showEdit" class="join">
+        <button class="btn btn-primary join-item" :disabled="!modified" @click="onSubmit">Update</button>
+        <button class="btn join-item" @click="onCancel">Cancel</button>
       </div>
       <div v-else class="">
         <button class="btn no-border xs" @click="toggleEdit(true)">Edit</button>
@@ -144,7 +146,7 @@ const closeNewSecret = () => set(newSecret, null);
         <div class="pl-1 mb-2">
           New secret
         </div>
-        <div class="p-4 text-sm break-all border-2 rounded dark:border-dark-500 dark:bg-dark-700">
+        <div class="p-4 text-sm break-all border-2 rounded border-primary-content">
             {{ newSecret }}
         </div>
         <div class="flex justify-end my-3">
@@ -165,14 +167,34 @@ const closeNewSecret = () => set(newSecret, null);
               <div class="pl-1 mb-1">
                 App name
               </div>
-              <input class="w-full input primary" :class="{ 'invalid': v$.name.$invalid }" v-model="v$.name.$model" type="text" name="name" />
+              <input 
+                class="w-full input input-bordered" 
+                :class="{ 'data-invalid': v$.name.$invalid, 'dirty': v$.name.$dirty }" 
+                v-model="v$.name.$model" 
+                type="text" 
+                name="name" 
+              />
+              <p v-if="v$.name.$errors.length > 0 && v$.name.$model?.length > 0"
+                class="mt-1 ml-1 text-xs text-red-500">
+                {{ v$.name.$errors[0].$message }}
+              </p>
             </div>
             <div class="mt-3 input-container">
               <div class="pl-1 mb-1">
                 App description
                 <span class="text-sm">(optional)</span>
               </div>
-              <textarea class="w-full input primary" :class="{ 'invalid': v$.description.$invalid }" v-model="v$.description.$model" name="description" rows="3" />
+              <textarea 
+                class="w-full input input-bordered min-h-32" 
+                :class="{ 'data-invalid': v$.description.$invalid, 'dirty': v$.description.$dirty }" 
+                v-model="v$.description.$model" 
+                name="description" 
+                rows="3" 
+              />
+              <p v-if="v$.description.$errors.length > 0 && v$.description.$model?.length > 0"
+                  class="mt-1 ml-1 text-xs text-red-500">
+                  {{ v$.description.$errors[0].$message }}
+              </p>
             </div>
           </fieldset>
         </form>
@@ -180,12 +202,12 @@ const closeNewSecret = () => set(newSecret, null);
       <div class="mt-3">
         
         <div class="mx-auto w-fit">
-          <div class="button-group">
-            <button class="btn xs" @click.prevent="updateSecret">
+          <div class="join">
+            <button class="btn join-item" @click.prevent="updateSecret">
               <fa-icon icon="sync" />
               <span class="pl-2">New Secret</span>
             </button>
-            <button class="btn red xs" @click.prevent="onDelete">
+            <button class="btn text-error join-item" @click.prevent="onDelete">
               <fa-icon icon="minus-circle" />
               <span class="pl-2">Delete</span>
             </button>

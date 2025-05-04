@@ -1,9 +1,18 @@
 import 'pinia'
-import { MaybeRef, watch } from 'vue';
-import { ServerDataBuffer, ServerObjectBuffer, UserProfile, WebMessage, apiCall, useAxios, useDataBuffer, useUser } from '@vnuge/vnlib.browser';
-import { get, useToggle } from '@vueuse/core';
+import { computed, watch } from 'vue';
+import { 
+    type ServerDataBuffer, 
+    type ServerObjectBuffer, 
+    type UserProfile, 
+    type WebMessage, 
+    apiCall,
+    useDataBuffer, 
+    useAccount, 
+    useAccountRpc
+} from '@vnuge/vnlib.browser';
+import { syncRef, useToggle } from '@vueuse/core';
 import { PiniaPlugin, PiniaPluginContext, storeToRefs } from 'pinia'
-import { defer, noop } from 'lodash-es';
+import { defer } from 'lodash-es';
 import { storeExport } from './index';
 
 export interface OAuth2Application {
@@ -26,30 +35,28 @@ interface ExUserProfile extends UserProfile {
 }
 
 export interface UserProfileStore{
-    userProfile: ServerDataBuffer<ExUserProfile, WebMessage<string>>
-    userName: string | undefined
+    readonly userProfile: ServerDataBuffer<ExUserProfile, WebMessage<string>>
     refreshProfile(): void;
 }
 
 declare module 'pinia' {
     export interface PiniaCustomProperties extends UserProfileStore {
-      
     }
 }
 
-export const profilePlugin = (accountsUrl:MaybeRef<string>) :PiniaPlugin => {
+export const profilePlugin = () :PiniaPlugin => {
 
     return ({ store }: PiniaPluginContext): UserProfileStore => {
 
-        const { loggedIn } = storeToRefs(store)
-        const { getProfile, userName } = useUser()
-        const axios = useAxios(null)
+        const { loggedIn, userName } = storeToRefs(store)
+        const { getProfile } = useAccount()
+        const { exec } = useAccountRpc()
 
         const [onRefresh, refreshProfile] = useToggle()
 
         const updateUserProfile = async (profile: ServerObjectBuffer<ExUserProfile>) => {
             // Apply the buffer to the profile
-            const { data } = await axios.post<WebMessage<string>>(get(accountsUrl), profile.buffer)
+            const data = await exec<string>('profile.update', profile.buffer)
 
             //Get the new profile from the server
             const newProfile = await getProfile() as ExUserProfile
@@ -70,15 +77,17 @@ export const profilePlugin = (accountsUrl:MaybeRef<string>) :PiniaPlugin => {
         }
 
         //If the user is logged in, load the profile buffer
-        watch([loggedIn, onRefresh], ([li]) => li ? apiCall(loadProfile) : noop())
+        watch([loggedIn, onRefresh], ([li]) => li ? apiCall(loadProfile) : userProfile.apply({} as any))
 
         //Defer intiial profile load
         defer(refreshProfile);
 
+        //sync global username value with profile email
+        syncRef(userName, computed(() => userProfile.data.email), { direction: 'rtl' })
+
         return storeExport({
             userProfile,
-            refreshProfile,
-            userName
-        })
+            refreshProfile
+        }) as unknown as UserProfileStore
     }
 }

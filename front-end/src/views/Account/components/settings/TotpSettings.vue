@@ -1,28 +1,21 @@
 <script setup lang="ts">
-import { isNil, chunk, defaultTo, includes, map, join } from 'lodash-es'
-import { TOTP } from 'otpauth'
+import { isNil, chunk, defaultTo, map, join, toSafeInteger } from 'lodash-es'
 import base32Encode from 'base32-encode'
-import QrCodeVue from 'qrcode.vue'
-import VOtpInput from "vue3-otp-input";
 import { computed, ref } from 'vue'
+import { get } from '@vueuse/core'
 import {
   useSession,
   useMessage,
   useConfirm,
   usePassConfirm,
-  useFormToaster,
-  MfaMethod
+  useTotpApi,
+  apiCall,
+  type TotpUpdateResponse
 } from '@vnuge/vnlib.browser'
 import { useStore } from '../../../../store';
 import { storeToRefs } from 'pinia';
-
-interface TotpConfig {
-  secret: string;
-  readonly issuer: string;
-  readonly algorithm: string;
-  readonly digits?: number;
-  readonly period?: number;
-}
+import QrCodeVue from 'qrcode.vue'
+import VOtpInput from "vue3-otp-input";
 
 const store = useStore();
 const { isLocalAccount } = storeToRefs(store);
@@ -31,12 +24,12 @@ const { KeyStore } = useSession()
 const { reveal } = useConfirm()
 const { elevatedApiCall } = usePassConfirm()
 const { onInput, setMessage } = useMessage()
+const totpSupported = store.mfa.isSupported('totp')
+const totpEnabled = store.mfa.isEnabled('totp')
+const totpApi = useTotpApi(store.mfa);
 
-const totpEnabled = computed(() => includes(store.mfa.enabledMethods, MfaMethod.TOTP))
-
-const totpMessage = ref<TotpConfig>()
+const totpMessage = ref<TotpUpdateResponse>()
 const showSubmitButton = ref(false)
-const toaster = useFormToaster()
 
 const showTotpCode = computed(() => !isNil(totpMessage.value?.secret))
 
@@ -52,7 +45,7 @@ const qrCode = computed(() => {
     return ''
   }
 
-  const m = totpMessage.value!;
+  const m = get(totpMessage)!;
 
   // Build the totp qr codeurl
   const params = new URLSearchParams()
@@ -69,10 +62,7 @@ const ProcessAddOrUpdate = async () => {
   await elevatedApiCall(async ({ password }) => {
 
     // Init or update the totp method and get the encrypted totp message
-    const res = await store.mfa.initOrUpdateMethod<TotpConfig>(MfaMethod.TOTP, password);
-
-    //Get the encrypted totp message
-    const totp = res.getResultOrThrow()
+    const totp = await totpApi.enable({ password })
 
     // Decrypt the totp secret
     const secretBuf = await KeyStore.decryptDataAsync(totp.secret)
@@ -115,40 +105,46 @@ const disable = async () => {
   // Show a confrimation prompt
   const { isCanceled } = await reveal({
     title: 'Disable TOTP',
-    text: 'Are you sure you want to disable TOTP? You may re-enable TOTP later.'
+    text: 'Are you sure you want to disable TOTP? You may re-enable TOTP later.',
+    isWarning: true
   })
 
   if (isCanceled) {
     return
   }
 
-  await elevatedApiCall(async ({ password }) => {
+  await elevatedApiCall(async ({ password, toaster }) => {
     // Disable the totp method
-    const res = await store.mfa.disableMethod(MfaMethod.TOTP, password)
-    res.getResultOrThrow()
+    const text = await totpApi.disable({ password });
+
+    toaster.general.success({ title: 'Success', text})
 
     store.mfa.refresh()
   })
 }
 
-const VerifyTotp = async (code: string) => {
-  // Create a new TOTP instance from the current message
-  const totp = new TOTP(totpMessage.value)
+const VerifyTotp = (code: string) => {
 
-  // validate the code
-  const valid = totp.validate({ token: code, window: 4 })
+ apiCall(async ({ toaster }) => {
 
-  if (valid) {
+  try{
+    
+    await totpApi.verify(toSafeInteger(code));
+
     showSubmitButton.value = true;
 
-    toaster.success({
+    toaster.general.success({
       title: 'Success',
       text: 'Your TOTP code is valid and is now enabled'
     })
-  } else {
+  }
+  catch(e){
     setMessage('Your TOTP code is not valid.')
   }
+ 
+ })
 }
+ 
 
 const CloseQrWindow = () => {
   showSubmitButton.value = false
@@ -160,10 +156,10 @@ const CloseQrWindow = () => {
 
 </script>
 <template>
-  <div id="totp-settings">
+  <div id="totp-settings" v-if="totpSupported">
 
     <div v-if="!isLocalAccount" class="flex flex-row justify-between">
-      <h6 class="block">
+      <h6 class="block font-bold">
         TOTP Authenticator App
       </h6>
       <div class="text-red-500">
@@ -185,8 +181,8 @@ const CloseQrWindow = () => {
         Your secret, if your application requires it.
       </p>
 
-      <p class="flex flex-row flex-wrap justify-center p-2 bg-gray-200 border border-gray-300 dark:bg-dark-800 dark:border-dark-500">
-        <span v-for="code in secretSegments" :key="code" class="px-2 font-mono tracking-wider" >
+      <p class="flex flex-row flex-wrap justify-center p-2 bg-base-100 border-base-100 border">
+        <span v-for="code in secretSegments" :key="code" class="px-2 font-mono tracking-wider">
           {{ code }}
         </span>
       </p>
@@ -196,65 +192,61 @@ const CloseQrWindow = () => {
       </p>
 
       <div class="m-auto w-min">
-           <VOtpInput
-                class="otp-input"
-                input-type="letter-numeric"
-                separator=""
-                value=""
-                :is-disabled="showSubmitButton"
-                input-classes="primary input rounded"
-                :num-inputs="6"
-                @on-change="onInput"
-                @on-complete="VerifyTotp"
-            />
+        <VOtpInput class="otp-input" input-type="letter-numeric" separator="" value="" :is-disabled="showSubmitButton"
+          input-classes="primary input rounded" :num-inputs="6" @on-change="onInput" @on-complete="VerifyTotp" />
       </div>
 
       <div v-if="showSubmitButton" class="flex flex-row justify-end my-2">
-        <button class="btn primary" @click.prevent="CloseQrWindow">
+        <button class="btn btn-primary" @click.prevent="CloseQrWindow">
           Complete
         </button>
       </div>
     </div>
-    
-    <div v-else class="flex flex-row flex-wrap justify-between">
-      <h6>TOTP Authenticator App</h6>
 
-      <div v-if="totpEnabled" class="button-group">
-        <button class="btn xs" @click.prevent="regenTotp">
-          <fa-icon icon="sync" />
-          <span class="pl-2">Regenerate</span>
-        </button>
-        <button class="btn red xs" @click.prevent="disable">
-          <fa-icon icon="minus-circle" />
-          <span class="pl-2">Disable</span>
-        </button>
+    <div v-else class="">
+      <div class="flex flex-row flex-wrap justify-between">
+        <h6 class="font-bold">TOTP Authenticator App</h6>
+
+        <div v-if="totpEnabled" class="join">
+          <button class="btn join-item tooltip max-sm:tooltip-left" data-tip="Reset your TOTP secret" @click.prevent="regenTotp">
+            <fa-icon icon="sync" />
+            <span class="pl-2 max-sm:hidden">Regenerate</span>
+          </button>
+          <button class="btn text-error join-item tooltip max-sm:tooltip-left tooltip-error" data-tip="Disable TOTP 2fa" @click.prevent="disable">
+            <fa-icon icon="minus-circle" />
+            <span class="pl-2 max-sm:hidden">Disable</span>
+          </button>
+        </div>
+
+        <div v-else>
+          <button class="btn btn-primary" @click.prevent="configTotp">
+            <fa-icon icon="plus" />
+            <span class="pl-2">Setup</span>
+          </button>
+        </div>
       </div>
 
-      <div v-else>
-        <button class="btn primary xs" @click.prevent="configTotp">
-          <fa-icon icon="plus" />
-          <span class="pl-2">Setup</span>
-        </button>
-      </div>
-      <p class="p-1 pt-3 text-sm text-bg">
+      <p v-if="!totpEnabled" class="p-1 pt-3 text-sm text-bg">
         TOTP is a time based one time password. You can use it as a form of Multi Factor Authentication when
         using another device such as a smart phone or TOTP hardware device. You can use TOTP with your smart
-        phone
-        using apps like Google Authenticator, Authy, or Duo. Read more on
+        phone using apps like Google Authenticator, Authy, or Duo. Read more on
         <a class="link" href="https://en.wikipedia.org/wiki/Time-based_one-time_password" target="_blank">
           Wikipedia.
         </a>
       </p>
+
+      <p v-else class="p-1 pt-2 text-sm text-primary-700">
+        TOTP is enabled for your account
+      </p>
+
     </div>
 
   </div>
+  <div v-else>
+    <div class="">
+      <div class="text-sm text-bg">
+        TOTP is not enabled on this server
+      </div>
+    </div>
+  </div>
 </template>
-
-
-<style>
-
-#totp-settings .otp-input input {
-    @apply w-12 text-center text-lg mx-1 focus:border-primary-500;
-}
-
-</style>

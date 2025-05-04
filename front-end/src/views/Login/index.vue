@@ -1,26 +1,40 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { apiCall, useWait } from '@vnuge/vnlib.browser'
-import { isNil } from 'lodash-es'
+import { apiCall, useWait, useOauthLogin, useAccount } from '@vnuge/vnlib.browser'
+import { get } from '@vueuse/core'
 import { useStore } from '../../store'
 import { storeToRefs } from 'pinia'
+import { useRouteQuery } from '@vueuse/router'
+import { RouteLocation, useRouter } from 'vue-router'
+import { defer, isEmpty } from 'lodash-es'
 import UserPass from './components/UserPass.vue'
 import Social from './components/Social.vue'
 
 const store = useStore();
 const { loggedIn } = storeToRefs(store)
-const pkiEnabled = computed(() => !isNil(store.pki?.pkiAuth))
+const { push } = useRouter();
+const redirectRoute = useRouteQuery('redirect');
 
 store.setPageTitle('Login')
 
 const { waiting } = useWait()
+const { logout } = useAccount()
+const socialOauth = useOauthLogin()
+
+const otpEnabled = store.account.isMethodSupported('otp.login');
 
 const submitLogout = async () => {
   //Submit logout request
   await apiCall(async ({ toaster }) => {
-    const { logout } = await store.socialOauth()
+
+    if(socialOauth.isEnabled(store.account.data)){
+      //Logout using oauth
+      await socialOauth.logout({ autoRedirect: true })
+      return
+    }
+
     // Attempt to logout
-    await logout()
+    await apiCall(logout);
+
     // Push a new toast message
     toaster.general.success({
       id: 'logout-success',
@@ -28,71 +42,80 @@ const submitLogout = async () => {
       text: 'You have been logged out',
       duration: 5000
     })
+    
+    store.account.refresh()
   })
 }
+
+defer(async () => {
+
+  /**
+   * redirects the user to the redirect route if 
+   * they are logged in and there is a redirect route
+   */
+  await store.account.wait();
+  const isLoggedIn = get(loggedIn);
+  const redirect = get(redirectRoute);
+  
+  if (isLoggedIn && !isEmpty(redirect)) {
+    push({ path: redirect } as RouteLocation);
+  }
+
+})
 
 </script>
 
 <template>
-  <div id="login-template" class="app-component-entry">
-    <div class="login-container">
 
-      <div v-if="!loggedIn">
-        <UserPass />
+  <div class="default-page-template md:mb-30 mb-20">
+    <div class="mx-auto max-w-[25rem] space-y-6 bg-base-100 rounded-lg md:p-6 p-3" data-id="3">
+      <div class="space-y-2 text-center" data-id="4">
+        <h1 class="text-3xl font-bold" data-id="5">Login</h1>
       </div>
+      <div class="" data-id="7">
 
-      <div v-else>
-        <h3>Logout</h3>
-        <p class="mt-3 mb-5 text-lg">
-          You are currently logged-in.
-        </p>
-        <div class="">
-          <button form="user-pass-submit-form" class="btn primary" @click="submitLogout" :disabled="waiting">
-            <!-- Display spinner if waiting, otherwise the sign-in icon -->
-            <fa-icon :class="{'animate-spin':waiting}" :icon="waiting ? 'spinner' : 'sign-in-alt'" />
-            Log-out
-          </button>
+        <div v-if="!loggedIn">
+          <UserPass />
         </div>
-      </div>
 
-      <div v-if="!loggedIn" class="w-full mt-6">
-
-        <Social />
-
-        <!-- pki button, forward to the pki route -->
-        <div v-if="pkiEnabled" class="mt-4">
-          <router-link to="/login/pki">
-            <button type="submit" class="btn social-button" :disabled="waiting">
-              <span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 256 256">
-                  <path fill="currentColor" d="M248 128a56 56 0 1 0-96 39.14V224a8 8 0 0 0 11.58 7.16L192 216.94l28.42 14.22A8 8 0 0 0 232 224v-56.86A55.81 55.81 0 0 0 248 128Zm-56-40a40 40 0 1 1-40 40a40 40 0 0 1 40-40Zm3.58 112.84a8 8 0 0 0-7.16 0L168 211.06v-32.47a55.94 55.94 0 0 0 48 0v32.47ZM136 192a8 8 0 0 1-8 8H40a16 16 0 0 1-16-16V56a16 16 0 0 1 16-16h176a16 16 0 0 1 16 16a8 8 0 0 1-16 0H40v128h88a8 8 0 0 1 8 8Zm-16-56a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Zm0-32a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Z" />
-                </svg>
-              </span>
-              Login with OTP
+        <div v-else>
+          <div class="">
+            <button form="user-pass-submit-form" class="btn btn-primary w-full" @click="submitLogout"
+              :disabled="waiting">
+              <!-- Display spinner if waiting, otherwise the sign-in icon -->
+              <fa-icon :class="{ 'animate-spin': waiting }" :icon="waiting ? 'spinner' : 'sign-in-alt'" />
+              Log-out
             </button>
-          </router-link>
+          </div>
         </div>
-      </div>
 
+        <div v-if="!loggedIn" class="w-full">
+
+          <!-- pki button, forward to the pki route -->
+          <div v-if="otpEnabled" class="mt-6">
+            <router-link to="/login/pki">
+              <button type="submit" class="btn w-full" :disabled="waiting">
+                <span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 256 256">
+                    <path fill="currentColor"
+                      d="M248 128a56 56 0 1 0-96 39.14V224a8 8 0 0 0 11.58 7.16L192 216.94l28.42 14.22A8 8 0 0 0 232 224v-56.86A55.81 55.81 0 0 0 248 128Zm-56-40a40 40 0 1 1-40 40a40 40 0 0 1 40-40Zm3.58 112.84a8 8 0 0 0-7.16 0L168 211.06v-32.47a55.94 55.94 0 0 0 48 0v32.47ZM136 192a8 8 0 0 1-8 8H40a16 16 0 0 1-16-16V56a16 16 0 0 1 16-16h176a16 16 0 0 1 16 16a8 8 0 0 1-16 0H40v128h88a8 8 0 0 1 8 8Zm-16-56a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Zm0-32a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Z" />
+                  </svg>
+                </span>
+                Login with OTP
+              </button>
+            </router-link>
+          </div>
+
+          <Social />
+
+          <div class="mt-4 text-center text-sm" data-id="18">
+            Don't have an account? <router-link data-id="19" class="underline" to="/register">Sign up</router-link>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
+
 </template>
 
-<style lang="scss">
-#login-template {
-  .login-container{
-      @apply container max-w-sm w-full sm:mt-2 mt-8 mb-16 mx-auto lg:mt-16 px-6 py-4 flex flex-col;
-      @apply ease-linear duration-150 text-center;
-      @apply rounded-sm sm:bg-white sm:border shadow-sm border-gray-200 sm:dark:bg-dark-800 dark:border-dark-500;
-  }
-
-  .login-container button{
-    @apply w-full border py-2.5;
-  }
-
-  button.social-button {
-    @apply flex flex-row justify-center gap-3 items-center;
-  }
-
-}
-</style>

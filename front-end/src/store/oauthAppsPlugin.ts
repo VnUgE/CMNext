@@ -22,7 +22,7 @@ export interface NewAppResponse {
 }
 
 export interface Oauth2Store{
-    oauth2: {
+    oauth2?: {
         apps: OAuth2Application[],
         scopes: string[],
         getApps(): Promise<OAuth2Application[]>

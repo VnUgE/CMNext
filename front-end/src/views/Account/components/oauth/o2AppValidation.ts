@@ -1,7 +1,7 @@
 import { MaybeRef } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { maxLength, helpers, required } from '@vuelidate/validators'
-import { useVuelidateWrapper } from '@vnuge/vnlib.browser'
+import { useVuelidateWrapper, VuelidateInstance } from '@vnuge/vnlib.browser'
 import { OAuth2Application } from '../../../../store/oauthAppsPlugin'
 
 //Custom alpha numeric regex
@@ -18,7 +18,6 @@ const rules = {
         maxLength: helpers.withMessage('Description must be less than 50 characters', maxLength(50))
     },
     permissions: {
-        alphaNumSpace: helpers.regex(/^[a-zA-Z0-9_,:\s]*$/),
         maxLength: helpers.withMessage('Permissions must be less than 64 characters', maxLength(64))
     }
 }
@@ -38,6 +37,6 @@ export const getAppValidator = (buffer: MaybeRef<OAuth2Application>) : AppValida
     //App validator
     const v$ = useVuelidate(rules, buffer)
     //validate wrapper function
-    const { validate } = useVuelidateWrapper(v$);
+    const { validate } = useVuelidateWrapper(v$ as MaybeRef<VuelidateInstance>);
     return { v$, validate, reset: v$.value.$reset };
 }

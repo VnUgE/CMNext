@@ -1,7 +1,5 @@
 <template>
-  <p class="nav-title">
-    Help
-  </p>
+  <h6 class="footer-title">Account</h6>
   <a href="https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext" target="_blank" class="footer-link">
     Documentation
   </a>
@@ -12,4 +10,3 @@
 <script setup lang="ts">
 
 </script>
-<style lang="scss"></style>

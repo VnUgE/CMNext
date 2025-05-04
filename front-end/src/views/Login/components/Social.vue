@@ -1,54 +1,39 @@
 <script setup lang="ts">
-import { apiCall, useWait, type OAuthMethod } from '@vnuge/vnlib.browser'
-import { capitalize, map } from 'lodash-es';
+import { apiCall, useOauthLogin, useWait, type SocialOAuthMethod } from '@vnuge/vnlib.browser'
 import { useStore } from '../../../store';
-import { useAsyncState } from '@vueuse/core';
-import { shallowRef } from 'vue';
-import { Mutable } from '@vueuse/core';
+import { get, useArrayFilter } from '@vueuse/core';
+import { computed } from 'vue';
 
-const { waiting } = useWait()
 const store = useStore()
-const buttonCont = shallowRef<HTMLDivElement | null>(null)
+const { waiting } = useWait()
 
-const filterSvgIcon = (oauth: OAuthMethod[]) => {
-    return map(oauth, (method: Mutable<OAuthMethod>) => {
-        //parse the base64 icon as an svg
-        if (method.icon) {
-            return{
-                ...method,
-                icon: atob(method.icon).replace(/(width|height)="[^"]*"/g, '')
-            }
-        }
-        return method;
-    })
-}
+const { getPortals, beginLoginFlow } = useOauthLogin()
+const methods = computed(() => {
+    const data = get(store.account.data);
+    return data?.properties ? getPortals(data) : []
+})
 
-const { state: methods, isReady } = useAsyncState(store.socialOauth().then(p => filterSvgIcon(p.methods)), []);
+const enabledMethods = useArrayFilter(methods, m => m.data.enabled)
 
 //Invoke login wrapped in api call
-const submitLogin = (method: OAuthMethod) => apiCall(async () => {
-    const { beginLoginFlow } = await store.socialOauth();
-    await beginLoginFlow(method)
+const submitLogin = (method: SocialOAuthMethod) => apiCall(async () => {
+    await beginLoginFlow({ method, autoRedirect: true })
 })
 
 </script>
 
 <template>
 
-    <div ref="buttonCont" v-if="isReady" class="flex flex-col gap-3">
-        <div v-for="method in methods" :key="method.id" class="">
-            <button type="submit" class="btn social-button" :disabled="waiting" @click.prevent="submitLogin(method)">
+    <ul v-for="method in enabledMethods" :key="method.method_id" class="">
+        <li class="my-2">
+            <button type="submit" class="btn flex flex-row w-full" :disabled="waiting"
+                @click.prevent="submitLogin(method)">
 
-                <div v-html="method.icon" class="w-6 h-6" >
-                </div>
+                <img v-if="method.data.icon_url" :src="method.data.icon_url" class="w-6 h-6" />
 
-                Login with {{ capitalize(method.id) }}
+                {{ method.data.friendly_name }}
             </button>
-        </div>
-    </div>
-
-    <div v-else class="my-8">
-        <fa-icon icon="spinner" size="2xl" spin />
-    </div>
+        </li>
+    </ul>
 
 </template>

@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2025 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,21 +13,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useSession } from "@vnuge/vnlib.browser";
 import { set } from "@vueuse/core";
 import { defineStore } from "pinia";
+import { defaultsDeep } from 'lodash-es';
+import { useAutoHeartbeat } from '@vnuge/vnlib.browser';
 import { computed, shallowRef, type UnwrapNestedRefs } from "vue";
 
-export { SortType, QueryType } from './sharedTypes'
+export type * from './sharedTypes';
 
-export const storeExport = <T>(val: T): UnwrapNestedRefs<T> => val as UnwrapNestedRefs<T>;
+export const storeExport = <T>(val: DeepMaybeRef<T>): UnwrapNestedRefs<T> => val as UnwrapNestedRefs<T>;
+
+type GlobalState = { autoHeartbeat: boolean, theme: string, loggedIn: boolean, userName: string | undefined, isLocalAccount: boolean };
+const defaultState: GlobalState = { autoHeartbeat: false, theme: '', loggedIn: false, userName: undefined, isLocalAccount: false };
 
 /**
  * Loads the main store for the application
  */
 export const useStore = defineStore('main', () => {
-
-    const { loggedIn, isLocalAccount } = useSession();
 
     //MANAGED STATE
     const headerRoutes = shallowRef(Array<string>());
@@ -36,11 +38,19 @@ export const useStore = defineStore('main', () => {
     const pageTitle = shallowRef("");
     const showCookieWarning = shallowRef(!navigator.cookieEnabled); //Default to current cookie status
 
+    //Get shared global state storage
+    const mainState = useLocalStorage<GlobalState | undefined>("vn-state", defaultState);
+    defaultsDeep(mainState.value, defaultState);
+    const stateRefs = toRefs<GlobalState>(mainState as any);
+
+    //Setup heartbeat for 5 minutes
+    useAutoHeartbeat(5 * 60 * 1000, stateRefs.autoHeartbeat);
+
     /**
      * The current routes to display in the header depending on the 
      * user's login status
      */
-    const currentRoutes = computed(() => loggedIn.value ? authRoutes.value : headerRoutes.value);
+    const currentRoutes = computed(() => stateRefs.loggedIn.value ? authRoutes.value : headerRoutes.value);
 
     const setHeaderRouteNames = (routeNames: string[], authRouteNames: string[]) => {
         set(headerRoutes, [...routeNames]);
@@ -51,9 +61,16 @@ export const useStore = defineStore('main', () => {
     const setPageTitle = (title: string) => set(pageTitle, title);
     const setCookieWarning = (show: boolean) => set(showCookieWarning, show);
 
+    //Watch for changes to the system theme and update the html tag
+    watchDebounced(stateRefs.theme, (theme) => {
+        document.getElementsByTagName('html')
+            .item(0)
+            ?.setAttribute('data-theme', theme);
+        }, 
+        { immediate: true, debounce: 50 }
+    );
+ 
     return{
-        loggedIn,
-        isLocalAccount,
         headerRoutes,
         authRoutes,
         siteTitle,
@@ -63,6 +80,7 @@ export const useStore = defineStore('main', () => {
         setPageTitle,
         currentRoutes,
         setHeaderRouteNames,
-        setSiteTitle
+        setSiteTitle,
+        ...stateRefs
     }
 })
