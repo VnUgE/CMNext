@@ -1,48 +1,72 @@
 
-#taskfile for building the libraries for admin and clients and creating their packages
+#taskfile for building the backend library
 
 version: '3'
 
+includes:
+  module:
+    taskfile: ../Module.Taskfile.yaml
+
 vars:
-  DOTNET_BUILD_FLAGS: '/p:RunAnalyzersDuringBuild=false /p:BuildInParallel=true /p:MultiProcessorCompilation=true'
+  BINARY_DIR: '{{ .BINARY_DIR | default "bin" }}'
+  TARGET_FRAMEWORK: '{{ .TARGET_FRAMEWORK | default "net8.0" }}'
+  RELEASE_DIR: "./bin/release/{{ .TARGET_FRAMEWORK }}/publish"
+  TARGET_DIR: '{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}'
 
 tasks:
 
-  build:
-    dir: '{{.USER_WORKING_DIR}}'
-    cmds:
-    #build project
-    - dotnet publish -c release {{.DOTNET_BUILD_FLAGS}} 
-    
-  #postbuild to package artifaces into the archives for upload
+  #postbuild to package artifacts into the archives for upload
   postbuild_success:
-   dir: '{{.USER_WORKING_DIR}}'
-   vars:
-     #output directory for the build artifacts
-     OUT_DIR: 'bin/release/{{.TARGET_FRAMEWORK}}/publish'
-   
-   cmds:
-    #pack up source code
-    - task: packsource
+    dir: '{{ .USER_WORKING_DIR }}'
+    cmds:
+     #pack up source code
+     - task: packsource
 
-    #copy license to output dir
-    - powershell -Command "cp '{{.MODULE_DIR}}/LICENSE.txt' -Destination '{{.OUT_DIR}}/LICENSE.txt'"
+     #run post in debug mode
+     - task: postbuild
+       vars: { BUILD_MODE: debug }
 
-    #tar the plugin output and put it in the bin dir
-    - cd {{.OUT_DIR}} && tar -czf '{{.USER_WORKING_DIR}}/bin/release.tgz' .
+     #remove uncessary files from the release dir
+     - cmd: powershell -Command "Get-ChildItem -Recurse '{{ .RELEASE_DIR }}/' -Include *.pdb,*.xml | Remove-Item"
 
-  packsource:
-    dir: '{{.USER_WORKING_DIR}}'
+     #run post in release mode
+     - task: postbuild
+       vars: { BUILD_MODE: release }
+
+  postbuild_failed:
+    dir: '{{ .USER_WORKING_DIR }}'
+    cmds: []
+
+  postbuild:
+    dir: '{{ .USER_WORKING_DIR }}'
     internal: true
+    vars:
+      #the build output directory
+      BUILD_OUT: "{{ .BINARY_DIR }}/{{ .BUILD_MODE }}/{{ .TARGET_FRAMEWORK }}/publish" 
+
+    cmds:
+     #copy license and readme to target
+     - cmd: powershell cp '../build.readme.md' '{{ .BUILD_OUT }}/readme.md'
+
+     #tar outputs
+     - cmd: cd "{{ .BUILD_OUT }}" && tar -czf "{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}/{{ .BUILD_MODE }}.tgz" .
+ 
+  packsource:
+    dir: '{{ .USER_WORKING_DIR }}'
+    internal: true
+    vars:
+      EXCLUDES:
+        --exclude="bin"
+        --exclude="obj"
     cmds:
     #copy source code to target
-    - powershell -Command "Get-ChildItem -Include *.cs,*.csproj -Recurse | Where { \$_.FullName -notlike '*\obj\*' -and \$_.FullName -notlike '*\bin\*' } | Resolve-Path -Relative | tar --files-from - -czf 'bin/src.tgz'"
- 
+    - cmd: tar {{ .EXCLUDES }} -czf '{{ .BINARY_DIR }}/src.tgz' .
+  
   #clean hook
   clean:
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: '{{ .USER_WORKING_DIR }}'
     ignore_error: true
     cmds:
-    - dotnet clean -c release
+    - cmd: dotnet clean -c release
     - for: [ bin/, obj/ ]
-      cmd: powershell -Command "Remove-Item -Recurse {{.ITEM}}"
+      cmd: powershell rm -Recurse '{{ .ITEM }}'

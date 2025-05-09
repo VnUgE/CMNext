@@ -4,31 +4,119 @@
 
 version: '3'
 
+vars:
+  ARCHIVE_FILE_NAME: '{{ .ARCHIVE_FILE_NAME | default "archive.tgz" }}'
+  MS_ARGS: 
+    /p:RunAnalyzersDuringBuild=false 
+    /p:BuildInParallel=true 
+    /p:MultiProcessorCompilation=true 
+    /p:ErrorOnDuplicatePublishOutputFiles=false  
+
 tasks:
+
+  default:
+    desc: 'Builds a single managed library when run from a project root'
+    dir: '{{ .USER_WORKING_DIR }}'
+    vars:
+      CONFIGURATION: '{{ .CONFIGURATION | default "release" }}'
+    cmds:
+      - cmd: dotnet build -c {{ .CONFIGURATION }} {{ .MS_ARGS }} {{ .CLI_ARGS }}
 
   package-update:
     cmds:
      - for: [ front-end/, lib/admin/, lib/client/ ]
-       cmd: cd {{.ITEM}} && task package-update
+       cmd: cd {{ .ITEM }} && task package-update
 
   #update project source code
   update:
     cmds:
-     - git reset --hard  
-     - git remote update
-     - git pull origin {{.BRANCH_NAME}} --verify-signatures
-      #re-write semver for back-end after hard reset
-     - dotnet-gitversion.exe /updateprojectfiles
+     - cmd: git reset --hard  
+     - cmd: git remote update
+     - cmd: git pull origin {{.BRANCH_NAME}} --verify-signatures
 
+  #called by build pipeline to build module
   build:
+    desc: "Used by vnbuild to build the entire module at CI time"
+    vars:
+      PACK_OUT: '{{ .OUTPUT_DIR }}/{{ .HEAD_SHA }}/pkg'
+      INT_DIR: '{{ .SCRATCH_DIR }}/obj/{{ .MODULE_NAME }}/'
+      MS_ARGS: ' 
+        {{ .MS_ARGS }} 
+        --nologo
+        /p:UseCommonOutputDirectory=true 
+        /p:IntermediateOutputPath="{{ .INT_DIR }}"'
     cmds:
+     - cmd: echo "building module {{ .MODULE_NAME }}" 
+       silent: true
+
+    #re-write semver after hard reset
+     - cmd: dotnet gitversion /updateprojectfiles
+
+     #build debug mode first
+     - cmd: dotnet publish -c debug {{ .MS_ARGS }}
+     - cmd: dotnet publish -c release {{ .MS_ARGS }}
+
+     # ONLY Pack release config with debug symbols
+     # pack can be run without build or restore because the previous commands build it
+     - cmd: dotnet pack 
+        --no-build 
+        --no-restore
+        --include-symbols
+        --configuration release
+        --output "{{ .PACK_OUT }}/release/" 
+        {{ .MS_ARGS }}
     
   #copy artifacts to temp directory
-  postbuild_success:
+  publish:
     cmds:
      #git archive in the module directory
-     - git archive --format {{.ARCHIVE_FILE_FORMAT}} --output {{.ARCHIVE_FILE_NAME}} HEAD
-
-  #clean hook
+     - cmd: git archive --format {{ .ARCHIVE_FILE_FORMAT }} --output {{ .ARCHIVE_FILE_NAME }} HEAD
+     
+#called by build pipeline to clean module
   clean:
+    desc: "Used by vnbuild to clean the entire module"
+    ignore_error: true
     cmds:
+    #clean solution
+     - cmd: dotnet clean /p:BuildInParallel=true /p:MultiProcessorCompilation=true
+     - cmd: powershell rm '{{ .ARCHIVE_FILE_NAME }}' --Force
+
+
+  dev-backend:
+    desc: 'Builds backend plugins during development'
+    summary: |
+      Can be used with the --watch flag to automatically build the backend
+      when files change. This is useful for development.
+    sources:
+      - back-end/src/**
+      - back-end/src/**/*.*
+    cmds:
+      - task: default
+        vars:
+          CONFIGURATION: debug
+
+  dev-frontend:
+    desc: 'Builds the front-end app during development'
+    summary: |
+      Can be used with the --watch flag to automatically build the front-end
+      when files change. This is useful for development.
+    sources:
+      - front-end/src/**
+      - front-end/src/**/.*
+    cmds:
+      - cmd: cd front-end/src && npm run build
+
+  dev-libs:
+    desc: 'Builds the front-end libraries during development'
+    summary: |
+      Can be used with the --watch flag to automatically build the libraries
+      when files change. This is useful for development.
+    sources:
+      - lib/admin/src/**
+      - lib/admin/src/**/.*
+      - lib/client/src/**
+      - lib/client/src/**/.*
+
+    cmds:
+      - cmd: cd lib/admin/src && npm run build
+      - cmd: cd lib/client/src && npm run build
