@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -170,7 +170,7 @@ namespace Content.Publishing.Blog.Admin
             //Mem stream to read the object into
             using VnMemoryStream ms = new();
 
-            if(await storage.ReadFileAsync(objPath, ms, cancellation) > 0)
+            if (await storage.ReadFileAsync(objPath, ms, cancellation) > 0)
             {
                 //Load the db from the stream
                 db.Load(ms);

@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -53,7 +53,7 @@ namespace Content.Publishing.Blog.Admin.Model
         public JsonRecordDb()
         {
             _lastModified = DateTimeOffset.UnixEpoch;
-            _records = new List<T>();
+            _records = [];
         }
 
         ///<inheritdoc/>
@@ -71,7 +71,7 @@ namespace Content.Publishing.Blog.Admin.Model
         ///<inheritdoc/>
         public void RemoveRecord(string id)
         {
-            _ = id ?? throw new ArgumentNullException(nameof(id));
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);           
 
             //Create new list without the record and re-order
             _records = _records.Where(r => !id.Equals(r.Id, StringComparison.OrdinalIgnoreCase))
@@ -103,7 +103,7 @@ namespace Content.Publishing.Blog.Admin.Model
             {
                 //Set defaults
                 _lastModified = DateTimeOffset.UnixEpoch;
-                _records = new List<T>();
+                _records = [];
             }
             else
             {
@@ -122,12 +122,12 @@ namespace Content.Publishing.Blog.Admin.Model
                 if (doc.RootElement.TryGetProperty("records", out JsonElement el))
                 {
                     //Read the records array
-                    _records = el.Deserialize<List<T>>() ?? new List<T>();
+                    _records = el.Deserialize<List<T>>() ?? [];
                 }
                 else
                 {
                     //Set defaults
-                    _records = new List<T>();
+                    _records = [];
                 }
             }
         }

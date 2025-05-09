@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -35,17 +35,11 @@ using VNLib.Plugins.Extensions.Loading;
 
 namespace Content.Publishing.Blog.Admin.Model
 {
-    internal sealed class ContentManager
+    internal sealed class ContentManager(PluginBase plugin)
     {
         private const string ContentIndex = "content.json";
 
-        private readonly ISimpleFilesystem Storage;
-
-        public ContentManager(PluginBase plugin)
-        {
-            //Load the minio client manager
-            Storage = plugin.GetOrCreateSingleton<ManagedStorage>();
-        }
+        private readonly ISimpleFilesystem Storage = plugin.GetOrCreateSingleton<ManagedStorage>();
 
         /// <summary>
         /// Gets the content meta object for the given content item by its id
@@ -73,7 +67,7 @@ namespace Content.Publishing.Blog.Admin.Model
         /// <exception cref="ArgumentNullException"></exception>
         public async Task SetMetaAsync(IChannelContext channel, ContentMeta meta, CancellationToken cancellation)
         {
-            _ = meta.Id ?? throw new ArgumentNullException(nameof(meta));
+            ArgumentException.ThrowIfNullOrWhiteSpace(meta.Id, nameof(meta.Id));
 
             //Get the content index
             IRecordDb<ContentMeta> contentIndex = await Storage.LoadDbAsync<ContentMeta>(channel, ContentIndex, cancellation);
@@ -96,11 +90,11 @@ namespace Content.Publishing.Blog.Admin.Model
            
             return new()
             {
-                Id = fileId,
-                Length = length,
-                FileName = fileName,
+                Id          = fileId,
+                Length      = length,
+                FileName    = fileName,
                 //File path from ct
-                FilePath = GetFileNameFromTypeOrExtension(fileId, ct, fileName)
+                FilePath    = GetFileNameFromTypeOrExtension(fileId, ct, fileName)
             };
         }
 
@@ -116,7 +110,7 @@ namespace Content.Publishing.Blog.Admin.Model
             IRecordDb<ContentMeta> contentIndex = await Storage.LoadDbAsync<ContentMeta>(context, ContentIndex, cancellation);
 
             //Return all content items
-            return contentIndex.GetRecords().ToArray();
+            return [.. contentIndex.GetRecords()];
         }
 
         /// <summary>
@@ -189,12 +183,12 @@ namespace Content.Publishing.Blog.Admin.Model
             //Create the content meta for the post as an empty html file
             ContentMeta meta = new()
             {
-                ContentType = HttpHelpers.GetContentTypeString(ContentType.Html),
-                Date = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                FileName = $"Content for post {postId}",
-                Id = postId,
-                Length = 0,
-                FilePath = GetFileNameFromTypeOrExtension(postId, ContentType.Html, null),
+                ContentType     = HttpHelpers.GetContentTypeString(ContentType.Html),
+                Date            = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                FileName        = $"Content for post {postId}",
+                Id              = postId,
+                Length          = 0,
+                FilePath        = GetFileNameFromTypeOrExtension(postId, ContentType.Html, null),
             };
 
             //Get the content index
@@ -244,7 +238,7 @@ namespace Content.Publishing.Blog.Admin.Model
         /// Gets the external path for the given item id.
         /// </summary>
         /// <param name="context">The context the item resides in</param>
-        /// <param name="id">The id of the item to get the path for</param>
+        /// <param name="metaId">The id of the item to get the path for</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>The external path of the item, or null if the item does not exist</returns>
         public async Task<string?> GetExternalPathForItemAsync(IChannelContext context, string metaId, CancellationToken cancellation)

@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2024 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -119,7 +119,13 @@ namespace Content.Publishing.Blog.Admin.Storage
         public override async Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             //Upload the file to the server
-            FtpStatus status = await _client.UploadStream(data, GetExternalFilePath(filePath), FtpRemoteExists.Overwrite, true, token: cancellation);
+            FtpStatus status = await _client.UploadStream(
+                data, 
+                GetExternalFilePath(filePath), 
+                FtpRemoteExists.Overwrite, 
+                createRemoteDir: true, 
+                token: cancellation
+            );
 
             if (status == FtpStatus.Failed)
             {

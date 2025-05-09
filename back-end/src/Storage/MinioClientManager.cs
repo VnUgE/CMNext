@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2024 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -24,24 +24,25 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Minio;
+using Minio.Handlers;
 using Minio.DataModel;
 using Minio.DataModel.Args;
+using Minio.DataModel.Tracing;
 
 using VNLib.Utils.Memory;
+using VNLib.Utils.Logging;
 using VNLib.Utils.Extensions;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
-
-using static Content.Publishing.Blog.Admin.Model.PostManager;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
 
     [ConfigurationName("storage")]
-    internal sealed class MinioClientManager(PluginBase pbase, IConfigScope s3Config) : StorageBase
+    internal sealed class MinioClientManager(PluginBase plugin, IConfigScope s3Config) : StorageBase
     {
         private readonly MinioClient Client = new();
-        private readonly S3Config Config = s3Config.Deserialze<S3Config>();
+        private readonly S3Config Config = s3Config.Deserialize<S3Config>();
 
         ///<inheritdoc/>
         protected override string? BasePath => Config.BaseBucket;
@@ -49,7 +50,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         ///<inheritdoc/>
         public override async Task ConfigureServiceAsync(PluginBase plugin)
         {
-            using ISecretResult? secret = await plugin.GetSecretAsync("storage_secret");
+            using ISecretResult? secret = await plugin.Secrets().GetSecretAsync("storage_secret");
 
             Client.WithEndpoint(Config.ServerAddress)
                     .WithCredentials(Config.ClientId, secret.Result.ToString())
@@ -105,12 +106,13 @@ namespace Content.Publishing.Blog.Admin.Storage
             //Get the item
             GetObjectArgs args = new();
             args.WithBucket(Config.BaseBucket)
-            .WithObject(filePath)
-            .WithCallbackStream(async (stream, cancellation) =>
-            {
-                //Read the object to memory
-                await stream.CopyToAsync(output, 16384, MemoryUtil.Shared, cancellation);
-            });
+                .WithObject(filePath)
+                .WithCallbackStream(async (stream, cancellation) =>
+                {
+                    //Read the object to memory
+                    await stream.CopyToAsync(output, 16384, MemoryUtil.Shared, cancellation);
+                });
+
             try
             {
                 //Get the post content file 
@@ -121,6 +123,17 @@ namespace Content.Publishing.Blog.Admin.Storage
             {
                 //File not found
                 return -1L;
+            }
+        }
+
+        internal record class ReqLogger(ILogProvider Log) : IRequestLogger
+        {
+            public void LogRequest(RequestToLog requestToLog, ResponseToLog responseToLog, double durationMs)
+            {
+                Log.Debug("S3 result\n{method} {uri} HTTP {ms}ms\nHTTP {status} {message}\n{content}",
+                    requestToLog.Method, requestToLog.Resource, durationMs,
+                    responseToLog.StatusCode, responseToLog.ErrorMessage, responseToLog.Content
+                );
             }
         }
     }
