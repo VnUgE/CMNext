@@ -13,7 +13,7 @@
     <Company>Vaughn Nugent</Company>
     <Product>CMNext.Admin</Product>
     <Description>A VNLib.Plugins.Essentials administration plugin for the CMNext content publishing platform.</Description>
-    <Copyright>Copyright © 2024 Vaughn Nugent</Copyright>
+    <Copyright>Copyright © 2025 Vaughn Nugent</Copyright>
     <PackageProjectUrl>https://www.vaughnnugent.com/resources/software/modules/CMNext.Admin</PackageProjectUrl>
     <RepositoryUrl>https://github.com/VnUgE/CMNext/tree/master/</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -33,10 +33,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="50.1.0" />
-    <PackageReference Include="Minio" Version="6.0.3" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0064" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0064" />
+    <PackageReference Include="FluentFTP" Version="52.1.0" />
+    <PackageReference Include="Minio" Version="6.0.4" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-rc0086" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-rc0086" />
   </ItemGroup>
 
   <ItemGroup>

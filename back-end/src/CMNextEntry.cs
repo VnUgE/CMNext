@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -27,6 +27,7 @@ using System.Text.Json;
 using VNLib.Plugins;
 using VNLib.Utils.Logging;
 using VNLib.Plugins.Extensions.Loading.Routing;
+using VNLib.Plugins.Extensions.Loading.Routing.Mvc;
 
 using Content.Publishing.Blog.Admin.Endpoints;
 

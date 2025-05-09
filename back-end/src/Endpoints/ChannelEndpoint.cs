@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -26,6 +26,7 @@ using System.Text.RegularExpressions;
 
 using FluentValidation;
 
+using VNLib.Net.Http;
 using VNLib.Plugins;
 using VNLib.Plugins.Essentials;
 using VNLib.Plugins.Essentials.Accounts;
@@ -33,94 +34,93 @@ using VNLib.Plugins.Essentials.Endpoints;
 using VNLib.Plugins.Essentials.Extensions;
 using VNLib.Plugins.Extensions.Loading;
 using VNLib.Plugins.Extensions.Validation;
+using VNLib.Plugins.Extensions.Loading.Routing.Mvc;
+using static VNLib.Plugins.Essentials.Endpoints.ResourceEndpointBase;
 
 using Content.Publishing.Blog.Admin.Model;
 
 namespace Content.Publishing.Blog.Admin.Endpoints
 {
+
     [ConfigurationName("channel_endpoint")]
-    internal sealed class ChannelEndpoint : ProtectedWebEndpoint
+    internal sealed class ChannelEndpoint(PluginBase plugin) : IHttpController
     {
         private static readonly IValidator<ChannelRequest> ChannelValidator = ChannelRequest.GetValidator();
         private static readonly IValidator<FeedMeta> FeedValidator = FeedMeta.GetValidator();
 
-        private readonly IChannelContextManager ContentManager;
-        private readonly PostManager PostManager;
+        private readonly ChannelManager ContentManager = plugin.GetOrCreateSingleton<ChannelManager>();
+        private readonly PostManager PostManager = plugin.GetOrCreateSingleton<PostManager>();
+
+        ///<inheritdoc/>
+        public ProtectionSettings GetProtectionSettings() => default;
 
 
-        public ChannelEndpoint(PluginBase plugin, IConfigScope config)
-        {
-            string? path = config["path"].GetString();
-
-            InitPathAndLog(path, plugin.Log);
-
-            ContentManager = plugin.GetOrCreateSingleton<ChannelManager>();
-            PostManager = plugin.GetOrCreateSingleton<PostManager>();
-        }
-
-        protected override async ValueTask<VfReturnType> GetAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.GET)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnGetChannelsAsync(HttpEntity entity)
         {
             //Check user read-permissions
             if (!entity.Session.CanRead())
             {
                 return VfReturnType.Forbidden;
             }
-
-            //Get the blog context list
+           
             object[] contexts = await ContentManager.GetAllContextsAsync(entity.EventCancellation);
-
-            //Return the list to the client
+         
             return VirtualOkJson(entity, contexts);
         }
 
-        protected override async ValueTask<VfReturnType> PostAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.POST)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnCreateChannelAsync(HttpEntity entity)
         {
-            ValErrWebMessage webm = new();
+            WebMessage webm = new();
 
-            //Check user write-permissions
-            if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permission to add channels"))
+            if (webm.Assert(entity.Session.CanWrite(), "You do not have permission to add channels"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
 
             //Get the blog context from the request body
             ChannelRequest? channel = await entity.GetJsonFromFileAsync<ChannelRequest>();
-
             if (webm.Assert(channel != null, "You must specify a new blog channel"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
-            //Validate the blog context
             if (!ChannelValidator.Validate(channel, webm))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
-            //Validate the feed if its defined
-            if (channel.Feed != null && !FeedValidator.Validate(channel.Feed, webm))
+            if(webm.AssertError(channel.Feed != null, "No feed object was received"))
+            {
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
+            }
+         
+            if (!FeedValidator.Validate(channel.Feed, webm))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
-            //Add the blog context to the manager
+            //Add the channel to the manager
             bool result = await ContentManager.CreateChannelAsync(channel, entity.EventCancellation);
 
             if (webm.Assert(result, "A blog with the given name already exists"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.Conflict);
             }
-
-            //Return the new blog context to the client
+            
             return VirtualClose(entity, HttpStatusCode.Created);
         }
 
-        protected override async ValueTask<VfReturnType> PatchAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.PATCH)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnUpdateChannelAsync(HttpEntity entity)
         {
-            ValErrWebMessage webm = new();
-
-            //Check user write-permissions
-            if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permission to add channels"))
+            WebMessage webm = new();
+           
+            if (webm.Assert(entity.Session.CanWrite(), "You do not have permission to add channels"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
@@ -133,16 +133,19 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
             }
 
-            //Validate the blog context
             if (!ChannelValidator.Validate(channel, webm))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
-            //Validate the feed if its defined
-            if (channel.Feed != null && !FeedValidator.Validate(channel.Feed, webm))
+            if (webm.AssertError(channel.Feed != null, "No feed object was received"))
             {
-                return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
+            }
+
+            if (!FeedValidator.Validate(channel.Feed, webm))
+            {
+                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
             //Make sure the blog context exists
@@ -153,7 +156,6 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
-            //Update the context
             bool result = await ContentManager.UpdateChannelAsync(channel, entity.EventCancellation);
 
             if (webm.Assert(result, "Failed to update the channel setting"))
@@ -161,13 +163,15 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VirtualClose(entity, webm, HttpStatusCode.Conflict);
             }
 
-            //Update post feeds
+            //Update post feeds since the channel was updated
             await PostManager.UpdateFeedForChannelAsync(channel, entity.EventCancellation);
-            
+
             return VirtualClose(entity, HttpStatusCode.Created);
         }
 
-        protected override async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.DELETE)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
         {
             //Check for user write-permissions
             if (!entity.Session.CanDelete())
@@ -190,7 +194,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             //Delete the blog context
             await ContentManager.DeleteChannelAsync(context, entity.EventCancellation);
-           
+
             return VirtualClose(entity, HttpStatusCode.NoContent);
         }
 
@@ -241,5 +245,5 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 Id = ChannelManager.ComputeContextId(this);
             }
         }
-    }
+    }   
 }

@@ -32,12 +32,13 @@ using VNLib.Utils.Logging;
 using VNLib.Utils.Resources;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
+using VNLib.Plugins.Extensions.Loading.Events;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
 
     [ConfigurationName("storage")]
-    internal class FtpStorageManager : StorageBase, IDisposable
+    internal class FtpStorageManager : StorageBase, IDisposable, IIntervalScheduleable
     {
         private readonly AsyncFtpClient _client;
         private readonly S3Config _storageConf;
@@ -46,7 +47,7 @@ namespace Content.Publishing.Blog.Admin.Storage
 
         public FtpStorageManager(PluginBase plugin, IConfigScope config)
         {
-            _storageConf = config.Deserialze<S3Config>();
+            _storageConf = config.Deserialize<S3Config>();
 
             Uri uri = new (_storageConf.ServerAddress!);
 
@@ -57,6 +58,14 @@ namespace Content.Publishing.Blog.Admin.Storage
                 //Logger in debug mode
                 logger: plugin.IsDebug() ? new FtpDebugLogger(plugin.Log) : null
             );
+
+
+            // If a keepalive interval is set, regularly ping the server to keep the connection alive
+            int keepaliveIntervalSec = config.GetValueOrDefault("keepalive_sec", 0);
+            if (keepaliveIntervalSec > 0)
+            {
+                plugin.ScheduleInterval(this, TimeSpan.FromSeconds(keepaliveIntervalSec), false);
+            }
         }
 
         public override async Task ConfigureServiceAsync(PluginBase plugin)
@@ -127,6 +136,12 @@ namespace Content.Publishing.Blog.Admin.Storage
         public void Dispose()
         {
             _client?.Dispose();
+        }
+
+        public async Task OnIntervalAsync(ILogProvider log, CancellationToken cancellationToken)
+        {
+            // Ping the server on regular intervals to check if it's still connected
+            await _client.IsStillConnected(token: cancellationToken);
         }
 
         sealed class FtpDebugLogger(ILogProvider Log) : IFtpLogger

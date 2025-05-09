@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -38,19 +38,10 @@ namespace Content.Publishing.Blog.Admin.Model
 {
 
     [ConfigurationName("blog_channels")]
-    internal sealed class ChannelManager : IChannelContextManager
+    internal sealed class ChannelManager(PluginBase plugin, IConfigScope config) : IChannelContextManager
     {
-        private readonly ISimpleFilesystem Storage;
-        private readonly string _indexPath;
-
-
-        public ChannelManager(PluginBase plugin, IConfigScope config)
-        {
-            //Init minio client
-            Storage = plugin.GetOrCreateSingleton<ManagedStorage>();
-
-            _indexPath = config["index_file_name"].GetString() ?? "channels.json";
-        }
+        private readonly ISimpleFilesystem Storage = plugin.GetOrCreateSingleton<ManagedStorage>();
+        private readonly string _indexPath = config.GetValueOrDefault("index_file_name", "channels.json");
 
         ///<inheritdoc/>
         public async Task<bool> CreateChannelAsync(BlogChannel context, CancellationToken cancellation)

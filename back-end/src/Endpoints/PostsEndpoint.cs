@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -26,37 +26,35 @@ using Content.Publishing.Blog.Admin.Model;
 
 using FluentValidation;
 
+using VNLib.Net.Http;
 using VNLib.Plugins;
 using VNLib.Plugins.Essentials;
 using VNLib.Plugins.Essentials.Accounts;
 using VNLib.Plugins.Essentials.Endpoints;
 using VNLib.Plugins.Essentials.Extensions;
 using VNLib.Plugins.Extensions.Loading;
+using VNLib.Plugins.Extensions.Loading.Routing.Mvc;
 using VNLib.Plugins.Extensions.Validation;
+
+using static VNLib.Plugins.Essentials.Endpoints.ResourceEndpointBase;
 
 namespace Content.Publishing.Blog.Admin.Endpoints
 {
 
     [ConfigurationName("post_endpoint")]
-    internal sealed class PostsEndpoint : ProtectedWebEndpoint
+    internal sealed class PostsEndpoint(PluginBase plugin) : IHttpController
     {
         private static readonly IValidator<BlogPost> PostValidator = BlogPost.GetValidator();
 
-        private readonly IBlogPostManager PostManager;
-        private readonly IChannelContextManager ContentManager;
+        private readonly IBlogPostManager PostManager = plugin.GetOrCreateSingleton<PostManager>();
+        private readonly IChannelContextManager ContentManager = plugin.GetOrCreateSingleton<ChannelManager>();
 
-        public PostsEndpoint(PluginBase plugin, IConfigScope config)
-        {
-            string? path = config["path"].GetString();
+        ///<inheritdoc/>
+        public ProtectionSettings GetProtectionSettings() => default;
 
-            InitPathAndLog(path, plugin.Log);
-
-            //Get post manager and context manager
-            PostManager = plugin.GetOrCreateSingleton<PostManager>();
-            ContentManager = plugin.GetOrCreateSingleton<ChannelManager>();
-        }
-
-        protected override async ValueTask<VfReturnType> GetAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.GET)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnGetPostsAsync(HttpEntity entity)
         {
             //Check for read permissions
             if (!entity.Session.CanRead())
@@ -95,12 +93,14 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualOkJson(entity, posts);
         }
 
-        protected override async ValueTask<VfReturnType> PostAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.POST)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnPostAsync(HttpEntity entity)
         {
-            ValErrWebMessage webm = new();
+            WebMessage webm = new();
 
             //Check for write permissions
-            if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permission to publish posts"))
+            if (webm.Assert(entity.Session.CanWrite(), "You do not have permission to publish posts"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
             }
@@ -144,9 +144,11 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualOk(entity, webm);
         }
 
-        protected override async ValueTask<VfReturnType> PatchAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.PATCH)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnUpdateAsync(HttpEntity entity)
         {
-            ValErrWebMessage webm = new();
+            WebMessage webm = new();
 
             //Check for write permissions
             if (webm.Assert(entity.Session.CanWrite() == true, "You do not have permissions to update posts"))
@@ -163,15 +165,12 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             //Try to get the blog context from the id
             IChannelContext? channel = await ContentManager.GetChannelAsync(contextId, entity.EventCancellation);
-
             if (webm.Assert(channel != null, "The channel you selected does not exist"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.NotFound);
             }
 
-            //Get the blog post object
             BlogPost? post = await entity.GetJsonFromFileAsync<BlogPost>();
-
             if (webm.Assert(post != null, "Message body was empty"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.BadRequest);
@@ -198,7 +197,9 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualOk(entity, webm);
         }
 
-        protected override async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}", HttpMethod.DELETE)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnDeleteAsync(HttpEntity entity)
         {
             //Check for delete permissions
             if (!entity.Session.CanDelete())
@@ -228,13 +229,11 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             {
                 return VfReturnType.NotFound;
             }
-
-            //Delete post
+           
             await PostManager.DeletePostAsync(context, postId, entity.EventCancellation);
-
-            //Success
+          
             return VirtualOk(entity);
         }
-
+       
     }
 }
