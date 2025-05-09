@@ -64,7 +64,7 @@ export const cmnextAdminPlugin = (router: ReturnType<typeof useRouter>, ckEditor
         const search = useRouteQuery<string>(QueryType.Filter, '', { mode: 'replace', router });
 
         //Get sort order query
-        const sort = useRouteQuery<SortType>(QueryType.Sort, SortType.CreatedTime, { mode: 'replace', router });
+        const sort = useRouteQuery<SortType>(QueryType.Sort, 'created', { mode: 'replace', router });
 
         const uploadProgress = ref<number>(0)
 

@@ -32,10 +32,7 @@ export enum QueryType {
     PageSize = 'size',
 }
 
-export enum SortType {
-    CreatedTime = 'created',
-    ModifiedTime = 'date',
-}
+export type SortType = 'created' | 'date';
 
 export interface ReactiveBlogStore<T> {
     readonly all: T[];

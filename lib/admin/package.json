@@ -13,7 +13,6 @@
   "typings": "./dist/index.d.ts",
 
   "scripts": {
-    "lint": "eslint --ext .js,.ts --ignore-path ../../.gitignore src",
     "build": "tsc",
     "clean": "if exist dist ( rd /S /Q lib)"
   },
@@ -32,29 +31,6 @@
     "vue": "^3.x",
     "axios": "^1.x",
     "jose": "^6.0.x",
-     "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/451091e93b5feee7a5e01d3a81f5d63efa7ea8be/@vnuge-vnlib.browser/release.tgz"
-  },
-
-  "eslintConfig": {
-    "root": true,
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "project": []
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "rules": {},
-    "ignorePatterns": [
-      "src/**/*.test.ts",
-      "src/frontend/generated/*"
-    ],
-    "env": {
-      "browser": true
-    }
+    "@vnuge/vnlib.browser": "../vnlib.browser"
   }
 }

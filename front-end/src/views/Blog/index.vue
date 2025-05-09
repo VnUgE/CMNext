@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useRouteQuery } from '@vueuse/router';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel, Switch } from '@headlessui/vue'
 import { defer, first } from 'lodash-es';
-import { useStore, type SortType } from '../../store';
+import { useStore } from '../../store';
 import Channels from './components/Channels.vue';
 import Posts from './components/Posts.vue';
 import Content from './components/Content.vue';
@@ -18,9 +18,9 @@ const tabIdQ = useRouteQuery<string>('tabid', '', { mode: 'push' })
 //Map queries to their respective computed values
 const tabId = computed(() => tabIdQ.value ? parseInt(tabIdQ.value) : 0);
 const lastModified = computed({
-    get: () => store.queryState.sort === SortType.ModifiedTime,
+    get: () => store.queryState.sort === 'date',
     set: (value: boolean) => {
-        store.queryState.sort = value ? SortType.ModifiedTime : SortType.CreatedTime
+        store.queryState.sort = value ? 'date' : 'created'
     }
 })
 

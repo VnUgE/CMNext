@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { defer } from 'lodash-es'
 import { set, tryOnMounted } from '@vueuse/core'
-import { useWait, configureApiCall } from '@vnuge/vnlib.browser'
+import { useWait, useApiCall } from '@vnuge/vnlib.browser'
 import { useRouter } from 'vue-router';
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia';
@@ -16,7 +16,7 @@ const router = useRouter()
 const message = ref('')
 
 //Override the message handler to capture the error message and display it
-const { apiCall } = configureApiCall(m => message.value = m)
+const { apiCall } = useApiCall({ notifyError: (t) => (message.value = t), close: () => {} })
 
 //Set the page title
 store.setPageTitle('Social Login')

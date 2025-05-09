@@ -14,40 +14,15 @@
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
   "scripts": {
-    "lint": "eslint --ext .js,.ts --ignore-path ../../.gitignore src",
     "build": "tsc",
     "clean": "if exist dist ( rd /S /Q lib)"
   },
 
   "devDependencies": {
     "@babel/types": "^7.x",
-    "@types/lodash-es": "^4.14.194",
-    "@typescript-eslint/eslint-plugin": "^7.0.x",
-    "eslint": "^8.39.0"
+    "@types/lodash-es": "^4.14.194"
   },
   "peerDependencies": {
     "lodash-es": "^4.x"
-  },
-  "eslintConfig": {
-    "root": true,
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "project": []
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "rules": {},
-    "ignorePatterns": [
-      "src/**/*.test.ts",
-      "src/frontend/generated/*"
-    ],
-    "env": {
-      "browser": true
-    }
   }
 }
