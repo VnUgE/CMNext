@@ -212,10 +212,3 @@ const removeNewFile = () =>{
 
 </script>
 
-<style lang="scss">
-#content-upload-form{
-    input.primary.invalid{
-        @apply border-red-500;
-    }
-}
-</style>

@@ -1,0 +1,98 @@
+#blog-admin-template {
+    @apply flex flex-row flex-auto min-h-[50rem] border rounded-sm max-w-[82rem] mx-auto;
+    @apply dark:border-dark-600 dark:text-gray-300 border-gray-200;
+
+    .text-color-foreground {
+        @apply dark:text-white text-black;
+    }
+
+    .text-color-background {
+        @apply text-gray-500;
+    }
+
+    .username-box {
+        @apply grid w-10 h-10 text-sm rounded-lg place-content-center;
+        @apply text-gray-600 bg-gray-100 dark:text-gray-300 dark:bg-dark-600;
+    }
+
+    .menu-item {
+        @apply relative flex justify-center rounded px-2 py-2 cursor-pointer;
+        @apply text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-dark-700 dark:hover:text-gray-300;
+
+        &.active {
+            @apply text-primary-600;
+        }
+
+        .tooltip {
+            @apply absolute start-full -translate-y-1/2 top-1/2 ms-4 rounded  px-2 py-1.5 text-xs font-medium;
+            @apply text-white bg-gray-900 dark:bg-dark-600;
+        }
+    }
+   
+    .menu {
+        @apply flex flex-col justify-between w-16 border-e;
+        @apply bg-white dark:bg-dark-800 dark:border-dark-500;
+    }
+   
+    #channel-select {
+        @apply w-full p-1 px-2 border rounded-sm sm:text-sm min-w-[13rem];
+        @apply border-gray-300 text-gray-700 bg-white;
+        @apply dark:bg-dark-800 dark:border-dark-500 focus:dark:border-dark-400 hover:dark:border-dark-400 dark:text-inherit; 
+
+        option {
+            @apply text-base;
+        }
+    }
+
+    .tab-container {
+        @apply flex-1 py-4 rounded-r-sm dark:bg-dark-800 bg-white text-gray-700 dark:text-inherit;
+    }
+
+    /* Rules for dynamic forms in edit panes */
+    .dynamic-form.form {
+        @apply w-full mt-4 md:px-12;
+
+        .dynamic-form.input-group {
+            @apply grid grid-flow-row grid-cols-2 gap-x-16;
+
+            .dynamic-form.input-container {
+                
+                .dynamic-form.dynamic-input {
+                    @apply border rounded-sm p-2 bg-transparent w-full dark:border-dark-600;
+                    @apply dark:bg-dark-800 focus:border-primary-500;
+
+                    &.input-textarea {
+                        @apply h-40 outline-none;
+                    }
+
+                    &::placeholder {
+                        @apply dark:text-gray-500;
+                    }
+                    
+                    &:disabled {
+                        @apply text-rose-400;
+                    }
+                }
+            }
+        }
+    }
+
+    .filter {
+        @apply dark:bg-transparent;
+    }
+
+    .ck.ck-toolbar,
+    .ck.ck-reset {
+        @apply dark:bg-dark-700 dark:text-gray-300 dark:border-dark-300;
+
+        .ck-button,
+        .ck-dropdown {
+            @apply dark:text-gray-300;
+
+            &:hover,
+            &.ck-on {
+                @apply dark:bg-dark-600;
+            }
+        }
+    }
+}

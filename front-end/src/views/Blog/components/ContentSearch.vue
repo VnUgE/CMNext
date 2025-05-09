@@ -89,27 +89,3 @@ const onSelected = (result: ContentResult) => {
     </div>
 </template>
 
-<style lang="scss">
-
-    .search-results{
-        @apply mt-3;
-    }
-    
-    .result{
-        @apply flex flex-row items-center justify-between;
-        @apply p-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-600;
-
-        .id{
-            @apply text-sm;
-        }
-
-        .controls{
-            @apply min-w-[4rem] text-center;
-        }
-
-        &.name{
-            @apply text-sm;
-        }
-    }
-
-</style>

@@ -18,8 +18,3 @@ setPageTitle('404 - Resource not found')
 
 </script>
 
-<style lang="scss">
-#default-template{
-
-}
-</style>

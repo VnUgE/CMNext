@@ -23,6 +23,7 @@ import { createPinia } from "pinia";
 
 //Import all styles
 import './assets/main.css'
+import './assets/component-styles.css'
 
 //Import font data
 import "@fontsource/source-sans-pro"

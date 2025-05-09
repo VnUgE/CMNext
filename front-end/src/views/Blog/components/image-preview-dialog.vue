@@ -59,10 +59,3 @@ onClickOutside(dialog, onClose)
       </Dialog>
     </div>
 </template>
-<style lang="scss"> 
-
-.preview-image {
-    @apply max-h-[53rem];
-}
-
-</style>

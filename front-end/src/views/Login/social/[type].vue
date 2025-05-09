@@ -84,13 +84,4 @@ tryOnMounted(() => defer(() => {
   </div>
 </template>
 
-<style lang="scss">
 
-#social-login-template{
-  .entry-container{
-    @apply w-full max-w-[28rem] p-6 text-center sm:border rounded-sm sm:shadow-sm;
-    @apply sm:bg-white bg-transparent sm:dark:bg-dark-700 dark:border-dark-400;
-  }
-}
-
-</style>

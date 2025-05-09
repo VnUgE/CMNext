@@ -1,0 +1,14 @@
+#enclosure-dialog {
+    .dialog {
+        @apply w-full max-w-3xl px-8 pb-8 pt-4 mx-auto mb-auto border rounded shadow-md;
+        @apply bg-white dark:bg-dark-700 dark:text-gray-300 dark:border-dark-500;
+    }
+    
+    .dynamic-form.input-group {
+        @apply grid grid-cols-2 gap-4;
+    }
+
+    .dynamic-form.input-container {
+        @apply flex flex-col;
+    }
+}

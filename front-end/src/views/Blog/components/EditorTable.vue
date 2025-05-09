@@ -82,10 +82,3 @@ const openNew = () => emit('open-new')
     </slot>
 </template>
 
-<style lang="scss">
-button.page-button {
-    @apply inline-flex items-center px-2 py-1.5 space-x-2 font-medium;
-    @apply text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-50;
-    @apply dark:border-dark-300 dark:bg-transparent dark:text-gray-300 hover:dark:bg-dark-700;
-}
-</style>

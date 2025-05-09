@@ -168,10 +168,3 @@ tryOnMounted(() => defer(() =>
 
 </script>
 
-<style lang="scss">
-
-.md-pannel{
-    @apply p-6 min-w-[32rem] bg-white shadow-md dark:bg-dark-700 border dark:border-dark-300;
-}
-
-</style>
