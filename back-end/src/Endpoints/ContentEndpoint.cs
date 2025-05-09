@@ -56,6 +56,9 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
         private readonly int MaxContentLength = config.GetValueOrDefault("max_content_length", 1048576);
 
+        ///<inheritdoc/>
+        public ProtectionSettings GetProtectionSettings() => default;
+
 
         [HttpStaticRoute("{{ path }}", HttpMethod.GET)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
@@ -374,11 +377,5 @@ namespace Content.Publishing.Blog.Admin.Endpoints
 
             return val;
         }
-
-        public ProtectionSettings GetProtectionSettings()
-        {
-            throw new NotImplementedException();
-        }
     }
-
 }
