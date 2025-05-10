@@ -27,13 +27,13 @@
                 {{ post.summary }}
             </td>
             <td class="w-20">
-                 <button class="btn xs no-border" @click="openEdit(post)">
+                 <button class="btn btn-ghost btn-xs btn-square" @click="openEdit(post)">
                     <fa-icon icon="pencil" />
                 </button>
-                <button class="btn xs no-border" @click="copy(post.id)">
+                <button class="btn btn-ghost btn-xs btn-square" @click="copy(post.id)">
                     <fa-icon icon="copy" />
                 </button>
-                <button class="btn xs no-border red" @click="onDelete(post)">
+                <button class="btn btn-ghost btn-xs btn-square btn-error" @click="onDelete(post)">
                     <fa-icon icon="trash" />
                 </button>
             </td>

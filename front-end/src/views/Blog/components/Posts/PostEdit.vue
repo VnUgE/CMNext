@@ -1,12 +1,12 @@
 <template>
     <div id="new-post-editor" class="flex flex-col w-full">
         <div class="my-4 ml-auto">
-            <div class="button-group">
+            <div class="join">
                 <!-- Submit the post form -->
-                <button class="btn primary" form="post-edit-form">Save</button>
-                <button class="btn" @click="onClose">Back</button>
+                <button class="btn btn-primary join-item" form="post-edit-form">Save</button>
+                <button class="btn join-item" @click="onClose">Back</button>
             </div>
-            <div class="pl-3 text-xs text-color-background">
+            <div class="pl-3 text-xs opacity-70">
                 ctrl + s
             </div>
         </div>
@@ -15,7 +15,7 @@
         </div>
         <div class="relative">
             <div class="absolute top-2 right-10">
-                <button class="btn no-border" @click="setMeAsAuthor">@Me</button>
+                <button class="btn btn-ghost" @click="setMeAsAuthor">@Me</button>
             </div>
         </div>
         <dynamic-form
@@ -34,11 +34,11 @@
          <FeedFields :show-ep-adder="true" :properties="postProperties" />
 
          <div class="mx-auto my-4">
-            <div class="button-group">
+            <div class="join">
                 <!-- Submit the post form -->
-                <button class="btn primary" form="post-edit-form">Save</button>
-                <button class="btn" @click="onClose">Back</button>
-                <button v-if="!isNew" class="btn red" @click="onDelete">Delete Forever</button>
+                <button class="btn btn-primary join-item" form="post-edit-form">Save</button>
+                <button class="btn join-item" @click="onClose">Back</button>
+                <button v-if="!isNew" class="btn btn-error" @click="onDelete">Delete Forever</button>
             </div>
         </div>
     </div>

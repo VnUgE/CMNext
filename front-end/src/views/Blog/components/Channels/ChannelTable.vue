@@ -23,7 +23,7 @@
                 {{ feedEnabled(channel) }}
             </td>
             <td class="w-12">
-                <button class="btn xs no-border" @click="openEdit(channel)">
+                <button class="btn btn-ghost btn-xs btn-square" @click="openEdit(channel)">
                     <fa-icon icon="pencil" />
                 </button>
             </td>

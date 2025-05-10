@@ -1,7 +1,7 @@
 #enclosure-dialog {
     .dialog {
         @apply w-full max-w-3xl px-8 pb-8 pt-4 mx-auto mb-auto border rounded shadow-md;
-        @apply bg-white dark:bg-dark-700 dark:text-gray-300 dark:border-dark-500;
+        @apply bg-base-100 text-base-content border-base-300;
     }
     
     .dynamic-form.input-group {

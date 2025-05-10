@@ -1,9 +1,9 @@
 <template>
     <div class="flex flex-col w-full">
         <div class="my-4 ml-auto">
-            <div class="button-group">
-                <button class="btn primary" form="channel-edit-form">Save</button>
-                <button class="btn" @click="close">Cancel</button>
+            <div class="join">
+                <button class="btn btn-primary join-item" form="channel-edit-form">Save</button>
+                <button class="btn join-item" @click="close">Cancel</button>
             </div>
         </div>
         <div class="mx-auto">
@@ -23,7 +23,7 @@
         />
          <div class="relative">
             <div class="absolute top-0 right-10">
-                <button class="btn xs no-border red" @click="disableFeed" v-if="feedEnabled">
+                <button class="btn btn-xs btn-error btn-ghost" @click="disableFeed" v-if="feedEnabled">
                     Disable
                 </button>
             </div>
@@ -52,7 +52,7 @@
 
         <div class="mt-6">
             <div class="mx-auto w-fit">
-                <button class="btn red" @click="onDelete" v-if="editMode">
+                <button class="btn btn-error" @click="onDelete" v-if="editMode">
                     Delete Permenantly
                 </button>
             </div>

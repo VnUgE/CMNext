@@ -45,14 +45,14 @@ const style = computed(() => {
 
                 <div class="modal-content-container">
 
-                    <DialogPanel class="modal-panel">
+                    <DialogPanel class="modal modal-open modal-box">
                         <slot name="main">
 
-                            <DialogTitle as="div" class="modal-title">
+                            <DialogTitle as="div" class="modal-header font-bold text-lg">
                                 <slot name="title"></slot>
                             </DialogTitle>
 
-                            <DialogDescription>
+                            <DialogDescription class="py-4">
                                 <slot name="description"></slot>
                             </DialogDescription>
                         </slot>

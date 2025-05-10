@@ -36,26 +36,19 @@ const openNew = () => emit('open-new')
                     <div class="mt-auto">
                         <div class="flex justify-center">
                             <nav aria-label="Pagination">
-                                <ul class="inline-flex items-center space-x-1 text-sm rounded-md">
+                                <ul class="join">
                                     <li>
-                                        <button :disabled="isFirstPage" class="page-button" @click="prev">
+                                        <button :disabled="isFirstPage" class="join-item btn btn-circle btn-sm" @click="prev">
                                             <fa-icon icon="chevron-left" />
                                         </button>
                                     </li>
                                     <li>
-                                        <span class="inline-flex items-center px-4 py-2 space-x-1">
-                                            Page
-                                            <b class="mx-1">
-                                                {{ currentPage }}
-                                            </b>
-                                            of
-                                            <b class="ml-1">
-                                                {{ pageCount }}
-                                            </b>
+                                        <span class="join-item btn btn-ghost btn-sm">
+                                            Page {{ currentPage }} of {{ pageCount }}
                                         </span>
                                     </li>
                                     <li>
-                                        <button :disabled="isLastPage" class="page-button" @click="next">
+                                        <button :disabled="isLastPage" class="join-item btn btn-circle btn-sm" @click="next">
                                             <fa-icon icon="chevron-right" />
                                         </button>
                                     </li>
@@ -65,13 +58,13 @@ const openNew = () => emit('open-new')
                     </div>
 
                     <div class="h-fit">
-                        <button class="rounded btn primary sm" id="new-btn" @click="openNew">
+                        <button class="btn btn-primary btn-sm" id="new-btn" @click="openNew">
                             <fa-icon :icon="['fas', 'plus']" class="mr-2" />
                             New
                         </button>
                     </div>
                 </div>
-                <table class="edit-table">
+                <table class="table table-zebra">
                     <slot name="table" />
                 </table>
             </div>

@@ -4,8 +4,6 @@ import { defaultTo, cloneDeep, map } from 'lodash-es'
 import { toRefs, computed } from 'vue'
 import type { useVuelidate } from '@vuelidate/core'
 
-
-
 export interface IDynamicFormField {
   readonly name: string
   readonly label: string
@@ -75,18 +73,18 @@ const onInput = (field: IDynamicFormField) => emit('input', field)
     @submit.prevent="onSubmit"
   >
 
-    <fieldset class="dynamic-form input-group" :disabled="disabled">
+    <fieldset class="dynamic-form input-group" :disabled="disabled">      
 
       <!-- Create a new div element for each field in the form -->
       <div v-show="!field.hidden"
         v-for="field in fields"
         :key="field.name"
         :class="{ 'dirty': field.validator.$dirty, 'data-invalid': field.validator.$invalid }"
-        class="dynamic-form input-container"
+        class="form-control"
       >
         <!-- label above the fields -->
-        <label :for="field.id" class="dynamic-form input-label" >
-          {{ field.label }}
+        <label :for="field.id" class="label">
+          <span class="label-text">{{ field.label }}</span>
         </label>
 
         <!-- Determine select, input, or textarea -->
@@ -94,7 +92,7 @@ const onInput = (field: IDynamicFormField) => emit('input', field)
           v-model="field.validator.$model"
           :id="field.id"
           :disabled="field.disabled"
-          class="dynamic-form dynamic-input input-select"
+          class="select select-bordered w-full"
           @change="onInput(field)"
         >
 
@@ -108,7 +106,7 @@ const onInput = (field: IDynamicFormField) => emit('input', field)
           v-model="field.validator.$model"
           :id="field.id"
           :disabled="field.disabled"
-          class="dynamic-form dynamic-input input-textarea"
+          class="textarea textarea-bordered w-full h-24"
           @input="onInput(field)"
         />
 
@@ -118,13 +116,13 @@ const onInput = (field: IDynamicFormField) => emit('input', field)
           :type="field.type"
           :name="field.name"
           :disabled="field.disabled"
-          class="dynamic-form dynamic-input input"
+          class="input input-bordered w-full"
           :placeholder="placeholder(field)"
           @input="onInput(field)"
         >
 
-        <div class="dynamic-form field-description">
-          <p>{{ field.description }}</p>
+        <div class="label">
+          <span class="label-text-alt">{{ field.description }}</span>
         </div>
 
       </div>
