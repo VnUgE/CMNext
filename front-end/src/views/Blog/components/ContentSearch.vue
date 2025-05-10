@@ -57,7 +57,7 @@ const onSelected = (result: ContentResult) => {
     <div id="content-search" class="my-4">
         <div class="">
             <div class="">
-                <input class="w-full input primary" placeholder="Search..." v-model="search" />
+                <input class="w-full input input-bordered" placeholder="Search..." v-model="search" />
             </div>
         </div>
         <div class="search-results">
@@ -75,11 +75,11 @@ const onSelected = (result: ContentResult) => {
                     <div v-if="waiting">
                         <fa-icon icon="spinner" spin />
                     </div>
-                    <div v-else-if="result.copied.value" class="text-sm text-amber-500">
+                    <div v-else-if="result.copied.value" class="text-sm text-warning">
                         copied
                     </div>
                     <div v-else class="">
-                         <button class="btn secondary sm borderless" @click="result.copyLink()">
+                         <button class="btn btn-secondary btn-sm btn-ghost" @click="result.copyLink()">
                             <fa-icon icon="link" />
                          </button>
                     </div>

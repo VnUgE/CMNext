@@ -49,7 +49,7 @@ onClickOutside(dialog, onClose)
         <!-- Full-screen container to center the panel -->
         <div class="fixed inset-0 flex items-center justify-center w-screen p-4">
           <!-- The actual dialog panel -->
-          <DialogPanel class="p-2 bg-white rounded dark:bg-dark-700" ref="dialog">
+          <DialogPanel class="p-2 bg-base-100 rounded" ref="dialog">
             <DialogDescription>
               <img class="preview-image" :src="imgUrl" alt="preview" />
             </DialogDescription>

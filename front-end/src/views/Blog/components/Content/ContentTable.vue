@@ -86,19 +86,19 @@ const onClosePreview = () => previewItem.value = undefined
             </td>
             <td class="w-24">
                 <fieldset :disabled="waiting">
-                     <button class="btn xs no-border" @click="openEdit(item)">
+                     <button class="btn btn-ghost btn-xs btn-square" @click="openEdit(item)">
                         <fa-icon icon="pencil" />
                     </button>
-                    <button class="btn xs no-border" @click="copyLink(item)">
+                    <button class="btn btn-ghost btn-xs btn-square" @click="copyLink(item)">
                         <fa-icon icon="link" />
                     </button>
-                    <button class="btn xs no-border" @click="copy(item.id)">
+                    <button class="btn btn-ghost btn-xs btn-square" @click="copy(item.id)">
                         <fa-icon icon="copy" />
                     </button>
-                    <button class="btn xs no-border" @click="download(item)">
+                    <button class="btn btn-ghost btn-xs btn-square" @click="download(item)">
                         <fa-icon icon="file-download" />
                     </button>
-                    <button class="btn xs no-border red" @click="deleteItem(item)">
+                    <button class="btn btn-ghost btn-xs btn-square btn-error" @click="deleteItem(item)">
                         <fa-icon icon="trash" />
                     </button>
                 </fieldset>

@@ -1,3 +1,3 @@
-#content-upload-form input.primary.invalid {
-    @apply border-red-500;
+#content-upload-form {
+   
 }

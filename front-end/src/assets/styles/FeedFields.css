@@ -17,15 +17,15 @@
         }
 
         textarea.invalid {
-            @apply border-red-500;
+            @apply border-error;
         }
     }
 
     .xml {
-        @apply tracking-wider font-mono p-3 text-sm border dark:border-dark-500 rounded whitespace-pre-wrap;
+        @apply tracking-wider font-mono p-3 text-sm border border-base-300 rounded whitespace-pre-wrap;
     }
 
     .xml.invalid {
-        @apply border-red-500;
+        @apply border-error;
     }
 }

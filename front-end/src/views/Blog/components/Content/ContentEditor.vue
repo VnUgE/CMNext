@@ -1,13 +1,13 @@
 <template>
     <div id="content-editor" class="flex flex-col w-full">
         <div class="my-4 ml-auto">
-            <div class="button-group">
+            <div class="join">
                 <!-- Submit the post form -->
-                <button :disabled="waiting || !isChannelSelected" class="btn primary" form="content-upload-form">
+                <button :disabled="waiting || !isChannelSelected" class="btn btn-primary join-item" form="content-upload-form">
                     <fa-icon icon="spinner" v-if="waiting" class="animate-spin" />
                     <span v-else>Save</span>
                 </button>
-                <button class="btn" @click="onClose">Cancel</button>
+                <button class="btn join-item" @click="onClose">Cancel</button>
             </div>
         </div>
         <div class="mx-auto sm:min-w-[20rem] text-center">
@@ -21,16 +21,16 @@
                             <label class="">File name</label>
                             <input
                                 type="text" 
-                                class="w-full input primary"
+                                class="w-full input input-bordered"
                                 placeholder="Title"
                                 v-model="v$.name.$model" 
-                                :class="{'invalid':v$.name.$invalid && v$.name.$dirty}"
+                                :class="{'input-error':v$.name.$invalid && v$.name.$dirty}"
                             />
                             <div v-if="isNewUpload"
                                 id="file-drop-zone" 
                                 ref="newFileDropZone" 
-                                class="py-16 mt-3 transition-all duration-150 ease-linear border-2 border-dashed rounded cursor-pointer dark:border-dark-500"
-                                :class="{'border-primary-500 dark:border-primary-500':isOverDropZone}"
+                                class="py-16 mt-3 transition-all duration-150 ease-linear border-2 border-dashed rounded cursor-pointer border-base-300"
+                                :class="{'border-primary':isOverDropZone}"
                                 @click.prevent="open()"
                             >
                                 <div class="flex flex-col items-center justify-center">
@@ -44,11 +44,11 @@
                         <div v-if="editFile?.id" class="mt-3">
                             <div class="p-3 py-0.5">
                                 <label>Content Id</label>
-                                <input type="text" class="w-full input primary" :value="editFile.id" readonly />
+                                <input type="text" class="w-full input input-bordered" :value="editFile.id" readonly />
                             </div>
                         </div>
                          
-                        <div v-if="uploadedFile.name" class="border border-gray-300 dark:border-dark-500 p-4 w-[24rem] mx-auto rounded-sm relative mt-5">
+                        <div v-if="uploadedFile.name" class="border border-base-300 p-4 w-[24rem] mx-auto rounded-sm relative mt-5">
                             <div class="absolute top-0 text-right -right-12">
                                 <button class="rounded-sm btn sm red" @click.prevent="removeNewFile">
                                     <fa-icon :icon="['fas', 'trash']" />
