@@ -58,7 +58,7 @@ tryOnMounted(() => defer(() => {
         <div class="entry-container">
           <h3>Finalizing login</h3>
           <div class="mt-6 mb-4">
-            <div v-if="message?.length > 0" class="text-lg text-red-500 dark:text-rose-500">
+            <div v-if="message?.length > 0" class="text-lg text-error">
               <p>{{ message }}</p>
               <div class="flex justify-center mt-5">
                 <router-link to="/login">

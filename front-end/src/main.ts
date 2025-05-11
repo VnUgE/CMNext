@@ -30,11 +30,11 @@ import "@fontsource/source-sans-pro"
 /* FONT AWESOME CONFIG */
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faBullhorn, faCertificate, faCheck, faChevronLeft, faChevronRight, faCode, faComment, faCopy, faFile, faFileDownload, faFileZipper, faFolderOpen, faHeadphones, faImage, faKey, faLink, faMinusCircle, faPencil, faPhotoFilm, faPlus, faRotateLeft, faSignInAlt, faSpinner, faSync, faTrash, faUser, faVideo } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faLock, faBullhorn, faCertificate, faCheck, faChevronLeft, faChevronRight, faCode, faComment, faCopy, faFile, faFileDownload, faFileZipper, faFolderOpen, faHeadphones, faImage, faKey, faLink, faMinusCircle, faPencil, faPhotoFilm, faPlus, faRotateLeft, faSignInAlt, faSpinner, faSync, faTrash, faUser, faVideo, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { faGithub, faDiscord, faMarkdown } from '@fortawesome/free-brands-svg-icons'
 
 //Add required icons for the app
-library.add(faSignInAlt, faGithub, faDiscord, faSpinner, faCertificate, faKey, faSync, faPlus, faMinusCircle, faUser, faCheck, faTrash, faCopy, 
+library.add(faTrashCan, faBars, faLock, faSignInAlt, faGithub, faDiscord, faSpinner, faCertificate, faKey, faSync, faPlus, faMinusCircle, faUser, faCheck, faTrash, faCopy, 
     faPencil, faLink, faPhotoFilm, faRotateLeft, faMarkdown, faBullhorn, faFolderOpen, faComment, faChevronLeft, faChevronRight, faFileDownload,
     faCode, faFile, faVideo, faImage, faHeadphones, faFileZipper
 );
@@ -44,8 +44,6 @@ import router from './router'
 
 //Import nav components
 import Dialog from './components/Dialog.vue';
-import FooterNav1 from './components/FooterNav1.vue'
-import FooterNav2 from './components/FooterNav2.vue'
 import DynamicFormVue from './components/DynamicForm.vue'
 
 import { oauth2AppsPlugin } from './store/oauthAppsPlugin'
@@ -81,7 +79,7 @@ store.use(accountStatePlugin())
     //Protect desired routes
     .use(pageGuardPlugin(router, ['Account', 'Blog']))
     //Use the oauth2 plugin store
-    .use(oauth2AppsPlugin('/oauth/apps', '/oauth/scopes'))
+    //.use(oauth2AppsPlugin('/oauth/apps', '/oauth/scopes'))
     //User-profile plugin
     .use(profilePlugin())
     //Enable mfa with totp settings plugin
@@ -104,8 +102,6 @@ app.use(Notifications)
     .component('Dialog', Dialog)
     //Add the footer nav components
     .component('fa-icon', FontAwesomeIcon)
-    .component('FooterNav1', FooterNav1)
-    .component('FooterNav2', FooterNav2)
     //Register the dynamic form component
     .component('dynamic-form', DynamicFormVue)
 

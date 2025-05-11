@@ -200,12 +200,8 @@ watch(loginData, console.log)
         </div>
 
         <form v-else id="user-pass-submit-form" method="post" action="/login" @submit.prevent="SubmitLogin">
-            
-            <p class="text-base-content my-3" data-id="6">
-                Enter your email below to login to your account
-            </p>
 
-            <fieldset class="" :disabled="waiting">
+            <fieldset class="mt-10" :disabled="waiting">
                 <div class="pt-3">
                     <label class="input input-bordered flex items-center gap-2 w-full"
                         :class="{ 'input-error': (v$.username.$invalid && v$.username.$model.length > 0) }">
@@ -228,7 +224,7 @@ watch(loginData, console.log)
                         <input tabindex="2" id="password" v-model="v$.password.$model" type="password"
                             autocomplete="current-password" class="grow" placeholder="Password" @input="onInput">
                     </label>
-                    <div class="label text-sm">
+                    <div class="label text-sm w-full flex flex-row justify-between mt-1">
                         <span class="label-text-alt link link-hover"></span>
                         <span class="label-text-alt link link-hover">
                             <router-link to="/pwreset">

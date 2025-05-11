@@ -153,7 +153,7 @@ const onDownload = async (item: ContentMeta) => {
                         role="progressbar"
                         aria-labelledby="ProgressLabel"
                         :aria-valuenow="uploadProgress"
-                        class="relative block bg-gray-200 rounded-full dark:bg-dark-500"
+                        class="relative block bg-base-300 rounded-full"
                     >
                         <span class="absolute inset-0 flex items-center justify-center text-[10px]/4">
                             <span class="font-bold text-white "> {{ loadingProgress }} </span>

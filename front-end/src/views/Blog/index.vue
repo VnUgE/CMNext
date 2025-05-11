@@ -43,7 +43,7 @@ defer(() => store.channels.refresh());
                             </span>
                         </div>
 
-                        <div class="border-t border-gray-100 dark:border-dark-500">
+                        <div class="border-t border-base-300">
                             <div class="px-2">
                                 
                                  <Tab v-slot="{ selected }" as="div" class="py-4">
@@ -57,7 +57,7 @@ defer(() => store.channels.refresh());
                                     </div>
                                 </Tab>
 
-                                 <ul class="flex flex-col pt-4 space-y-1 border-t border-gray-100 dark:border-dark-500">
+                                 <ul class="flex flex-col pt-4 space-y-1 border-t border-base-300">
                                     <Tab v-slot="{ selected }" as="li">
                                         <div class="group menu-item" :class="{'active':selected}">
                                             
@@ -108,14 +108,14 @@ defer(() => store.channels.refresh());
                         
                         <div class="flex flex-row py-2 mr-auto">
                             <Switch v-model="lastModified"
-                                :class="lastModified ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-500'"
+                                :class="lastModified ? 'bg-primary' : 'bg-base-300'"
                                 class="relative inline-flex items-center w-10 h-5 my-auto duration-75 rounded-full">
                                 <span class="sr-only">Last modified</span>
                                 <span :class="lastModified ? 'translate-x-6' : 'translate-x-1'"
                                     class="inline-block w-3 h-3 transition transform bg-white rounded-full" />
                             </Switch>
                             <div class="my-auto ml-3">
-                                Last Modifed
+                                Last Modified
                             </div>
                         
                         </div>

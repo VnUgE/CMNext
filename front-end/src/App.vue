@@ -28,7 +28,7 @@ store.setHeaderRouteNames(
 //Compute meta title from the default site title and the page title
 const metaTile = computed(() => `${pageTitle.value} | ${siteTitle.value}`)
 
-const { showCookieWarning, currentRoutes } = storeToRefs(store)
+const { currentRoutes } = storeToRefs(store)
 const { getRoutes } = useRouter();
 
 //Use the env size to calculate the header and footer heights for us
@@ -85,7 +85,6 @@ const logout = async () => {
     </div>
 
     <div id="env-body" class="flex w-full" :style="bodyStyle">
-      <cookie-warning :hidden="showCookieWarning" />
 
       <router-view />
 
@@ -93,14 +92,7 @@ const logout = async () => {
 
     <!-- Setup footer with nav elements from global config -->
     <div ref="footer">
-      <site-footer>
-        <template #footer-nav-1>
-          <footer-nav-1 />
-        </template>
-        <template #footer-nav-2>
-          <footer-nav-2 />
-        </template>
-      </site-footer>
+      <site-footer />
     </div>
 
     <PasswordPrompt />

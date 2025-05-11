@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import FooterNav1 from './FooterNav1.vue';
+import FooterNav2 from './FooterNav2.vue';
 
 </script>
 
@@ -10,10 +12,10 @@
       </p>
     </aside>
     <nav class="footer-nav" data-footer-nav="1">
-      <slot name="footer-nav-1" />
+      <FooterNav1 />
     </nav>
     <nav class="footer-nav" data-footer-nav="2">
-      <slot name="footer-nav-2" />
+      <FooterNav2 />
     </nav>
     <nav>
       <h6 class="footer-title">Built with</h6>

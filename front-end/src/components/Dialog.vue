@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import { onClickOutside } from '@vueuse/core';
-import { ref, computed } from 'vue'
+import { ref, computed, toRefs } from 'vue'
 import { useEnvSize } from '@vnuge/vnlib.browser'
-import { 
-    Dialog,
-    DialogPanel,
-    DialogTitle,
-    DialogDescription,
-    TransitionRoot,
-    TransitionChild
-} from '@headlessui/vue'
 
 const emit = defineEmits(['close', 'submit'])
-defineProps<{ open: boolean }>()
+const props = defineProps<{ open: boolean }>()
+const { open } = toRefs(props)
 
 const dialogRef = ref(null)
 
@@ -27,39 +20,24 @@ const style = computed(() => {
     }
 })
 
+const modalClass = computed(() => ({ 'modal-open': open.value }))
+
 </script>
 
 <template>
 
-    <TransitionRoot :show="$props.open" as="template">
-        <Dialog as="div" ref="dialogRef" :style="style" @close="emit('close')" class="modal-entry">
+    <dialog :style="style" :class="modalClass" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box" ref="dialogRef">
+            <slot name="main">
+                <h3 as="div" class="text-lg font-bold">
+                    <slot name="title"></slot>
+                </h3>
 
-            <TransitionChild enter="duration-100 ease-out" enter-from="opacity-0" enter-to="opacity-100"
-                leave="duration-100 ease-in" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-base-100/80 " aria-hidden="true" />
-            </TransitionChild>
-
-            <TransitionChild enter="duration-100 ease-out" enter-from="opacity-0 scale-95"
-                enter-to="opacity-100 scale-100" leave="duration-100 ease-in" leave-from="opacity-100 scale-100"
-                leave-to="opacity-0 scale-95" as="div" class="relative w-full">
-
-                <div class="modal-content-container">
-
-                    <DialogPanel class="modal modal-open modal-box">
-                        <slot name="main">
-
-                            <DialogTitle as="div" class="modal-header font-bold text-lg">
-                                <slot name="title"></slot>
-                            </DialogTitle>
-
-                            <DialogDescription class="py-4">
-                                <slot name="description"></slot>
-                            </DialogDescription>
-                        </slot>
-                    </DialogPanel>
-
+                <div class="modal-action">
+                    <slot name="description"></slot>
                 </div>
-            </TransitionChild>
-        </Dialog>
-    </TransitionRoot>
+            </slot>
+        </div>
+    </dialog>
+
 </template>

@@ -68,7 +68,7 @@
                             </div>
                         </div>
                         <div v-else-if="editFile?.id" >
-                            <div class="border border-gray-300 dark:border-dark-500 p-4 min-w-[24rem] mx-auto rounded-sm relative mt-5">
+                            <div class="border border-base-300 p-4 min-w-[24rem] mx-auto rounded-sm relative mt-5">
                                 <div class="pr-4 truncate">
                                     Name: {{ editFile.name }}
                                 </div>

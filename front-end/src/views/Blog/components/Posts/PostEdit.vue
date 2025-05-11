@@ -48,7 +48,7 @@ import { computed, defineAsyncComponent, ref, toRef } from 'vue';
 import { reactiveComputed, useMagicKeys } from '@vueuse/core';
 import { isNil, isString, split, debounce } from 'lodash-es';
 import { PostMeta, useXmlProperties } from '@vnuge/cmnext-admin';
-import { apiCall, useUser } from '@vnuge/vnlib.browser';
+import { apiCall, useAccount } from '@vnuge/vnlib.browser';
 import { getPostForm } from '../../form-helpers';
 import { useStore } from '../../../../store';
 import FeedFields from '../FeedFields.vue';
@@ -57,7 +57,7 @@ const Editor = defineAsyncComponent(() => import('../../ckeditor/Editor.vue'));
 const emit = defineEmits(['close', 'submit', 'delete']);
 const store = useStore()
 
-const { getProfile } = useUser();
+const { getProfile } = useAccount();
 const { schema, getValidator } = getPostForm();
 
 const podcastMode = ref(false)

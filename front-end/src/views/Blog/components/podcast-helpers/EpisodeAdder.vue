@@ -25,7 +25,7 @@
                                 </div>
                                 <div class="">
                                     <Switch v-model="isExplicit"
-                                        :class="isExplicit ? 'bg-red-500' : 'bg-gray-300 dark:bg-dark-500'"
+                                        :class="isExplicit ? 'bg-red-500' : 'bg-base-300'"
                                         class="relative inline-flex items-center w-10 h-5 my-auto duration-75 rounded-full">
                                         <span class="sr-only">Podcast Mode</span>
                                         <span :class="isExplicit ? 'translate-x-6' : 'translate-x-1'"

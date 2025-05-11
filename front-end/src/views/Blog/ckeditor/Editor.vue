@@ -4,7 +4,7 @@
             <div class="w-fit">
                 <div class="flex flex-row py-2 mr-auto">
                     <Switch v-model="podcastMode"
-                        :class="$props.podcastMode ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-500'"
+                        :class="$props.podcastMode ? 'bg-primary-500' : 'bg-base-300'"
                         class="relative inline-flex items-center w-10 h-5 my-auto duration-75 rounded-full">
                         <span class="sr-only">Podcast Mode</span>
                         <span :class="$props.podcastMode ? 'translate-x-6' : 'translate-x-1'"

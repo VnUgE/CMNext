@@ -108,40 +108,6 @@ h6 {
     }
 }
 
-.modal-entry {
-    
-    @apply fixed z-30 flex w-full;
-
-    .modal-content-container {
-        @apply relative px-3;
-
-        .modal-panel{
-            @apply shadow-2xl w-fit p-5 m-auto md:mt-[8rem] mt-24 rounded border;
-            @apply bg-base-100 border-base-content/25;
-        }
-        
-        .modal-title {
-            @apply md:text-xl text-lg font-bold;
-        }
-
-        .modal-description {
-            @apply text-sm py-4;
-        }
-    }
-
-    .modal-button-container {
-        @apply flex flex-row justify-end pt-4 gap-3;
-    }
-
-    .input-container {
-        @apply pt-3;
-
-        input {
-            @apply w-full;
-        }
-    }
-}
-
 #account-security-settings .modal-body {
     @apply w-full sm:max-w-md;
 }

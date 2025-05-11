@@ -61,12 +61,13 @@ const close = function () {
       </template>
 
       <template v-slot:description>
-        <div class="max-w-[24rem] md:w-screen w-[70vw]">
-          <p class="modal-description">
-            Please re-enter your password to continue.
+        <div class="w-full text-center">
+
+          <p class="my-1 text-sm ">
+            To confirm your identity, please enter your password.
           </p>
 
-          <form id="password-form" @submit.prevent="formSubmitted()" :disabled="waiting">
+          <form id="password-form" class="my-2 w-full" @submit.prevent="formSubmitted()" :disabled="waiting">
             <fieldset>
               <div class="input-container">
                 <input tabindex="1" v-model="v$.password.$model" id="password-prompt-input" type="password"
@@ -75,15 +76,14 @@ const close = function () {
             </fieldset>
           </form>
 
-          <div class="pt-4 join w-full flex justify-end">
-            <button class=" btn btn-primary join-item" form="password-form">
-            Submit
+          <div class="join mt-4 w-fit float-right">
+            <button class="btn btn-primary join-item" form="password-form">
+              Submit
             </button>
             <button class="btn join-item" @click.prevent="close()">
               Close
             </button>
           </div>
-
         </div>
       </template>
 

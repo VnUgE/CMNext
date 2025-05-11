@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { set } from "@vueuse/core";
+import { set, useLocalStorage, watchDebounced, toRefs, type DeepMaybeRef } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { defaultsDeep } from 'lodash-es';
 import { useAutoHeartbeat } from '@vnuge/vnlib.browser';
@@ -36,7 +36,6 @@ export const useStore = defineStore('main', () => {
     const authRoutes = shallowRef(Array<string>());
     const siteTitle = shallowRef("");
     const pageTitle = shallowRef("");
-    const showCookieWarning = shallowRef(!navigator.cookieEnabled); //Default to current cookie status
 
     //Get shared global state storage
     const mainState = useLocalStorage<GlobalState | undefined>("vn-state", defaultState);
@@ -75,7 +74,6 @@ export const useStore = defineStore('main', () => {
         authRoutes,
         siteTitle,
         pageTitle,
-        showCookieWarning,
         setCookieWarning,
         setPageTitle,
         currentRoutes,
