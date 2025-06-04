@@ -40,6 +40,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="CMNext.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="CMNext.sample.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

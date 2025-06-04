@@ -1,17 +1,9 @@
 {
   //Enables debug logging
-  "debug": ${DEBUG_PLUGINS},
+  "debug": ${DEBUG_PLUGINS:-false},
 
-  "post_endpoint": {
-    "path": "/api/blog/posts"
-  },
-
-  "channel_endpoint": {
-    "path": "/api/blog/channels"
-  },
-
-  "content_endpoint": {
-    "path": "/api/blog/content",
+  "api": {
+    "path": "/api/blog",
     "max_content_length": ${MAX_CONTENT_LENGTH}
   },
 
