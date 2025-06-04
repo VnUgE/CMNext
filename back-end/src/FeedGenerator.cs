@@ -43,6 +43,7 @@ namespace Content.Publishing.Blog.Admin
         const string ATOM_NAMESPACE_LINK = "https://www.w3.org/2005/Atom";
         const string GENERATOR_NAME = "CMNext";
 
+
         public FeedGenerator(PluginBase pbase)
         { }
 

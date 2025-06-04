@@ -53,8 +53,8 @@ namespace Content.Publishing.Blog.Admin.Storage
 
             //Init new client
             _client = new(
-                uri.Host, 
-                uri.Port, 
+                uri.Host,
+                uri.Port,
                 //Logger in debug mode
                 logger: plugin.IsDebug() ? new FtpDebugLogger(plugin.Log) : null
             );
@@ -76,7 +76,7 @@ namespace Content.Publishing.Blog.Admin.Storage
             _client.Credentials = new NetworkCredential(_storageConf.ClientId, password?.Result.ToString());
 
             //If the user forces ssl, then assume it's an implicit connection and force certificate checking
-            if(_storageConf.UseSsl == true)
+            if (_storageConf.UseSsl == true)
             {
                 _client.Config.EncryptionMode = FtpEncryptionMode.Implicit;
             }
@@ -94,13 +94,13 @@ namespace Content.Publishing.Blog.Admin.Storage
 
 
         ///<inheritdoc/>
-        public override Task DeleteFileAsync(string filePath, CancellationToken cancellation)
+        public override ValueTask DeleteFileAsync(string filePath, CancellationToken cancellation)
         {
-            return _client.DeleteFile(GetExternalFilePath(filePath), cancellation);
+            return new(_client.DeleteFile(GetExternalFilePath(filePath), cancellation));
         }
 
         ///<inheritdoc/>
-        public override async Task<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
+        public override async ValueTask<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
         {
             try
             {
@@ -116,14 +116,14 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public override async Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
+        public override async ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             //Upload the file to the server
             FtpStatus status = await _client.UploadStream(
-                data, 
-                GetExternalFilePath(filePath), 
-                FtpRemoteExists.Overwrite, 
-                createRemoteDir: true, 
+                data,
+                GetExternalFilePath(filePath),
+                FtpRemoteExists.Overwrite,
+                createRemoteDir: true,
                 token: cancellation
             );
 

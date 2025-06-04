@@ -41,7 +41,7 @@ using static VNLib.Plugins.Essentials.Endpoints.ResourceEndpointBase;
 namespace Content.Publishing.Blog.Admin.Endpoints
 {
 
-    [ConfigurationName("post_endpoint")]
+    [ConfigurationName("api")]
     internal sealed class PostsEndpoint(PluginBase plugin) : IHttpController
     {
         private static readonly IValidator<BlogPost> PostValidator = BlogPost.GetValidator();
@@ -52,7 +52,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         ///<inheritdoc/>
         public ProtectionSettings GetProtectionSettings() => default;
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.GET)]
+        [HttpStaticRoute("{{ path }}/posts", HttpMethod.GET)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnGetPostsAsync(HttpEntity entity)
         {
@@ -93,7 +93,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualOkJson(entity, posts);
         }
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.POST)]
+        [HttpStaticRoute("{{ path }}/posts", HttpMethod.POST)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnPostAsync(HttpEntity entity)
         {
@@ -144,7 +144,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualOk(entity, webm);
         }
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.PATCH)]
+        [HttpStaticRoute("{{ path }}/posts", HttpMethod.PATCH)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnUpdateAsync(HttpEntity entity)
         {
@@ -197,7 +197,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualOk(entity, webm);
         }
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.DELETE)]
+        [HttpStaticRoute("{{ path }}/posts", HttpMethod.DELETE)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnDeleteAsync(HttpEntity entity)
         {

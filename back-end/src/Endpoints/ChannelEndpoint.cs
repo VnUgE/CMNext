@@ -42,7 +42,7 @@ using Content.Publishing.Blog.Admin.Model;
 namespace Content.Publishing.Blog.Admin.Endpoints
 {
 
-    [ConfigurationName("channel_endpoint")]
+    [ConfigurationName("api")]
     internal sealed class ChannelEndpoint(PluginBase plugin) : IHttpController
     {
         private static readonly IValidator<ChannelRequest> ChannelValidator = ChannelRequest.GetValidator();
@@ -54,8 +54,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         ///<inheritdoc/>
         public ProtectionSettings GetProtectionSettings() => default;
 
-
-        [HttpStaticRoute("{{ path }}", HttpMethod.GET)]
+        [HttpStaticRoute("{{ path }}/channels", HttpMethod.GET)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnGetChannelsAsync(HttpEntity entity)
         {
@@ -64,13 +63,13 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             {
                 return VfReturnType.Forbidden;
             }
-           
+
             object[] contexts = await ContentManager.GetAllContextsAsync(entity.EventCancellation);
-         
+
             return VirtualOkJson(entity, contexts);
         }
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.POST)]
+        [HttpStaticRoute("{{ path }}/channels", HttpMethod.POST)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnCreateChannelAsync(HttpEntity entity)
         {
@@ -93,11 +92,11 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
-            if(webm.AssertError(channel.Feed != null, "No feed object was received"))
+            if (webm.AssertError(channel.Feed != null, "No feed object was received"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
-         
+
             if (!FeedValidator.Validate(channel.Feed, webm))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
@@ -110,16 +109,16 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             {
                 return VirtualClose(entity, webm, HttpStatusCode.Conflict);
             }
-            
+
             return VirtualClose(entity, HttpStatusCode.Created);
         }
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.PATCH)]
+        [HttpStaticRoute("{{ path }}/channels", HttpMethod.PATCH)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnUpdateChannelAsync(HttpEntity entity)
         {
             WebMessage webm = new();
-           
+
             if (webm.Assert(entity.Session.CanWrite(), "You do not have permission to add channels"))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.Forbidden);
@@ -169,7 +168,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualClose(entity, HttpStatusCode.Created);
         }
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.DELETE)]
+        [HttpStaticRoute("{{ path }}/channels", HttpMethod.DELETE)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
         {
@@ -245,5 +244,5 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 Id = ChannelManager.ComputeContextId(this);
             }
         }
-    }   
+    }
 }

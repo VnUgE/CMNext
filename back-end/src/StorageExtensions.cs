@@ -42,7 +42,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="ct">The file content type</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that completes when the file data has been written to the storage layer</returns>
-        public static Task SetObjectDataAsync(this ISimpleFilesystem storage, IChannelContext context, Stream data, string path, ContentType ct, CancellationToken cancellation)
+        public static ValueTask SetObjectDataAsync(this ISimpleFilesystem storage, IChannelContext context, Stream data, string path, ContentType ct, CancellationToken cancellation)
         {
             return storage.WriteFileAsync($"{context.BaseDir}/{path}", data, HttpHelpers.GetContentTypeString(ct), cancellation);
         }
@@ -55,7 +55,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="path">The item path within the channel to delete</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that completes when the deletion operation has completed</returns>
-        public static Task RemoveObjectAsync(this ISimpleFilesystem storage, IChannelContext context, string path, CancellationToken cancellation)
+        public static ValueTask RemoveObjectAsync(this ISimpleFilesystem storage, IChannelContext context, string path, CancellationToken cancellation)
         {
             return storage.DeleteFileAsync($"{context.BaseDir}/{path}", cancellation);
         }
@@ -100,7 +100,7 @@ namespace Content.Publishing.Blog.Admin
         /// <param name="stream">The stream to write the file data to from the storage layer</param>
         /// <param name="cancellation">A token to cancel the operation</param>
         /// <returns>A task that resolves the number of bytes read into the output stream</returns>
-        public static Task<long> ReadFileAsync(this ISimpleFilesystem storage, IChannelContext context, string fileName, Stream stream, CancellationToken cancellation)
+        public static ValueTask<long> ReadFileAsync(this ISimpleFilesystem storage, IChannelContext context, string fileName, Stream stream, CancellationToken cancellation)
         {
             return storage.ReadFileAsync($"{context.BaseDir}/{fileName}", stream, cancellation);
         }
@@ -110,7 +110,7 @@ namespace Content.Publishing.Blog.Admin
         /// </summary>
         /// <param name="storage"></param>
         /// <param name="context">The channel context that contains the item</param>
-        /// <param name="path">The realtive path inside the channel to the item to get the path for</param>
+        /// <param name="path">The relative path inside the channel to the item to get the path for</param>
         /// <returns>The full external path of the item</returns>
         public static string GetExternalFilePath(this ISimpleFilesystem storage, IChannelContext context, string path)
         {

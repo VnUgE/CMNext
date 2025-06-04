@@ -131,7 +131,7 @@ namespace Content.Publishing.Blog.Admin.Model
             IRecordDb<BlogChannel> db = await LoadDb(cancellation);
 
             //Get the channel
-            return db.GetRecords().ToArray();
+            return [.. db.GetRecords()];
         }
 
        

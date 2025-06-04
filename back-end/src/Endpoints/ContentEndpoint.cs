@@ -45,7 +45,7 @@ using Content.Publishing.Blog.Admin.Model;
 namespace Content.Publishing.Blog.Admin.Endpoints
 {
 
-    [ConfigurationName("content_endpoint")]
+    [ConfigurationName("api")]
     internal sealed class ContentEndpoint(PluginBase plugin, IConfigScope config) : IHttpController
     {
         private static readonly IValidator<ContentMeta> MetaValidator = ContentMeta.GetValidator();
@@ -60,7 +60,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         public ProtectionSettings GetProtectionSettings() => default;
 
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.GET)]
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.GET)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnGetContentAsync(HttpEntity entity)
         {
@@ -145,7 +145,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
          * Patch allows updating content meta data without having to upload the content again
          */
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.PATCH)]
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.PATCH)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnUpdateMetaAsync(HttpEntity entity)
         {
@@ -214,7 +214,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         /*
          * Put adds or updates content
          */
-        [HttpStaticRoute("{{ path }}", HttpMethod.PUT)]
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.PUT)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnUploadAsync(HttpEntity entity)
         {
@@ -302,7 +302,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         }
 
 
-        [HttpStaticRoute("{{ path }}", HttpMethod.DELETE)]
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.DELETE)]
         [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
         public async ValueTask<VfReturnType> OnDeleteAsync(HttpEntity entity)
         {

@@ -76,18 +76,18 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public override Task DeleteFileAsync(string filePath, CancellationToken cancellation)
+        public override ValueTask DeleteFileAsync(string filePath, CancellationToken cancellation)
         {
             RemoveObjectArgs args = new();
             args.WithBucket(Config.BaseBucket)
                 .WithObject(filePath);
 
             //Remove the object
-            return Client.RemoveObjectAsync(args, cancellation);
+            return new ValueTask(Client.RemoveObjectAsync(args, cancellation));
         }
 
         ///<inheritdoc/>
-        public override Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
+        public override ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             PutObjectArgs args = new();
             args.WithBucket(Config.BaseBucket)
@@ -97,11 +97,11 @@ namespace Content.Publishing.Blog.Admin.Storage
                 .WithStreamData(data);
 
             //Upload the object
-            return Client.PutObjectAsync(args, cancellation);
+            return new ValueTask(Client.PutObjectAsync(args, cancellation));
         }
 
         ///<inheritdoc/>
-        public override async Task<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
+        public override async ValueTask<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
         {
             //Get the item
             GetObjectArgs args = new();

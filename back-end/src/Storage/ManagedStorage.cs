@@ -62,7 +62,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public Task DeleteFileAsync(string filePath, CancellationToken cancellation)
+        public ValueTask DeleteFileAsync(string filePath, CancellationToken cancellation)
         {
             return _backingStorage.DeleteFileAsync(filePath, cancellation);
         }
@@ -74,7 +74,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public async Task<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
+        public async ValueTask<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
         {
             //Read the file from backing storage
             long result = await _backingStorage.ReadFileAsync(filePath, output, cancellation);
@@ -90,7 +90,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
+        public ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             //Try to reset the stream if allowed
             if (data.CanSeek)
@@ -100,6 +100,12 @@ namespace Content.Publishing.Blog.Admin.Storage
             }
 
             return _backingStorage.WriteFileAsync(filePath, data, ct, cancellation);
+        }
+      
+        ///<inheritdoc/>
+        ValueTask<Stream?> ISimpleFilesystem.OpenFileAsync(string filePath, FileAccess options, CancellationToken cancellation)
+        {
+            return _backingStorage.OpenFileAsync(filePath, options, cancellation);
         }
     }
 }
