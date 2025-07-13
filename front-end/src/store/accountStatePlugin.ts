@@ -46,8 +46,16 @@ export const accountStatePlugin = (): PiniaPlugin => {
         }, { delay: 100, immediate: true })
 
         //This plugin is authoritatively setting the value of isLocalAccount and loggedIn
-        syncRef(isLocalAccount, computed(() => accountRpcState.isReady && accountRpcState.state.value.status.is_local_account), { direction: 'rtl'});
-        syncRef(loggedIn, computed(() => accountRpcState.isReady && accountRpcState.state.value.status.authenticated), { direction: 'rtl'});
+        syncRef(
+            isLocalAccount,
+            computed(() => accountRpcState.isReady && accountRpcState.state.value.status.is_local_account),
+            { direction: 'rtl' }
+        );
+        syncRef(
+            loggedIn,
+            computed(() => accountRpcState.isReady && accountRpcState.state.value.status.authenticated),
+            { direction: 'rtl' }
+        );
 
         const isMethodSupported = (type: string): Ref<boolean> => {
             return computed(() => {

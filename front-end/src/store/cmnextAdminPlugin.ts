@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2025 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -14,41 +14,30 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'pinia'
-import { MaybeRef, Ref, computed, ref, toRef } from 'vue';
-import { PiniaPluginContext, PiniaPlugin } from 'pinia'
-import { find, isEqual } from 'lodash-es';
-import { useRouter } from 'vue-router';
-import { useContent, ContentApi, ContentMeta,  
-    PostMeta, PostApi, BlogChannel, ChannelApi, usePosts, useChannels, 
-    createBlogContext
-} from '@vnuge/cmnext-admin';
-import { useRouteQuery } from '@vueuse/router';
+import { type MaybeRef, type Ref, ref } from 'vue';
+import { type PiniaPluginContext, PiniaPlugin } from 'pinia'
+import { type AxiosProgressEvent } from 'axios';
 import { useAxios } from '@vnuge/vnlib.browser';
-import { useScriptTag } from '@vueuse/core';
-import { type ReactiveBlogStore, createReactiveBlogApi, QueryType, SortType } from './sharedTypes';
-import { AxiosProgressEvent } from 'axios';
+import { useAsyncState } from '@vueuse/core';
+import { find as _find } from 'lodash-es'
+import { 
+    usePosts, useContent, useChannels, createBlogContext, 
+    type BlogChannel, type ChannelApi, type PostApi, type PostMeta, type ContentApi,
+    type ContentMeta,
+} from '@vnuge/cmnext-admin';
 
-export type PostStore = ReactiveBlogStore<PostMeta> & PostApi
-
-export interface ChannelStore extends ReactiveBlogStore<BlogChannel>, ChannelApi {
-    editId: string
-    readonly editChannel: BlogChannel | undefined;
-}
-
-export interface ContentStore extends ReactiveBlogStore<ContentMeta>, ContentApi {
+export interface ReactiveBlogStore<T> {
+    readonly all: Readonly<T[]>
+    readonly isLoading: Readonly<boolean>;
+    readonly isReady: Readonly<boolean>;
+    refresh(): Promise<T[]>;
 }
 
 export interface BlogAdminState{
-    content: ContentStore
-    posts: PostStore
-    channels: ChannelStore
-    uploadProgress: number;
-    waitForEditor(): Promise<void>;
-    queryState:{
-        sort: SortType;
-        search: string;
-        pageSize: number;
-    }
+    readonly uploadProgress: number;
+    readonly channels: ReactiveBlogStore<BlogChannel> & ChannelApi;   
+    createPostStore(channelId: MaybeRef<string>): ReactiveBlogStore<PostMeta> & PostApi;
+    createContentStore(channelId: MaybeRef<string>): ReactiveBlogStore<ContentMeta> & ContentApi;
 }
 
 declare module 'pinia' {
@@ -56,15 +45,14 @@ declare module 'pinia' {
     }
 }
 
-export const cmnextAdminPlugin = (router: ReturnType<typeof useRouter>, ckEditorUrl: string, pageSize: MaybeRef<number>): PiniaPlugin => {
+type BlogEntity = BlogChannel | PostMeta | ContentMeta;
+interface BlogStore<T extends BlogEntity> {
+    getAllItems(): Promise<T[]>;
+}
 
-    return ({ store }: PiniaPluginContext): BlogAdminState => {
+export const cmnextAdminPlugin = (adminBaseUrl: string): PiniaPlugin => {
 
-        //setup filter search query
-        const search = useRouteQuery<string>(QueryType.Filter, '', { mode: 'replace', router });
-
-        //Get sort order query
-        const sort = useRouteQuery<SortType>(QueryType.Sort, 'created', { mode: 'replace', router });
+    return ({}: PiniaPluginContext): BlogAdminState => {
 
         const uploadProgress = ref<number>(0)
 
@@ -76,101 +64,39 @@ export const cmnextAdminPlugin = (router: ReturnType<typeof useRouter>, ckEditor
             timeout: 60 * 1000
         })
 
-        const initCkEditor = () => {
-            //Setup cke editor
-            if ('CKEDITOR' in window === false) {
-                //Load scripts
-                const ckEditorTag = useScriptTag(ckEditorUrl)
-                //Store the wait result on the window for the editor script to wait
-                const loadPromise = ckEditorTag.load(true);
+        const blogContext = createBlogContext({ axios, baseUrl: adminBaseUrl })
 
-                return async (): Promise<void> => {
-                    await loadPromise;
-                }
-            }
-            return (): Promise<void> => Promise.resolve()
+        const createStore = <T extends BlogEntity, TStore extends BlogStore<T>>(store: TStore) => 
+        {
+            const { state: all, execute: refresh, isLoading, isReady } = useAsyncState(
+                async () => (await store.getAllItems()) || [],
+                [],
+                { delay: 100, immediate: true, resetOnExecute: true }
+            );
+
+            return { all, isLoading, isReady, refresh, ...store }
         }
 
-        const blogContext = createBlogContext({
-            axios,
-            channelUrl: '/blog/channels',
-            postUrl: '/blog/posts',
-            contentUrl: '/blog/content',
-        })
-
-        const channels = (() => {
-
-            //Create channel api
-            const api = createReactiveBlogApi<BlogChannel, ChannelApi>(
-                useChannels(blogContext),
-                {
-                    query: QueryType.Channel,
-                    channelId: undefined,
-                    router,
-                    sort,
-                    search,
-                    pageSize
-                }
-            )
-
-            //route query for the selected channel
-            const editId = useRouteQuery<string>(QueryType.ChannelEdit, '', { mode: 'push', router });
-
-            //Compute the selected items from their ids
-            const editChannel = computed<BlogChannel | undefined>(() => find(api.all.value, c => isEqual(c.id, editId.value)))
-
-            return{
-                ...api,
-                editId,
-                editChannel
-            }
-        })()
-
-        const getContentStore = (): ContentStore => {
-            //Create post api
-            return createReactiveBlogApi<ContentMeta, ContentApi>(
-                useContent(blogContext, channels.selectedId),
-                {
-                    query: QueryType.Content,
-                    channelId: toRef(channels.selectedId),
-                    router,
-                    sort,
-                    search,
-                    pageSize
-                },
-            )
+        const createChannelsStore = () => {
+            const blogChannels = useChannels(blogContext);
+            return createStore(blogChannels);
         }
 
-        const getPostStore = (): PostStore => {
-
-            //Create post api
-            return createReactiveBlogApi<PostMeta, PostApi>(
-                usePosts(blogContext, channels.selectedId),
-                {
-                    query: QueryType.Post,
-                    channelId: toRef(channels.selectedId),
-                    router,
-                    sort,
-                    search,
-                    pageSize
-                }
-            )
+        const createPostStore = (channelId: MaybeRef<string>)=> {
+            const postStore = usePosts(blogContext, channelId);
+            return createStore(postStore);
         }
 
-        //Load the editor script
-        const waitForEditor = initCkEditor()
-
+        const createContentStore = (channelId: MaybeRef<string>)=> {
+            const contentStore = useContent(blogContext, channelId);
+            return createStore(contentStore);
+        }
+     
         return {
-            content: getContentStore(),
-            posts: getPostStore(),
-            channels,
-            uploadProgress,
-            waitForEditor,
-            queryState: {
-                sort,
-                search,
-                pageSize
-            }
-        }
+            uploadProgress: uploadProgress,
+            channels: createChannelsStore(),
+            createPostStore,
+            createContentStore
+        } as any as BlogAdminState;
     }
 } 

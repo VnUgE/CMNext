@@ -1,8 +1,0 @@
-
-
-#social-login-template {
-  .entry-container {
-    @apply w-full max-w-[28rem] p-6 text-center sm:border rounded-sm sm:shadow-sm;
-    @apply bg-base-100 text-base-content border-base-300;
-  }
-}
