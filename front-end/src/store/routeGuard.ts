@@ -1,16 +1,13 @@
 import 'pinia'
 import { whenever } from '@vueuse/core';
 import { storeToRefs, type PiniaPlugin, type PiniaPluginContext } from 'pinia'
-import { includes, map, toLower } from 'lodash-es';
+import { toLower } from 'lodash-es';
 import { storeExport } from './index';
 import type { Router } from 'vue-router';
 
-export const pageGuardPlugin = (router: Router, protectedRoutes: string[]) :PiniaPlugin => {
+export const pageGuardPlugin = (router: Router) :PiniaPlugin => {
 
     const { beforeEach, afterEach } = router
-
-    //Convert routes to lowercase
-    protectedRoutes = map(protectedRoutes, toLower);
 
     //scroll window back to top
     afterEach(() => window.scrollTo(0, 0))
@@ -30,7 +27,7 @@ export const pageGuardPlugin = (router: Router, protectedRoutes: string[]) :Pini
             await store.account.wait();
 
             if (!loggedIn.value) {
-                if (includes(protectedRoutes, toLower(to.name as string))) {
+                if (toLower(to.name as string) !== 'login') {
 
                     return { name: 'Login', query: { redirect: to.fullPath }}
                 }
@@ -46,6 +43,27 @@ export const pageGuardPlugin = (router: Router, protectedRoutes: string[]) :Pini
             () => router.push({ name: 'Login' }),
             { }
         );
+        
+        //Whenever the logged in state changes from false to true, redirect to the last query param
+        whenever(
+            () => {
+                const redirect = router.currentRoute.value.query['redirect'] as string | undefined;
+                const isLoginPage = toLower(router.currentRoute.value.name as string) === 'login';
+                //If the user is logged in and the redirect query param is set, and the current route is not the login page
+                return loggedIn.value && redirect && !isLoginPage;
+            },
+            () => {
+                const redirect = router.currentRoute.value.query['redirect'] as string | undefined;
+                if (redirect) {
+                    router.push({ path: redirect });
+                } else {
+                    //If no redirect, go to the dashboard
+                    router.push({ name: 'Dashboard' });
+                }
+            },
+            { immediate: true }
+        );
+
 
         return storeExport({}) 
     }
