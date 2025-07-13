@@ -1,3 +1,66 @@
+<script setup lang="ts">
+
+import { ref, reactive, computed, defineAsyncComponent } from 'vue';
+import { PodcastEntity, getPodcastForm } from './podcast-form'
+import {
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    DialogDescription,
+    PopoverButton,
+    PopoverPanel,
+    Popover,
+    Switch
+} from '@headlessui/vue'
+import { apiCall, debugLog } from '@vnuge/vnlib.browser';
+import { ContentMeta } from '@vnuge/cmnext-admin';
+import { useStore } from '../../../../store';
+const ContentSearch = defineAsyncComponent(() => import('../ContentSearch.vue'));
+
+const emit = defineEmits(['submit'])
+const store = useStore()
+
+const isOpen = ref(false)
+const { schema, setEnclosureContent, getValidator, exportProperties } = getPodcastForm()
+
+const buffer = reactive<PodcastEntity>({} as PodcastEntity)
+
+const { v$, validate } = getValidator(buffer)
+
+const isExplicit = computed({
+    get: () => buffer.explicit,
+    set: (v: boolean) => buffer.explicit = v
+});
+
+const setIsOpen = (value: boolean) => isOpen.value = value
+
+const onFormSubmit = async () => {
+    //Validate the form
+    if (! await validate()) {
+        return
+    }
+
+    //get the enclosure properties to add to the xml
+    const props = exportProperties(buffer)
+    debugLog(props);
+    emit('submit', props)
+    setIsOpen(false)
+}
+
+const onCancel = () => setIsOpen(false)
+
+const onContentSelected = (content: ContentMeta) => {
+    apiCall(async () => {
+        //Get the content link from the server
+        const url = await store.content.getPublicUrl(content)
+
+        //set the form content
+        setEnclosureContent(buffer, content, `/${url}`)
+    })
+}
+
+</script>
+
 <template>
     <div id="podcast-upload-form">
 
@@ -69,65 +132,3 @@
         </Dialog>
     </div>
 </template>
-<script setup lang="ts">
-
-import { ref, reactive, computed, defineAsyncComponent } from 'vue';
-import { PodcastEntity, getPodcastForm } from './podcast-form'
-import {
-    Dialog,
-    DialogPanel,
-    DialogTitle,
-    DialogDescription,
-    PopoverButton,
-    PopoverPanel,
-    Popover,
-    Switch
-} from '@headlessui/vue'
-import { apiCall, debugLog } from '@vnuge/vnlib.browser';
-import { ContentMeta } from '@vnuge/cmnext-admin';
-import { useStore } from '../../../../store';
-const ContentSearch = defineAsyncComponent(() => import('../ContentSearch.vue'));
-
-const emit = defineEmits(['submit'])
-const store = useStore()
-
-const isOpen = ref(false)
-const { schema, setEnclosureContent, getValidator, exportProperties } = getPodcastForm()
-
-const buffer = reactive<PodcastEntity>({} as PodcastEntity)
-
-const { v$, validate } = getValidator(buffer)
-
-const isExplicit = computed({
-    get : () => buffer.explicit,
-    set : (v: boolean) => buffer.explicit = v
-});
-
-const setIsOpen = (value: boolean) => isOpen.value = value
-
-const onFormSubmit = async () =>{
-    //Validate the form
-    if(! await validate()){
-        return
-    }
-
-    //get the enclosure properties to add to the xml
-    const props = exportProperties(buffer)
-    debugLog(props);
-    emit('submit', props)
-    setIsOpen(false)
-}
-
-const onCancel = () => setIsOpen(false)
-
-const onContentSelected = (content: ContentMeta) =>{
-    apiCall(async () =>{
-        //Get the content link from the server
-        const url = await store.content.getPublicUrl(content)
-        
-        //set the form content
-        setEnclosureContent(buffer, content, `/${url}`)
-    })
-}
-
-</script>
