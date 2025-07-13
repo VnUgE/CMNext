@@ -143,7 +143,7 @@ export interface PostApi extends BlogApi<PostMeta> {
     getSinglePost: (postId: string) => Promise<PostMeta>;
 }
 
-export interface ContentApi {
+export interface ContentApi extends BlogApi<ContentMeta> {
     /**
     * Gets all blog entities from the server
     * @returns An array of entities
@@ -231,8 +231,6 @@ export interface SortedFilteredPaged<T>{
 }
 
 export interface BlogAdminContext {
-    getPostUrl(): string;
-    getContentUrl(): string;
-    getChannelUrl(): string;
+    baseUrl(): string;
     getAxios(): Axios;
 }

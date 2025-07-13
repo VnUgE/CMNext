@@ -20,12 +20,10 @@
   "license": "agpl3",
 
   "devDependencies": {
-    "@types/lodash-es": "^4.14.194",
-    "@babel/types": "^7.x",
-    "@typescript-eslint/eslint-plugin": "^7.0.x"
+    "@types/lodash-es": "^4.14.194"
   },
 
-  "peerDependencies": {
+  "dependencies": {
     "@vueuse/core": "^13.x",
     "lodash-es": "^4.x",
     "vue": "^3.x",
