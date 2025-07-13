@@ -22,43 +22,29 @@ import { capitalize } from 'lodash-es'
 import VueRouter from 'unplugin-vue-router/vite'
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => { 
-
-  let server = {};
-
-  try {
-    //try to import the local config for development
-    server = await import('./vite.config.local.ts')
-  }
-  catch { }
+export default defineConfig(() => { 
 
   return {
     build: {
       cssCodeSplit: true,
-      rollupOptions: {
-        plugins: [],
-        output: {
-        
-        }
-      },
     },
-  plugins: [
-    //Setup the vite pages plugin
-    VueRouter({
-      extensions: ['vue'],
-      routesFolder: 'src/views',
-      exclude: ['**/components/**'],
-      logs: true,
-      getRouteName:(node) => {
-        const trimSlashes = /^\/|\/$/g
-        const name = node.fullPath.replace(trimSlashes, '')
-        return capitalize(name)
-      },
-      importMode: 'async',
-    }),
-    vue(),
-    tailwindcss()
-  ],
-  server
+    plugins: [
+      //Setup the vite pages plugin
+      VueRouter({
+        extensions: ['vue'],
+        routesFolder: 'src/views',
+        exclude: ['**/components/**'],
+        logs: true,
+        getRouteName:(node) => {
+          const trimSlashes = /^\/|\/$/g
+          const name = node.fullPath.replace(trimSlashes, '')
+          return capitalize(name)
+        },
+        importMode: 'async',
+      }),
+      vue(),
+      tailwindcss()
+    ],
+   
   }
 })

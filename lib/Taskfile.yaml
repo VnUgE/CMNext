@@ -6,23 +6,23 @@ version: '3'
 tasks:
 
   package-update:
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: '{{ .USER_WORKING_DIR }}'
     cmds:
      - npm update
 
   build:
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: '{{ .USER_WORKING_DIR }}'
     cmds:
     
     - cmd: npm version {{ .BUILD_VERSION }}
       ignore_error: true #error if run when version is not updated
     #install deps and run build
-    - npm install
-    - npm run build
+    - cmd: npm install
+    - cmd: npm run build
     
   #copy artifacts to temp directory
   postbuild_success:
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: '{{ .USER_WORKING_DIR }}'
     vars:
       PACKAGE_FILES:
         dist/*
@@ -38,8 +38,8 @@ tasks:
 
   #clean hook
   clean:
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: '{{ .USER_WORKING_DIR }}'
     ignore_error: true
     cmds:
     - for: [node_modules/, dist/, bin/]
-      cmd: powershell -Command "Remove-Item -Recurse -Force {{.ITEM}}"
+      cmd: powershell rm -Recurse -Force {{ .ITEM }}
