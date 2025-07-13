@@ -1,170 +1,78 @@
-<template>
-    <div class="pt-6">
-        <div class="flex justify-end w-full gap-2 my-2">
-            <div class="w-fit">
-                <div class="flex flex-row py-2 mr-auto">
-                    <Switch v-model="podcastMode"
-                        :class="$props.podcastMode ? 'bg-primary-500' : 'bg-base-300'"
-                        class="relative inline-flex items-center w-10 h-5 my-auto duration-75 rounded-full">
-                        <span class="sr-only">Podcast Mode</span>
-                        <span :class="$props.podcastMode ? 'translate-x-6' : 'translate-x-1'"
-                            class="inline-block w-3 h-3 transition transform bg-white rounded-full" />
-                    </Switch>
-                    <div class="my-auto ml-3">
-                        Podcast Mode
-                    </div>
-                </div>
-            </div>
-            <div class="w-fit">
-                 <Popover class="relative">
-                    <PopoverButton class="btn">
-                        Add
-                        <fa-icon class="ml-2" icon="photo-film" />
-                    </PopoverButton>
-                    <PopoverPanel class="absolute right-0 z-10 top-10">
-                        <div class="md-pannel">
-                            <div class="">
-                                Search for content by its id or file name.
-                            </div>
-                            <ContentSearch/>
-                        </div>
-                    </PopoverPanel>
-                </Popover>
-            </div>
-            <div class="w-fit">
-                 <Popover class="relative">
-                    <PopoverButton class="btn" @click="recoverMd">
-                        Markdown
-                        <fa-icon class="ml-2" :icon="['fab','markdown']" />
-                    </PopoverButton>
-                    <PopoverPanel class="absolute right-0 z-10 top-10">
-                        <div class="md-pannel">
-                            <div class="">
-                                Paste your markdown here to convert it to html.
-                            </div>
-                            <div class="my-4">
-                                <textarea class="w-full h-40 p-2 bg-transparent border" v-model="mdBuffer"></textarea>
-                            </div>
-                            <div class="flex justify-end">
-                                <button class="btn primary" @click="convertMarkdown">Convert</button>
-                            </div>
-                        </div>
-                    </PopoverPanel>
-                </Popover>
-            </div>
-            <div class="w-fit">
-                <button class="btn" @click="recoverFromCrash">
-                    Recover
-                    <fa-icon class="ml-2" icon="rotate-left" />
-                </button>
-            </div>
-        </div>
-        <div id="ck-editor-frame" ref="editorFrame">
-            <div class="w-full text-center">
-                <h5>Loading editor...</h5>
-                <fa-icon class="text-2xl" icon="spinner" spin />
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
-import { debounce, defer } from 'lodash-es';
-import { computed, defineAsyncComponent, ref, toRefs } from 'vue';
-import { useSessionStorage } from '@vueuse/core';
-import { tryOnMounted } from '@vueuse/shared';
+import { defer } from 'lodash-es';
+import { ref, toRefs, watch } from 'vue';
+import { get, set, tryOnMounted, until } from '@vueuse/core';
 import { apiCall } from '@vnuge/vnlib.browser';
-import { Popover, PopoverButton, PopoverPanel, Switch } from '@headlessui/vue'
-import { Converter } from 'showdown'
-import { useCkConfig } from './build.ts'
-import { useUploadAdapter } from './uploadAdapter';
-import { useStore } from '../../../store';
-const ContentSearch = defineAsyncComponent(() => import('../components/ContentSearch.vue'));
+import suneditor from 'suneditor'
+import plugins from 'suneditor/src/plugins'
+import SunEditor from 'suneditor/src/lib/core';
 
 const emit = defineEmits(['change', 'load', 'mode-change'])
+const props = defineProps<{ initialContent: string | undefined }>();
+const { initialContent } = toRefs(props);
 
-const props = defineProps<{
-    podcastMode: boolean
-}>()
+const sunPostEditor = ref<HTMLTextAreaElement>();
+const editorInstance = ref<SunEditor>();
 
-const store = useStore()
+// Called when the suneditor completes initlaization
+const onEditorLoaded = async (editor: SunEditor) => {
+    set(editorInstance, editor);
+    emit('load', editor);
+}
 
-let editor = {}
-const propRefs = toRefs(props)
-//Init new shodown converter
-const showdownConverter = new Converter()
-const mdBuffer = ref('')
-const editorFrame = ref(null)
-const crashBuffer = useSessionStorage('post-crash', '')
-const podcastMode = computed({
-    get: () => propRefs.podcastMode.value,
-    set: (v) => emit('mode-change', v)
+const onEditorChanged = async (content: string) => {
+    emit('change', content);
+}
+
+//IF the initial data buffer updates, write the content to the editor
+watch(initialContent, async () => {
+    const val = get(initialContent);
+    //Wait for the editor to load if it hasn't yet. 
+    const editor = await until(editorInstance).not.toBeNull().then(e => e!);
+    editor.setContents(val || '');
 })
-
-const recoverFromCrash = () => {
-    //Set editor content from crash buffer
-    editor.setData(crashBuffer.value);
-}
-
-const onChange = (content:string) =>{
-    //Save the content to the crash buffer
-    crashBuffer.value = content;
-    emit('change', content)
-}
-
-const convertMarkdown = () => {
-  
-    const html = showdownConverter.makeHtml(mdBuffer.value);
-
-    //Set initial data
-    editor.setData(html)
-
-    //manually trigger change event
-    onChange(html)
-
-    //Clear the buffer
-    mdBuffer.value = ''
-}
-
-const recoverMd = () => {
-    const current = editor.getData();
-    const md = showdownConverter.makeMd(current);
-    mdBuffer.value = md;
-}
 
 tryOnMounted(() => defer(() =>
     //Load the editor once the component is mounted
-   apiCall(async ({ toaster }) => {
+    apiCall(async () => {
+        const editor = suneditor.create(sunPostEditor.value!, {
+            plugins: plugins,
+            height: 'auto',
+            stickyToolbar: 87,
+            width: '100%',
+            imageMultipleFile: true,
+            buttonList: [
+                ['undo', 'redo'],
+                ['font', 'fontSize', 'formatBlock'],
+                ['paragraphStyle', 'blockquote'],
+                ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                ['fontColor', 'hiliteColor', 'textStyle'],
+                ['removeFormat'],
+                '/', // Line break
+                ['outdent', 'indent'],
+                ['align', 'horizontalRule', 'list', 'lineHeight'],
+                ['table', 'link', 'image', 'video', 'audio' /** ,'math' */], // You must add the 'katex' library at options to use the 'math' plugin.
+                /** ['imageGallery'] */ // You must add the "imageGalleryUrl".
+                ['fullScreen', 'showBlocks', 'codeView'],
+                ['preview', 'print', 'template'],
+                /** ['dir', 'dir_ltr', 'dir_rtl'] */ // "dir": Toggle text direction, "dir_ltr": Right to Left, "dir_rtl": Left to Right
+            ],
+            placeholder: 'Start writing your post content here...',
+            charCounterType: 'byte-html',
+            charCounter: true,
+            maxCharCount: 50000,
+            showPathLabel: false
+        });
 
-        await store.waitForEditor()
+        editor.onload = () => {
+            onEditorLoaded(editor);
+        };
 
-        if ('CKEDITOR' in window === false) {
-            toaster.general.error({
-                title: 'Script Error',
-                text: 'The CKEditor script failed to load, check script permissions.'
-            })
-            return;
-        }
-
-        //CKEditor 5 superbuild in global scope
-        const { ClassicEditor } = window['CKEDITOR']
-
-         //Init the ck config
-        const config = useCkConfig([
-            //Add the upload adapter
-            useUploadAdapter(store.content, apiCall, toaster.general)
-        ]);
-
-        //Init editor when loading is complete
-        editor = await ClassicEditor.create(editorFrame.value, config);
-
-        //Update the local copy when the editor data changes
-        editor.model.document.on('change:data', debounce(() => onChange(editor.getData())), 500)
-
-        //Call initial load hook
-        defer(() => emit('load', editor));
+        editor.onChange = onEditorChanged;
     })
 ))
 
 </script>
-
+<template>
+    <textarea id="sun-post-editor" ref="sunPostEditor" class="prose max-w-none" />
+</template>
