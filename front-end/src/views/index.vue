@@ -9,6 +9,6 @@
 import { useRouter } from 'vue-router';
 
 const { push } = useRouter();
-push('/blog')
+push('/dashboard')
 
 </script>
