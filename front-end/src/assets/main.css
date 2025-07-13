@@ -3,9 +3,9 @@
 @plugin "daisyui" {
     base: true;
     styled: true;
-    dark: black;
+    dark: dim;
     utils: true;
-    themes: winter --default, black --prefersdark, cupcake, dim, dracula, forest, luxury, corporate;
+    themes: winter, dim --default, cupcake, dracula, forest, luxury, corporate;
 }
 
 textarea.input {
@@ -253,12 +253,92 @@ h6 {
     @apply mx-auto;
 }
 
-@import './styles/ContentEditor.css';
-@import './styles/EditorTable.css';
-@import './styles/image-preview-dialog.css';
-@import './styles/EpisodeAdder.css';
-@import './styles/FeedFields.css';
-@import './styles/ContentSearch.css';
-@import './styles/Editor.css';
-@import './styles/social-type.css';
-@import './styles/blog-index.css';
+#enclosure-dialog {
+  .dialog {
+      @apply w-full max-w-3xl px-8 pb-8 pt-4 mx-auto mb-auto border rounded shadow-md;
+      @apply bg-base-100 text-base-content border-base-300;
+  }
+  
+  .dynamic-form.input-group {
+      @apply grid grid-cols-2 gap-4;
+  }
+
+  .dynamic-form.input-container {
+      @apply flex flex-col;
+  }
+}
+
+
+#social-login-template {
+  .entry-container {
+    @apply w-full max-w-[28rem] p-6 text-center sm:border rounded-sm sm:shadow-sm;
+    @apply bg-base-100 text-base-content border-base-300;
+  }
+}
+
+button.page-button {
+  @apply btn btn-circle btn-sm btn-ghost;
+}
+
+.md-pannel {
+  @apply p-6 min-w-[32rem] bg-base-100 shadow-md border border-base-300;
+}
+
+.preview-image {
+  @apply max-h-[53rem];
+}
+
+
+.search-results {
+  @apply mt-3;
+}
+
+.result {
+  @apply flex flex-row items-center justify-between;
+  @apply p-1 cursor-pointer hover:bg-base-200;
+
+  .id {
+      @apply text-sm;
+  }
+
+  .controls {
+      @apply min-w-[4rem] text-center;
+  }
+
+  &.name {
+      @apply text-sm;
+  }
+}
+
+
+#feed-custom-fields {
+  @apply w-full max-w-[80%] mx-auto py-4 my-5;
+
+  .json > .jse-main {
+      @apply w-full min-h-[40rem] rounded bg-transparent mx-auto;
+  }
+
+  .feed-fields {
+      @apply mx-auto gap-4 flex flex-row justify-center my-6;
+      
+      input.primary {
+          @apply w-full;
+      }
+
+      textarea.primary {
+          @apply w-full h-full tracking-wider font-mono p-3 text-sm;
+      }
+
+      textarea.invalid {
+          @apply border-error;
+      }
+  }
+
+  .xml {
+      @apply tracking-wider font-mono p-3 text-sm border border-base-300 rounded whitespace-pre-wrap;
+  }
+
+  .xml.invalid {
+      @apply border-error;
+  }
+}
