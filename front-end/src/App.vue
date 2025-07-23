@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { apiCall, useAccount, useOauthLogin } from '@vnuge/vnlib.browser';
-import { computed, defineAsyncComponent } from 'vue'
+import { defineAsyncComponent } from 'vue'
 import { useStore } from './store'
 import { storeToRefs } from 'pinia';
 import Sidebar from './components/Sidebar.vue'
@@ -8,15 +8,11 @@ const ConfirmPrompt = defineAsyncComponent(() => import('./components/ConfirmPro
 const PasswordPrompt = defineAsyncComponent(() => import('./components/PasswordPrompt.vue'));
 
 const store = useStore()
-const { siteTitle, pageTitle } = storeToRefs(store)
+const { pageTitle } = storeToRefs(store)
 const oauthLogout = useOauthLogin();
 const account = useAccount();
 
-store.setSiteTitle('CMnext Admin')
-store.setPageTitle('Home')
-
-//Compute meta title from the default site title and the page title
-const metaTile = computed(() => `${pageTitle.value} | ${siteTitle.value}`)
+store.setPageTitle('Home');
 
 const logout = async () => {
   if (oauthLogout.isEnabled(store.account.data)) {
@@ -34,17 +30,18 @@ const logout = async () => {
 <template>
 
   <head>
-    <title>{{ metaTile }}</title>
+    <title>{{ pageTitle }} | CMNext Admin</title>
   </head>
 
   <div class="drawer lg:drawer-open">
-    <input id="main-drawer" type="checkbox" class="drawer-toggle" />    <div class="drawer-content flex flex-col min-h-screen" ref="content">
+    <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-content flex flex-col min-h-screen" ref="content">
       <!-- Notifications - positioned at top of content -->
       <div class="relative w-full">
-        <notifications class="general-toast top-4" group="general" position="top"  />
+        <notifications class="general-toast top-4" group="general" position="top" />
         <notifications class="form-toast top-4" group="form" position="top" />
       </div>
-      
+
       <!-- Main body for router-view -->
       <div id="env-body" class="flex-grow w-full">
         <router-view />

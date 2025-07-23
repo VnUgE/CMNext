@@ -34,7 +34,6 @@ export const useStore = defineStore('main', () => {
     //MANAGED STATE
     const headerRoutes = shallowRef(Array<string>());
     const authRoutes = shallowRef(Array<string>());
-    const siteTitle = shallowRef("");
     const pageTitle = shallowRef("");
 
     //Get shared global state storage
@@ -55,10 +54,8 @@ export const useStore = defineStore('main', () => {
         set(headerRoutes, [...routeNames]);
         set(authRoutes, [...authRouteNames]);
     }
-
-    const setSiteTitle = (title: string) => set(siteTitle, title);
+   
     const setPageTitle = (title: string) => set(pageTitle, title);
-    const setCookieWarning = (show: boolean) => set(showCookieWarning, show);
 
     //Watch for changes to the system theme and update the html tag
     watchDebounced(stateRefs.theme, (theme) => {
@@ -72,13 +69,10 @@ export const useStore = defineStore('main', () => {
     return{
         headerRoutes,
         authRoutes,
-        siteTitle,
         pageTitle,
-        setCookieWarning,
         setPageTitle,
         currentRoutes,
         setHeaderRouteNames,
-        setSiteTitle,
         ...stateRefs
     }
 })
