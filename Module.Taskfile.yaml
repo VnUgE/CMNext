@@ -16,7 +16,7 @@ tasks:
 
   default:
     desc: 'Builds a single managed library when run from a project root'
-    dir: '{{ .USER_WORKING_DIR }}'
+    dir: '{{ .USER_WORKING_DIR }}/back-end/src'
     vars:
       CONFIGURATION: '{{ .CONFIGURATION | default "release" }}'
     cmds:
@@ -81,6 +81,16 @@ tasks:
      - cmd: dotnet clean /p:BuildInParallel=true /p:MultiProcessorCompilation=true
      - cmd: powershell rm '{{ .ARCHIVE_FILE_NAME }}' --Force
 
+  dev-init:
+    desc: 'Initializes the development environment'
+    summary: |
+      This task sets up the development environment by installing necessary
+      dependencies and preparing the project for development.
+    cmds:
+      - cmd: cd lib/admin/src && npm install
+      - cmd: cd lib/client/src && npm install
+      - cmd: cd front-end/src && npm install
+      - cmd: dotnet restore back-end/src
 
   dev-backend:
     desc: 'Builds backend plugins during development'
