@@ -1,44 +1,19 @@
-version: 17
+version: 40
 jobs:
-- name: GitHub Push
+- name: Git Mirror Push
   steps:
   - !PushRepository
     name: Github push sync
     remoteUrl: https://github.com/VnUgE/CMNext.git
     userName: VnUgE
     passwordSecret: github-access-token
-    withLfs: false
     force: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    condition: SUCCESSFUL
+    optional: false
   triggers:
-  - !TagCreateTrigger
-    projects: CMNext
-  - !BranchUpdateTrigger
-    projects: CMNext
+  - !TagCreateTrigger {}
+  - !BranchUpdateTrigger {}
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
-  cpuRequirement: 250
-  memoryRequirement: 256
-  timeout: 3600
-- name: GitHub Pull
-  steps:
-  - !PullRepository
-    name: GitHub sync pull
-    remoteUrl: https://github.com/VnUgE/CMNext.git
-    userName: VnUgE
-    passwordSecret: github-access-token
-    refs: refs/heads/* refs/tags/*
-    withLfs: false
-    force: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  triggers:
-  - !ScheduleTrigger
-    cronExpression: 0 15 10 ? * *
-    projects: CMNext
-  retryCondition: never
-  maxRetries: 3
-  retryDelay: 30
-  cpuRequirement: 250
-  memoryRequirement: 256
   timeout: 3600
