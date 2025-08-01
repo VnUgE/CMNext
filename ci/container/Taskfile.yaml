@@ -38,6 +38,7 @@ tasks:
 
   #called from ci pipline to build the package
   build:
+    desc: 'WARNING: For vnbuild use only. Do not run manually.'
     cmds:
      # clean up the run.sh script to remove windows line endings in my wsl default instance
      - cmd: wsl dos2unix ./run.sh
@@ -52,6 +53,7 @@ tasks:
      - task: prune-sql-runtimes
 
   postbuild_success:
+    desc: 'WARNING: For vnbuild use only. Do not run manually.'
     cmds:
      #tar up the build directory and move it to the output bin directory
      - cmd: cd build/ && tar -czf ../../bin/{{.PACKAGE_FILE_NAME}} .

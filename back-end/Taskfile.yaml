@@ -1,4 +1,3 @@
-
 #taskfile for building the backend library
 
 version: '3'
@@ -17,6 +16,7 @@ tasks:
 
   #postbuild to package artifacts into the archives for upload
   postbuild_success:
+    desc: 'WARNING: For vnbuild use only. Do not run manually.'
     dir: '{{ .USER_WORKING_DIR }}'
     cmds:
      #pack up source code

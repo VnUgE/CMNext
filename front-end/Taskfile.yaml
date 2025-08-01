@@ -7,16 +7,19 @@ tasks:
 
   default:
     desc: 'Builds dependencies and the front-end app'
+    summary: |
+      Developers can use this command to build the front-end app and its dependencies.
     cmds:
       - cmd: cd ../lib/admin && npm run build
       - cmd: npm run build
 
   package-update:
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: '{{ .USER_WORKING_DIR }}'
     cmds:
-     - npm update
+     - cmd: npm update
 
   build:
+    desc: 'DO NOT USE. For ci vnbuild only'
     cmds:
     - cmd: npm version {{ .BUILD_VERSION }}
       ignore_error: true #error if run when version is not updated
@@ -34,6 +37,7 @@ tasks:
     
   #copy artifacts to temp directory
   postbuild_success:
+    desc: 'DO NOT USE. For ci vnbuild only'
     cmds:
     - cmd: powershell mkdir bin -Force
     #tar the dist output and put it in the output dir
@@ -44,4 +48,4 @@ tasks:
     ignore_error: true
     cmds:
     - for: [ node_modules/, dist/, bin/ ]
-      cmd: powershell rm -r -Force {{ .ITEM }}"
+      cmd: '{{ if eq OS "winows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}" 

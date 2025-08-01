@@ -1,4 +1,3 @@
-
 #taskfile for building the libraries for admin and clients and creating their packages
 
 version: '3'
@@ -11,6 +10,7 @@ tasks:
      - npm update
 
   build:
+    desc: 'WARNING: For vnbuild use only. Do not run manually.'
     dir: '{{ .USER_WORKING_DIR }}'
     cmds:
     
@@ -22,6 +22,7 @@ tasks:
     
   #copy artifacts to temp directory
   postbuild_success:
+    desc: 'WARNING: For vnbuild use only. Do not run manually.'
     dir: '{{ .USER_WORKING_DIR }}'
     vars:
       PACKAGE_FILES:
@@ -42,4 +43,4 @@ tasks:
     ignore_error: true
     cmds:
     - for: [node_modules/, dist/, bin/]
-      cmd: powershell rm -Recurse -Force {{ .ITEM }}
+      cmd: '{{ if eq OS "winows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}"
