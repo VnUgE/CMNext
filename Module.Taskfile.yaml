@@ -36,7 +36,7 @@ tasks:
 
   #called by build pipeline to build module
   build:
-    desc: "Used by vnbuild to build the entire module at CI time"
+    desc: "WARNING: For vnbuild use only. Do not run manually."
     vars:
       PACK_OUT: '{{ .OUTPUT_DIR }}/{{ .HEAD_SHA }}/pkg'
       INT_DIR: '{{ .SCRATCH_DIR }}/obj/{{ .MODULE_NAME }}/'
@@ -68,13 +68,14 @@ tasks:
     
   #copy artifacts to temp directory
   publish:
+    desc: "WARNING: For vnbuild use only. Do not run manually."
     cmds:
      #git archive in the module directory
      - cmd: git archive --format {{ .ARCHIVE_FILE_FORMAT }} --output {{ .ARCHIVE_FILE_NAME }} HEAD
      
 #called by build pipeline to clean module
   clean:
-    desc: "Used by vnbuild to clean the entire module"
+    desc: "WARNING: For vnbuild use only. Do not run manually."
     ignore_error: true
     cmds:
     #clean solution
