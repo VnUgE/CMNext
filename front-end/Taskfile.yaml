@@ -50,4 +50,4 @@ tasks:
     ignore_error: true
     cmds:
     - for: [ node_modules/, dist/, bin/ ]
-      cmd: '{{ if eq OS "winows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}" 
+      cmd: '{{ if eq OS "winows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}"' 
