@@ -4,12 +4,12 @@
 
   "api": {
     "path": "/api/blog",
-    "max_content_length": ${MAX_CONTENT_LENGTH}
+    "max_content_length": ${MAX_CONTENT_LENGTH:-5120000}, //5MB
   },
 
   "blog_channels": {
     //The index file for storing channel configuration
-    "index_file_name": "${CHANNEL_INDEX_FILE}"
+    "index_file_name": "${CHANNEL_INDEX_FILE:-blogs/channels.json}"
   },
 
   "storage": {
@@ -22,7 +22,7 @@
     "server_address": "${STORAGE_SERVER_ADDRESS}",
     "access_key": "${STORAGE_USERNAME}",
     "bucket": "${STORAGE_BUCKET}",
-    "use_ssl": ${STORAGE_USE_SSL},
+    "use_ssl": ${STORAGE_USE_SSL:-false},
     "Region": "${S3_REGION}"
   },
 

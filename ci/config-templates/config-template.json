@@ -86,7 +86,7 @@
 
       //Key-value headers object, some headers are special and are controlled by the vh processor
       "headers": {
-        "Server": "Simple-Bookmark-Server",
+        "Server": "vnuge/cmnext",
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",
         "X-XSS-Protection": "1; mode=block",
