@@ -9,6 +9,8 @@
     "max_recv_size": 655360,                        //640k absolute maximum recv buffer (defaults to OS socket buffer size)
     "max_connections": ${HTTP_MAX_CONS:-5000}0,     //Per listener instance
     "backlog": 1000,                                //OS socket backlog,
+    "no_delay": false,                               //Disable Nagle's algorithm for this listener
+    "reuse_address": true,                          //Allow the socket to be reused
 
     "tx_buffer": 65536,           //OS socket send buffer size
     "rx_buffer": 65536            //OS socket recv buffer size
@@ -19,9 +21,9 @@
     "multipart_max_buf_size": 64,                   //The size of the buffer to use when parsing multipart/form data uploads
     "multipart_max_size": 0,                        //The maxium ammount of data (in bytes) allows for mulitpart/form data file uploads
     "max_entity_size": ${MAX_CONTENT_LENGTH:-5120000}, //Absolute maximum size (in bytes) of the request entity body (exludes headers)    
-    "header_buf_size": 8128,                        //The buffer size to use when parsing headers (also the maxium request header size allowed) 
     "max_request_header_count": 50,                 //The maxium number of headers allowed in an HTTP request message
     "max_connections": ${HTTP_MAX_CONS:-5000},      //The maxium number of allowed network connections, before 503s will be issued automatically and connections closed   
+    "request_header_buf_size": 8192,                  //The buffer size to use when parsing headers (also the maxium request header size allowed) 
     "response_header_buf_size": 8128,               //The size (in bytes) of the buffer used to store all response header data
     "max_uploads_per_request": 1,                   //Max number of file uploads allowed per request
     "keepalive_ms": ${HTTP_KEEPALIVE_MS:-1000000},  //Keepalive ms for HTTP1.1 keepalive connections
@@ -53,6 +55,8 @@
         {
           "address": "${HTTP_BIND_ADDRESS:-0.0.0.0}",
           "port": ${HTTP_BIND_PORT:-8080},
+
+          "tcp_no_delay": null,                //If null, the global tcp.no_delay setting is used, otherwise this overrides the global setting for this interface
 
           "ssl": ${TLS_ENABLE:-true},          //Enables TLS for this interface for this host specifically
           "certificate": "${TLS_CERT}",         //Cert may be pem or pfx (include private key in pfx, or include private key in a pem file)
@@ -111,7 +115,7 @@
   "plugins": {
     "enabled": ${PLUGINS_ENABLED:-true},
     //Hot-reload creates collectable assemblies that allow full re-load support in the host application, should only be used for development purposes!
-    "hot_reload": false,
+    "hot_reload": ${PLUGINS_HOT_RELOAD:-false},
     "path": "plugins/",
     "config_dir": "config/",
     "assets": "plugins/assets/"
