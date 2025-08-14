@@ -16,7 +16,7 @@ vars:
   CORE_VERSION: '843b68b248ccf1e15c1546ce9eee1c95e1886a1c'
   ESSENTIALS_VERSION: '2c69026ab2b3ccc01665ecd2a775bb53a380b459'
   CACHE_VERSION: '66bdabc3ed7539e5f10d7286ffc928f9c7e17340'
-  EXTENSIONS_VERSION: 'cf5b304f63aa4cf281b3648af69f995e64948b77'
+  EXTENSIONS_VERSION: 'aad050dc4ca67aec29a1768ab2b9e585311e3c5a'
 
   # vnlip_compress only supports amd64 platforms
   TARGET_ARCHES: [ 'windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'posix' ]
