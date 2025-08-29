@@ -2,7 +2,16 @@
 
 version: '3'
 
+vars:
+  BINARY_DIR: '{{ .BINARY_DIR | default "bin" }}'
+
 tasks:
+
+  default:
+    dir: '{{ .USER_WORKING_DIR }}'
+    desc: 'Runs a basic build of the project'
+    cmds:
+      - cmd: npm run build
 
   package-update:
     dir: '{{ .USER_WORKING_DIR }}'
@@ -13,29 +22,21 @@ tasks:
     desc: 'WARNING: For vnbuild use only. Do not run manually.'
     dir: '{{ .USER_WORKING_DIR }}'
     cmds:
-    
     - cmd: npm version {{ .BUILD_VERSION }}
       ignore_error: true #error if run when version is not updated
     #install deps and run build
     - cmd: npm install
-    - cmd: npm run build
-    
+    - task: default
+
   #copy artifacts to temp directory
   postbuild_success:
     desc: 'WARNING: For vnbuild use only. Do not run manually.'
     dir: '{{ .USER_WORKING_DIR }}'
-    vars:
-      PACKAGE_FILES:
-        dist/*
-        package.json
-        package-lock.json
-        README.md
-        tsconfig.json
-
     cmds:
-    - cmd: powershell mkdir bin/ -Force
-    #tar the package and put it in the output dir
-    - tar -czf bin/release.tgz {{ .PACKAGE_FILES }}
+    #use npm pack to create a tarball of the package
+     - cmd: '{{ if eq OS "windows" }}powershell {{ end }}mkdir -p {{ .BINARY_DIR }}'
+     - cmd: npm pack --pack-destination {{ .BINARY_DIR }}
+     - cmd: cd {{ .BINARY_DIR }} && powershell mv "*.tgz" "release.tgz"
 
   #clean hook
   clean:
@@ -43,4 +44,10 @@ tasks:
     ignore_error: true
     cmds:
     - for: [node_modules/, dist/, bin/]
-      cmd: '{{ if eq OS "winows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}"
+      cmd: '{{ if eq OS "windows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}"'
+
+  dev-init:
+    desc: 'Initializes the development environment'
+    dir: '{{ .USER_WORKING_DIR }}'
+    cmds:
+    - cmd: npm install
