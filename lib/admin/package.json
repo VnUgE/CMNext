@@ -20,7 +20,8 @@
   "license": "agpl3",
 
   "devDependencies": {
-    "@types/lodash-es": "^4.14.194"
+    "@types/lodash-es": "^4.14.194",
+     "typescript": "^5.9.2"
   },
 
   "dependencies": {
