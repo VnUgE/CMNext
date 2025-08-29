@@ -26,40 +26,7 @@ tasks:
     - install-vncache-sessions
     - install-users
     cmds:
-   
-    - echo "Installing and configuring plugins and UI"
-    - task: build-proj
-
-  build-proj:
-    requires:
-      vars: [PLUGIN_NAME]
-    deps:
-    - build-front-end
-    - build-cmn-plugin
-    cmds:
-    - cmd: echo "{{ .PLUGIN_NAME }} libraries built"
-      silent: true
-
-  build-front-end:
-    internal: false
-    cmds:
-    - cmd: cd ../front-end && task build
-    - cmd: powershell mkdir -Force "build/dist/"
-    - cmd: powershell cp -Recurse -Force "../front-end/dist/*" "build/dist/"
-
-  build-cmn-plugin:
-    internal: true
-    requires:
-      vars: [PLUGIN_NAME]
-    vars:
-      PLUGIN_DIR: "{{ .TASKFILE_DIR }}/build/plugins/{{ .PLUGIN_NAME }}"
-    cmds:
-     - cmd: powershell mkdir -Force "{{ .PLUGIN_DIR }}"
-     - cmd: cd .. && task 
-        -t Module.Taskfile.yaml
-        CONFIGURATION=release -- 
-        --output "{{ .PLUGIN_DIR }}"
-        --verbosity detailed
+     - cmd: echo "All plugins and dependencies installed"
 
   install-webserver:
     cmds:
@@ -73,7 +40,7 @@ tasks:
         VERSION: '{{ .CORE_VERSION }}'
         HASH: 
     #remove the executable since its not needed
-    - cmd: cd build/webserver/ && powershell rm VNlib.WebServer
+    - cmd: 'cd build/webserver/ && {{ .RM }} VNlib.WebServer'
 
   install-accounts:
     cmds:
