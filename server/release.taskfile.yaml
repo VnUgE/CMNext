@@ -51,6 +51,9 @@ tasks:
      #merge config files from environment
      - task: merge-config
 
+     #copy routes file from config-templates if it exists
+     - cmd: cp config-templates/routes.xml config/routes.xml
+
      - cmd: echo "Config merged, starting server"
        silent: true
 
