@@ -112,7 +112,7 @@ tasks:
     vars:
       PEPPER_FILE: "secrets/password-pepper.txt"
     cmds:
-      - cmd: '{{ if eq OS "windows"}}powershell {{end}}mkdir secrets/'
+      - cmd: '{{ if eq OS "windows"}}powershell {{end}}mkdir -p secrets/'
 
       - cmd: openssl rand -base64 {{ .PASS_PEPPER_SIZE }} > {{ .PEPPER_FILE }}
         platforms: [ linux, darwin ]
