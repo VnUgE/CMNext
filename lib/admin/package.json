@@ -7,29 +7,24 @@
   "repository": "https://github.com/VnUgE/CMNext/tree/master/lib/admin",
   "output_dir": "bin",
   "type": "module",
-
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
-
   "scripts": {
     "build": "tsc",
     "clean": "if exist dist ( rd /S /Q lib)"
   },
-
   "license": "agpl3",
-
   "devDependencies": {
     "@types/lodash-es": "^4.14.194",
-     "typescript": "^5.9.2"
+    "typescript": "^5.9.2"
   },
-
   "dependencies": {
     "@vueuse/core": "^13.x",
     "lodash-es": "^4.x",
     "vue": "^3.x",
     "axios": "^1.x",
     "jose": "^6.0.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/2c69026ab2b3ccc01665ecd2a775bb53a380b459/@vnuge-vnlib.browser/release.tgz"
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/6e0bbf330e08167fba04f62e6dc70a5313babf53/@vnuge-vnlib.browser/release.tgz"
   }
 }
