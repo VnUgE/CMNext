@@ -175,8 +175,10 @@ tasks:
     internal: true
     dir: 'lib/'
     cmds:
-    #build the native compressor library for linux/mac
-    - cmd: cd vnlib_compress/ && task && cp build/{{ OS }}/libvn_compress{{if eq OS "darwin"}}.dylib{{else}}.so{{end}} ../{{ .COMPRESS_LIB_NAME }}.so
+    #build the native compressor library for linux/mac with rpmalloc support
+    - cmd: cd vnlib_compress/ && 
+        task -- "-DCOMPRESS_RPMALLOC_SOURCE_DIR={{ .USER_WORKING_DIR }}/lib/vnlib_rpmalloc" && 
+        cp build/{{ OS }}/libvn_compress{{if eq OS "darwin"}}.dylib{{else}}.so{{end}} ../{{ .COMPRESS_LIB_NAME }}.so
       platforms: [ linux, darwin ]
 
     #windows now supports pre-compiled libs
