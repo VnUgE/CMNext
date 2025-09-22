@@ -25,6 +25,6 @@
     "vue": "^3.x",
     "axios": "^1.x",
     "jose": "^6.0.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/6e0bbf330e08167fba04f62e6dc70a5313babf53/@vnuge-vnlib.browser/release.tgz"
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/76b6b6c365a1091af95dca0fb1d482b5a12e3e35/@vnuge-vnlib.browser/release.tgz"
   }
 }

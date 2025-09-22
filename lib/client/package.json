@@ -20,7 +20,7 @@
 
   "devDependencies": {
     "@types/lodash-es": "^4.14.194",
-    "typescript": "^5.2.2"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "lodash-es": "^4.x"
