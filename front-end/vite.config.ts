@@ -31,7 +31,7 @@ export default defineConfig(() => {
     plugins: [
       //Setup the vite pages plugin
       VueRouter({
-        extensions: ['vue'],
+        extensions: ['.vue'],
         routesFolder: 'src/views',
         exclude: ['**/components/**'],
         logs: true,

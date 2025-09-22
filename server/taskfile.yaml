@@ -136,17 +136,17 @@ tasks:
     internal: true
     dir: build/plugins
     vars:
-      FILES:
-        VNLib.Utils.dll
-        VNLib.Net.Http.dll
-        VNLib.Hashing.Portable.dll
-        VNLib.Plugins.Essentials.dll
-        VNLib.Plugins.dll
-        Serilog.dll
-        Serilog.Sinks.Console.dll
-        Serilog.Sinks.File.dll
-        *.xml
-        *.pdb
+      FILES: '
+        */VNLib.Utils.dll
+        */VNLib.Net.Http.dll
+        */VNLib.Hashing.Portable.dll
+        */VNLib.Plugins.Essentials.dll
+        */VNLib.Plugins.dll
+        */Serilog.dll
+        */Serilog.Sinks.Console.dll
+        */Serilog.Sinks.File.dll
+        */*.xml
+        */*.pdb'
     cmds:
     - for: { var: FILES }
       cmd: '{{ .RM }} "{{ .ITEM }}"'
