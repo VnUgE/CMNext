@@ -17,3 +17,48 @@ jobs:
   maxRetries: 3
   retryDelay: 30
   timeout: 3600
+
+- name: Windows Tests
+  jobExecutor: windows
+  steps:
+  - !CommandStep
+    name: Clone and test
+    runInContainer: false
+    interpreter: !DefaultInterpreter
+      commands: |
+        git clone @server_url@/@project_path@ --branch @branch@ @project_name@
+        vnbuild test --verbose --task-verbose
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+
+- name: Staging build
+  jobExecutor: windows
+  steps:
+  - !CommandStep
+    name: Clone and build
+    runInContainer: false
+    interpreter: !DefaultInterpreter
+      commands: |
+        git clone @server_url@/@project_path@ --branch @branch@ @project_name@
+        vnbuild build --no-delay --verbose --task-verbose
+        vnbuild publish --verbose
+    useTTY: true
+    condition: SUCCESSFUL
+    optional: false
+  - !PublishArtifactStep
+    name: publish server artifacts
+    sourcePath: '@project_name@/server/bin'
+    artifacts: '*'
+    condition: SUCCESSFUL
+    optional: false
+  triggers:
+  - !BranchUpdateTrigger
+    branches: develop
+  jobDependencies:
+  - jobName: Windows Tests
+    requireSuccessful: true
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 3600
