@@ -31,7 +31,11 @@ jobs:
     useTTY: true
     condition: SUCCESSFUL
     optional: false
-
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 14400
+  
 - name: Staging build
   jobExecutor: windows
   steps:
