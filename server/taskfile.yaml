@@ -21,9 +21,7 @@ vars:
   # vnlip_compress only supports amd64 platforms
   TARGET_ARCHES: [ 'windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'posix' ]
 
-  MKDIR: '{{ if eq OS "windows" }}powershell mkdir -Force{{ else }}mkdir -p{{ end }}'
   RM: '{{ if eq OS "windows" }}powershell rm -Recurse -Force{{ else }}rm -rf{{ end }}'
-  CP: '{{ if eq OS "windows" }}powershell cp -Recurse -Force{{ else }}cp -r{{ end }}'
 
 includes:
   install:
@@ -50,13 +48,15 @@ tasks:
 
     #runtimes must be pruned for specific targets
     - task: prune-runtimes
+
+    - cmd: echo "Server package build complete"
   
   build-front-end:
     internal: false
     cmds:
     - cmd: cd ../front-end && task build
-    - cmd: '{{ .MKDIR }} "build/dist/"'
-    - cmd: '{{ .CP }} "../front-end/dist/*" "build/dist/"'
+    - cmd: mkdir -p "build/dist/"
+    - cmd: cp -rf "../front-end/dist/" "build/dist/"
 
   build-plugin:
     internal: true
@@ -65,7 +65,7 @@ tasks:
     vars:
       PLUGIN_DIR: "{{ .TASKFILE_DIR }}/build/plugins/{{ .PLUGIN_NAME }}"
     cmds:
-     - cmd: '{{ .MKDIR }} "{{ .PLUGIN_DIR }}"'
+     - cmd: mkdir -p "{{ .PLUGIN_DIR }}"
      - cmd: cd .. && task 
         -t Module.Taskfile.yaml
         CONFIGURATION=release -- 
@@ -88,24 +88,19 @@ tasks:
     vars:
       ENV_OUT_DIR: "build/arch/container"
     cmds:
-      - cmd: '{{ .MKDIR }} "{{ .ENV_OUT_DIR }}"'
-
-      #copy build files for container build in the 'app/' directory
-      - for: [ plugins, lib, webserver ]
-        cmd: cd build/ 
-          && {{ .MKDIR }} "arch/container/app/{{ .ITEM }}"
-          && {{ .CP }} "{{ .ITEM }}" "arch/container/app"
-
+      - task: create-env
+        vars: { TARGET_OS: 'container/app' }
+      
       #copy config templates to the app/config directory
-      - cmd: '{{ .CP }} "config-templates" "{{ .ENV_OUT_DIR }}/app"'
+      - cmd: cp -rf "config-templates" "{{ .ENV_OUT_DIR }}/app" 
 
       #docker specific files go in the root dir
       - for: [ Dockerfile, docker-compose.yaml ]
-        cmd: '{{ .CP }} {{ .ITEM }} {{ .ENV_OUT_DIR }}'
+        cmd: cp -rf {{ .ITEM }} "{{ .ENV_OUT_DIR }}"
 
       # copy the compile script and taskfile, rename the taskfile to Taskfile.yaml
-      - cmd: '{{ .CP }} compile.sh "{{ .ENV_OUT_DIR }}/app"'
-      - cmd: '{{ .CP }} release.taskfile.yaml "{{ .ENV_OUT_DIR }}/app/Taskfile.yaml"'
+      - cmd: cp -rf compile.sh "{{ .ENV_OUT_DIR }}/app"
+      - cmd: cp -rf release.taskfile.yaml "{{ .ENV_OUT_DIR }}/app/Taskfile.yaml"
 
   create-env:
     internal: true
@@ -115,22 +110,23 @@ tasks:
       ENV_OUT_DIR: "build/arch/{{ .TARGET_OS }}"
     cmds:
     #create dir for env
-    - cmd: '{{ .MKDIR }} "{{ .ENV_OUT_DIR }}"'
+    - cmd: mkdir -p "{{ .ENV_OUT_DIR }}"
 
     #copy build files for target os
     - for: [ plugins, lib, config, webserver, dist ]
-      cmd: cd build/ && {{ .CP }} "{{ .ITEM }}" "arch/{{ .TARGET_OS }}"
+      cmd: mkdir -p "{{ .ENV_OUT_DIR }}/{{ .ITEM }}" 
+        && cp -rf "build/{{ .ITEM }}" "{{ .ENV_OUT_DIR }}/"
 
     #copy release taskfile and rename it
-    - cmd: '{{ .CP }} release.taskfile.yaml "{{ .ENV_OUT_DIR }}/Taskfile.yaml"'
+    - cmd: cp -rf release.taskfile.yaml "{{ .ENV_OUT_DIR }}/Taskfile.yaml"
 
   compile-config:
     internal: true
     dotenv: ['build.env']  #use the local .env file when compiling config variables
     cmds:
-     - cmd: '{{ .MKDIR }} "build/config/"'
+     - cmd: mkdir -p "build/config/"
      - cmd: powershell './compile.ps1' -InputDir 'config-templates/' -OutputDir 'build/config/'
-     - cmd: '{{ .CP }} config-templates/routes.xml build/config/routes.xml'
+     - cmd: cp -rf config-templates/routes.xml build/config/routes.xml
 
   prune-plugin-libs:
     internal: true
@@ -179,7 +175,7 @@ tasks:
       vars: [DIR, ITEMS, SQLITE_OUT_DIR]
     cmds:
      - for: { var: ITEMS, split: ','}
-       cmd: cd build/arch/{{ .DIR }}/{{ .SQLITE_OUT_DIR }}/runtimes && {{ .RM }} "{{ .ITEM }}"
+       cmd: cd build/arch/{{ .DIR }}/{{ .SQLITE_OUT_DIR }}/runtimes && rm -rf "{{ .ITEM }}"
        ignore_error: true
 
   postbuild_success:
@@ -187,12 +183,12 @@ tasks:
     requires:
       vars: [BINARY_DIR]
     cmds:
-    - cmd: '{{ .MKDIR }} {{ .BINARY_DIR }}'
+    - cmd: mkdir -p {{ .BINARY_DIR }}
     - task: pb-parallel
 
     #cleanup unnecessary build files that clog up the pipeline
     - for: [ build ]
-      cmd: '{{ .RM }} "{{ .ITEM }}"'
+      cmd: rm -rf "{{ .ITEM }}"
       ignore_error: true
 
   pb-parallel:
@@ -216,13 +212,14 @@ tasks:
       vars: [TARGET_OS]
     vars:
     cmds:
-    - cmd: '{{ .MKDIR }} "build/arch/{{ .TARGET_OS }}/"'
+    - cmd: mkdir -p "build/arch/{{ .TARGET_OS }}/"
       ignore_error: true
-    - cmd: cd build/arch/{{ .TARGET_OS }} && tar -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_OS }}-release.tgz" . 
+    - cmd: cd build/arch/{{ .TARGET_OS }} && 
+        tar{{ if eq OS "windows" }}.exe{{ end}} -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_OS }}-release.tgz" . 
 
   clean:
     ignore_error: true
     cmds:
     - for: [ build/, bin/ ]
-      cmd: '{{ .RM }} "{{ .ITEM }}"'
+      cmd: rm -rf "{{ .ITEM }}"
 

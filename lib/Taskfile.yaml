@@ -34,9 +34,9 @@ tasks:
     dir: '{{ .USER_WORKING_DIR }}'
     cmds:
     #use npm pack to create a tarball of the package
-     - cmd: '{{ if eq OS "windows" }}powershell {{ end }}mkdir -p {{ .BINARY_DIR }}'
+     - cmd: mkdir -p {{ .BINARY_DIR }}
      - cmd: npm pack --pack-destination {{ .BINARY_DIR }}
-     - cmd: cd {{ .BINARY_DIR }} && powershell mv "*.tgz" "release.tgz"
+     - cmd: cd {{ .BINARY_DIR }} && powershell mv -Force "*.tgz" "release.tgz"
 
   #clean hook
   clean:
@@ -44,7 +44,7 @@ tasks:
     ignore_error: true
     cmds:
     - for: [node_modules/, dist/, bin/]
-      cmd: '{{ if eq OS "windows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}"'
+      cmd: rm -rf "{{ .ITEM }}"
 
   dev-init:
     desc: 'Initializes the development environment'

@@ -14,12 +14,7 @@ tasks:
       DOWNLOAD_URL: '{{ .BUILDS_URL }}/{{ .MODULE_NAME }}/{{ .VERSION }}/{{ .PROJECT_NAME }}/{{ .FILE_NAME }}'
     cmds:
      #make the plugin directory
-     - cmd: '{{ .MKDIR }} "{{ .DIR }}"'
-
-     #random delay if using linux
-     - cmd: sleep $((RANDOM % 10))
-       platforms: [linux, darwin]
-       ignore_error: true
+     - cmd: mkdir -p "{{ .DIR }}"
 
      - task: install-internal
        vars:
@@ -33,19 +28,10 @@ tasks:
     requires: { DOWNLOAD_URL, FILE_NAME, DIR, HASH }
     dir: '{{ .DIR }}'
     cmds:
-    - cmd: curl -L --output "{{ .FILE_NAME }}" "{{ .DOWNLOAD_URL }}" --fail
+    - cmd: curl 
+        -L "{{ .DOWNLOAD_URL }}" 
+        --fail |
+        tar{{ if eq OS "windows"}}.exe{{ end }} -xzf -
 
-    #extract the archive
-    - cmd: tar -xzf {{ .FILE_NAME }}
-
-    #remove the archive file
-    - cmd: '{{ .RM }} "{{ .FILE_NAME }}"'
-
-    #remove all pckage.json files that could cause build issues
-    - cmd: powershell 'Get-ChildItem -Path . -Recurse -File -Filter "package.json" | Remove-Item -Force'
-      platforms: [windows]
-      ignore_error: true
-    
-    - cmd: find . -type f -name "package.json" -exec rm -f {} +
-      platforms: [linux, darwin]
-      ignore_error: true
+    #remove all package.json files that could cause build issues
+    - cmd: '{{ .RM }} */package.json'

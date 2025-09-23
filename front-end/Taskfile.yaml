@@ -40,9 +40,9 @@ tasks:
   postbuild_success:
     desc: 'DO NOT USE. For ci vnbuild only'
     cmds:
-    - cmd: powershell mkdir bin -Force
+    - cmd: mkdir -p bin
     #tar the dist output and put it in the output dir
-    - cmd: cd dist/ && tar -czf '../bin/release.tgz' .
+    - cmd: cd dist/ && tar{{ if eq OS "windows" }}.exe{{ end }} -czf '../bin/release.tgz' .
 
   #clean hook
   clean:
@@ -50,4 +50,4 @@ tasks:
     ignore_error: true
     cmds:
     - for: [ node_modules/, dist/, bin/ ]
-      cmd: '{{ if eq OS "winows" }}powershell {{ end }}rm -r -Force "{{ .ITEM }}"' 
+      cmd: rm -rf "{{ .ITEM }}"

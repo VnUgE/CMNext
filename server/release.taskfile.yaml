@@ -42,7 +42,7 @@ tasks:
       TLS_CERT: "{{ .SSL_DIR }}/cert.pem"
       TLS_PRIVATE_KEY: "{{ .SSL_DIR }}/key.pem"
     cmds:
-     - defer: 'rm -rf config/'
+     - defer: rm -rf config/
 
      #merge user assets
      - cmd: cp -r 'usr/assets/*' 'plugins/assets/'
@@ -100,7 +100,7 @@ tasks:
       - task: build-compress
     cmds:
     #setup ssl dir
-    - cmd: '{{ if eq OS "windows"}}powershell {{end}}mkdir ssl/'
+    - cmd: mkdir -p ssl/
       ignore_error: true
 
     - cmd: echo "SETUP INCOMPLETE - You must create a self-signed certificate, and password pepper file before running the server"
@@ -112,7 +112,7 @@ tasks:
     vars:
       PEPPER_FILE: "secrets/password-pepper.txt"
     cmds:
-      - cmd: '{{ if eq OS "windows"}}powershell {{end}}mkdir -p secrets/'
+      - cmd: mkdir -p secrets/
 
       - cmd: openssl rand -base64 {{ .PASS_PEPPER_SIZE }} > {{ .PEPPER_FILE }}
         platforms: [ linux, darwin ]

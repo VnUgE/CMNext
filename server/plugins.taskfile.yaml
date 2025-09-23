@@ -12,20 +12,19 @@ includes:
 tasks:
 
   all:
-    deps:
-    - install-webserver
-    - install-rpmalloc
-    - install-compressor-lib
-    - install-argon2-lib
-    - install-compression
-    - install-sqlite
-    - install-router
-    - install-accounts
-    - install-sessions
-    - install-vncache
-    - install-vncache-sessions
-    - install-users
     cmds:
+     - task: install-webserver
+     - task: install-rpmalloc
+     - task: install-compressor-lib
+     - task: install-argon2-lib
+     - task: install-compression
+     - task: install-sqlite
+     - task: install-router
+     - task: install-accounts
+     - task: install-sessions
+     - task: install-vncache
+     - task: install-vncache-sessions
+     - task: install-users
      - cmd: echo "All plugins and dependencies installed"
 
   install-webserver:
@@ -40,7 +39,7 @@ tasks:
         VERSION: '{{ .CORE_VERSION }}'
         HASH: 
     #remove the executable since its not needed
-    - cmd: 'cd build/webserver/ && {{ .RM }} VNlib.WebServer'
+    - cmd: cd build/webserver/ && rm -f VNlib.WebServer
 
   install-accounts:
     cmds:

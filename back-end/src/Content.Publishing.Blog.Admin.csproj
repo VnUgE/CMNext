@@ -5,10 +5,6 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>Content.Publishing.Blog.Admin</RootNamespace>
     <AssemblyName>CMNext</AssemblyName>
-    <AssemblyVersion>0.2.0.0</AssemblyVersion>
-    <FileVersion>0.2.0.0</FileVersion>
-    <InformationalVersion>0.2.0-next.1+82.Branch.next.Sha.5ed37935070a29e8d00a0a7773f7536656f225b0</InformationalVersion>
-    <Version>0.2.0-next.1</Version>
   </PropertyGroup>
   <PropertyGroup>
     <Authors>Vaughn Nugent</Authors>
