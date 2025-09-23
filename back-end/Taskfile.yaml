@@ -45,11 +45,8 @@ tasks:
       BUILD_OUT: "{{ .BINARY_DIR }}/{{ .BUILD_MODE }}/{{ .TARGET_FRAMEWORK }}/publish" 
 
     cmds:
-     #copy license and readme to target
-     - cmd: powershell cp '../build.readme.md' '{{ .BUILD_OUT }}/readme.md'
-
      #tar outputs
-     - cmd: cd "{{ .BUILD_OUT }}" && tar -czf "{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}/{{ .BUILD_MODE }}.tgz" .
+     - cmd: cd "{{ .BUILD_OUT }}" && tar{{ if eq OS "windows" }}.exe{{ end }} -czf "{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}/{{ .BUILD_MODE }}.tgz" .
  
   packsource:
     dir: '{{ .USER_WORKING_DIR }}'
@@ -60,7 +57,7 @@ tasks:
         --exclude="obj"
     cmds:
     #copy source code to target
-    - cmd: tar {{ .EXCLUDES }} -czf '{{ .BINARY_DIR }}/src.tgz' .
+    - cmd: tar{{ if eq OS "windows" }}.exe{{ end }} {{ .EXCLUDES }} -czf '{{ .BINARY_DIR }}/src.tgz' .
   
   #clean hook
   clean:
@@ -69,4 +66,4 @@ tasks:
     cmds:
     - cmd: dotnet clean -c release
     - for: [ bin/, obj/ ]
-      cmd: powershell rm -Recurse '{{ .ITEM }}'
+      cmd: rm -rf '{{ .ITEM }}'
