@@ -7,8 +7,8 @@ FROM ubuntu:25.10 AS native-cont
 WORKDIR /build
 
 #download and install task (its easier and faster without npm)
-ADD --checksum=sha256:9ba2f9f5f11f8429f82cf4ceaa90e6187e02e5a0c161ba0975ba621942ce20bc \
-  https://github.com/go-task/task/releases/download/v3.44.1/task_linux_amd64.deb \
+ADD --checksum=sha256:e5012dce7d845bc11b506ef08bccd7ecc1ad58c6692e68396f8e99b33b3fe2a0 \
+  https://github.com/go-task/task/releases/download/v3.45.4/task_linux_amd64.deb \
   task_linux_amd64.deb
 
 RUN dpkg -i task_linux_amd64.deb
