@@ -23,7 +23,7 @@ RUN task container-create-cert
 
 #APP CONTAINER
 #move into a clean dotnet ubuntu lean image
-FROM mcr.microsoft.com/dotnet/runtime:8.0.19-noble AS app-cont
+FROM mcr.microsoft.com/dotnet/runtime:8.0.20-noble AS app-cont
 
 LABEL name="vnuge/cmnext"
 LABEL maintainer="Vaughn Nugent <vnpublic@proton.me>"
