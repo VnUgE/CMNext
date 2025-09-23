@@ -384,9 +384,19 @@ dist-ssr
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
 
 /back-end/*/CMNext.json
 front-end/typed-router.d.ts
 /front-end/vite.config.local.ts
+
+# CMNext Development Environment
+.dev/
+dev-contianer-bdd.md
+
+# Development data and generated configs (keep dev.env)
+dev/data/
+dev/storage/
+dev/config/*.json
+dev/config/routes.xml
+DEV-README.md

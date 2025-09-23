@@ -6,11 +6,6 @@ version: '3'
 
 vars:
   ARCHIVE_FILE_NAME: '{{ .ARCHIVE_FILE_NAME | default "archive.tgz" }}'
-  MS_ARGS: 
-    /p:RunAnalyzersDuringBuild=false 
-    /p:BuildInParallel=true 
-    /p:MultiProcessorCompilation=true 
-    /p:ErrorOnDuplicatePublishOutputFiles=false  
 
 tasks:
 
@@ -20,7 +15,7 @@ tasks:
     vars:
       CONFIGURATION: '{{ .CONFIGURATION | default "release" }}'
     cmds:
-      - cmd: dotnet build -c {{ .CONFIGURATION }} {{ .MS_ARGS }} {{ .CLI_ARGS }}
+      - cmd: dotnet build -c {{ .CONFIGURATION }} {{ .CLI_ARGS }}
 
   package-update:
     cmds:
@@ -41,7 +36,6 @@ tasks:
       PACK_OUT: '{{ .OUTPUT_DIR }}/{{ .HEAD_SHA }}/pkg'
       INT_DIR: '{{ .SCRATCH_DIR }}/obj/{{ .MODULE_NAME }}/'
       MS_ARGS: ' 
-        {{ .MS_ARGS }} 
         --nologo
         /p:UseCommonOutputDirectory=true 
         /p:IntermediateOutputPath="{{ .INT_DIR }}"'
@@ -79,7 +73,7 @@ tasks:
     ignore_error: true
     cmds:
     #clean solution
-     - cmd: dotnet clean /p:BuildInParallel=true /p:MultiProcessorCompilation=true
+     - cmd: dotnet clean
      - cmd: powershell rm '{{ .ARCHIVE_FILE_NAME }}' --Force
 
   dev-init:
