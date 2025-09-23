@@ -13,10 +13,10 @@ vars:
   SQLITE_OUT_DIR: "plugins/assets/VNLib.Plugins.Extensions.Loading.Sql.SQLite"
 
   PLUGIN_NAME: 'CMNext'
-  CORE_VERSION: '04bad0e8516289a5b8159e19c76c4970f290d387'
-  EXTENSIONS_VERSION: '2b9c795d56ef92412dfddea4ed9b461c5f4b3423'
-  CACHE_VERSION: '09a96c9da8f47558629ab7e00ffddb7a43f2ef8d'
-  ESSENTIALS_VERSION: '6e0bbf330e08167fba04f62e6dc70a5313babf53'
+  CORE_VERSION: 'd76948bd4d664932a247caa9eae5d170a81c0f7b'
+  EXTENSIONS_VERSION: '0bae07b864f5cecebf9d1cc0d6489bee8b58cbbe'
+  CACHE_VERSION: '0227c913db2f5b58300b6ee936f6453e43665506'
+  ESSENTIALS_VERSION: '76b6b6c365a1091af95dca0fb1d482b5a12e3e35'
 
   # vnlip_compress only supports amd64 platforms
   TARGET_ARCHES: [ 'windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'posix' ]
