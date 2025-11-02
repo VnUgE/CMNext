@@ -13,10 +13,10 @@ vars:
   SQLITE_OUT_DIR: "plugins/assets/VNLib.Plugins.Extensions.Loading.Sql.SQLite"
 
   PLUGIN_NAME: 'CMNext'
-  CORE_VERSION: 'd76948bd4d664932a247caa9eae5d170a81c0f7b'
-  EXTENSIONS_VERSION: '0bae07b864f5cecebf9d1cc0d6489bee8b58cbbe'
-  CACHE_VERSION: '0227c913db2f5b58300b6ee936f6453e43665506'
-  ESSENTIALS_VERSION: '76b6b6c365a1091af95dca0fb1d482b5a12e3e35'
+  CORE_VERSION: 'd3a1bd349a96e2ad3b519169bb45a6d04c9b8f54'
+  EXTENSIONS_VERSION: '4ea1776f1732558ef87ec9ed2b68becb49e20eb8'
+  CACHE_VERSION: '26b72dbd91260ceb81bfa91ad9fbc8e64a383b1f'
+  ESSENTIALS_VERSION: 'e8bfb4047cb4fe6cab38bbbb8551af6bf9d3dc88'
 
   # vnlip_compress only supports amd64 platforms
   TARGET_ARCHES: [ 'windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'posix' ]
@@ -215,7 +215,7 @@ tasks:
     - cmd: mkdir -p "build/arch/{{ .TARGET_OS }}/"
       ignore_error: true
     - cmd: cd build/arch/{{ .TARGET_OS }} && 
-        tar{{ if eq OS "windows" }}.exe{{ end}} -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_OS }}-release.tgz" . 
+        tar{{ if eq OS "windows" }}.exe{{ end }} -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_OS }}-release.tgz" . 
 
   clean:
     ignore_error: true
