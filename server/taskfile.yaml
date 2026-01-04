@@ -7,16 +7,11 @@ version: "3"
 
 vars:
 
+  PLUGIN_NAME: 'CMNext'
+
   BINARY_DIR: '{{ .BINARY_DIR | default "bin" }}'
 
-  BUILDS_URL: https://www.vaughnnugent.com/public/resources/software/builds
-  SQLITE_OUT_DIR: "plugins/assets/VNLib.Plugins.Extensions.Loading.Sql.SQLite"
-
-  PLUGIN_NAME: 'CMNext'
-  CORE_VERSION: 'd3a1bd349a96e2ad3b519169bb45a6d04c9b8f54'
-  EXTENSIONS_VERSION: '4ea1776f1732558ef87ec9ed2b68becb49e20eb8'
-  CACHE_VERSION: '26b72dbd91260ceb81bfa91ad9fbc8e64a383b1f'
-  ESSENTIALS_VERSION: 'e8bfb4047cb4fe6cab38bbbb8551af6bf9d3dc88'
+  SQLITE_OUT_DIR: "plugins/assets/vnlib.plugins.extensions.loading.sql.sqlite"
 
   # vnlip_compress only supports amd64 platforms
   TARGET_ARCHES: [ 'windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'posix' ]
@@ -27,18 +22,16 @@ includes:
   install:
     taskfile: install.taskfile.yaml
 
-  plugins:
-    taskfile: plugins.taskfile.yaml
-
 tasks:
 
   build:
     desc: 'WARNING: For vnbuild use only. Do not run manually.'
     deps:
       - compile-config
-      - plugins:all
       - build-front-end
     cmds:
+
+    - cmd: cd build/ && {{ .RM }} **/package.json
 
     - task: build-plugin
 
