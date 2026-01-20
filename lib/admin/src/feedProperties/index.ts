@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,60 +13,33 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { cloneDeep, filter, forEach, isEmpty, join, map } from 'lodash-es';
-import { watch, Ref, ref } from 'vue';
-import { FeedProperty, XmlPropertyContainer } from '../types';
+import { filter, forEach, isEmpty, join, map } from 'lodash-es';
+import { FeedProperty, } from '../types';
 
 /**
  * An interface for working with xml properties from an xml feed
  */
 export interface UseXmlProperties {
-
-    /**
-     * Correctly formats and exports the current properties
-     */
-    getCurrentProperties(): FeedProperty[] | undefined;
-
     /**
      * Gets the current properties as xml
      */
-    getXml(): string | undefined;
+    toXmlString(properties: FeedProperty[]): string | undefined;
 
     /**
      * Saves properties values from a json string
      * @param json The property json to parse
      * @returns True if the json was parsed and saved, false otherwise
      */
-    saveJson: (json: string | undefined) => boolean;
-
-    /**
-     * Gets a copy of the current properties
-    */
-    getModel(): FeedProperty[] | undefined;
-
-    /**
-     * Manually adds an array of properties to the current properties
-     */
-    addProperties: (properties: FeedProperty[]) => void;
+    fromJsonString(json: string | undefined): FeedProperty[] 
 }
 
 /**
  * Creates a new instance of the useXmlProperties api from the given feed
- * @param feed The feed to read and watch for changes from
+ * @param properties The properties to read and watch for changes from
  * @returns An api for working with xml properties
  */
-export const useXmlProperties = <T extends XmlPropertyContainer>(feed: Ref<T | undefined>): UseXmlProperties => {
+export const useXmlProperties = (): UseXmlProperties => {
 
-    //The current properties
-    const currentProperties = ref<FeedProperty[]>(feed.value?.properties || []);
-
-    //Watch for changes to the feed
-    watch(feed, (newFeed) => { currentProperties.value = newFeed?.properties || [] }, { immediate: true });
-
-    const getCurrentProperties = (): FeedProperty[] | undefined => {
-        //Get all properties that are not emtpy
-        return filter(currentProperties.value, p => !isEmpty(p.name));
-    }
 
     const getPropertyXml = (properties: FeedProperty[]): string => {
         let output = '';
@@ -88,57 +61,33 @@ export const useXmlProperties = <T extends XmlPropertyContainer>(feed: Ref<T | u
         return output;
     }
 
-    const getModel = (): FeedProperty[] | undefined => {
-        return cloneDeep(currentProperties.value);
-    }
-
-    const getXml = (): string => {
-        if (currentProperties.value === undefined) {
+    const toXmlString = (properties: FeedProperty[]): string => {
+        if (properties === undefined) {
             return '';
         }
-        return join(map(currentProperties.value, p => getPropertyXml([p])), '\n');
+        return join(map(properties, p => getPropertyXml([p])), '\n');
     }
 
-    const saveJson = (json: string | undefined): boolean => {
+    const fromJsonString = (json: string | undefined): FeedProperty[] => {
 
         if (isEmpty(json)) {
             //Clear all properties if json is undefined
-            currentProperties.value = [];
-            return true
+            return [];
         }
 
-        try {
-            const parsed = JSON.parse(json!);
+       const parsed = JSON.parse(json!);
 
-            const props = map(parsed, (prop) => ({
-                name: prop.name,
-                value: prop.value,
-                namespace: prop.namespace,
-                attributes: prop.attributes,
-                properties: prop.properties
-            }))
+        const props = map(parsed, (prop) => ({
+            name: prop.name,
+            value: prop.value,
+            namespace: prop.namespace,
+            attributes: prop.attributes,
+            properties: prop.properties
+        }))
 
-            //Remove any empty properties
-            const nonEmpty = filter(props, p => !isEmpty(p.name));
-
-            //Set the properties
-            currentProperties.value = nonEmpty;
-
-            return true;
-        } catch (err) {
-            return false;
-        }
+        //Remove any empty properties
+        return filter(props, p => !isEmpty(p.name));
     }
 
-    const addProperties = (properties: FeedProperty[]) => {
-        currentProperties.value = [...currentProperties.value, ...properties];
-    }
-
-    return {
-        getCurrentProperties,
-        getXml,
-        saveJson,
-        getModel,
-        addProperties
-    }
+    return { toXmlString, fromJsonString }
 }

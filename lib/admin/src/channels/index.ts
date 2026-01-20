@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { isArray, isEqual, toSafeInteger } from 'lodash-es';
-import { BlogChannel, ChannelFeed, ChannelApi, BlogAdminContext } from '../types.js'
+import { BlogChannel, ChannelApi, BlogAdminContext } from '../types.js'
 
 /**
  * Gets the channel helper api to manage content channels
@@ -25,7 +25,9 @@ export const useChannels = ({ getAxios, baseUrl }: BlogAdminContext): ChannelApi
 
     const sanitizeNumbers = (channel: BlogChannel): BlogChannel => {
         if (channel.feed) {
-            channel.feed.maxItems = isEqual(channel.feed.maxItems, '') ? undefined : toSafeInteger(channel.feed.maxItems);
+            channel.feed.maxItems = isEqual(channel.feed.maxItems, '') 
+                ? undefined 
+                : toSafeInteger(channel.feed.maxItems);
         }
         return channel;
     }
@@ -42,18 +44,18 @@ export const useChannels = ({ getAxios, baseUrl }: BlogAdminContext): ChannelApi
             return axios.get<BlogChannel[]>(getUrl()).then(s => s.data);
         },
         
-        async add(item: BlogChannel, feed?: ChannelFeed) {
+        async add(item: BlogChannel) {
             const axios = getAxios();
             //Clone the item to avoid modifying the original
-            const add = sanitizeNumbers({ ...item, feed });
+            const add = sanitizeNumbers({ ...item });
             //Call post with the channel data
             return axios.post(getUrl(), add);
         },
 
-        async update(item: BlogChannel, feed?: ChannelFeed) {
+        async update(item: BlogChannel) {
             const axios = getAxios();
             //Manually assign the feed or null, and clone the item to avoid modifying the original
-            const update = sanitizeNumbers({ ...item, feed });
+            const update = sanitizeNumbers({ ...item });
             //Call put with the channel data
             return axios.patch(getUrl(), update);
         },

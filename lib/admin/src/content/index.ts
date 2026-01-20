@@ -53,7 +53,7 @@ export const useContent = ({ getAxios, baseUrl } : BlogAdminContext, channel: Ma
      * @param cotentId The id of the content to get the raw value of
      * @returns A promise that resolves to the raw content string
      */
-    const _getContent = async (cotentId: string): Promise<string> => {       
+    const _getContent = async (cotentId: string): Promise<string> => {
         const { get } = getAxios();
         return get(`${getUrl()}&id=${cotentId}`).then(s => s.data);
     }

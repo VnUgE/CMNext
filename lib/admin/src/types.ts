@@ -131,7 +131,6 @@ export interface BlogApi<T extends BlogEntity> {
  * Represents the channel api and its operations
  */
 export interface ChannelApi extends BlogApi<BlogChannel> {
-    add(item: BlogChannel, feed?: ChannelFeed): Promise<BlogChannel>;
 }
 
 export interface PostApi extends BlogApi<PostMeta> {
