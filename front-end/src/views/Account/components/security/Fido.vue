@@ -1,33 +1,25 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash-es'
-import {  
-  useFormToaster, 
-  usePassConfirm, 
-  useConfirm, 
-  useVuelidateWrapper, 
-  type IFidoDevice, 
-  type VuelidateInstance,
-  useFidoApi,
-} from '@vnuge/vnlib.browser'
-import { computed, reactive, type Ref } from 'vue'
+import { useApiCall } from '@vnuge/vnlib.browser/vue'
+import { type FidoDevice as IFidoDevice, useFidoApi } from '@vnuge/vnlib.browser'
+import { reactive } from 'vue'
+import { confirm, promptForPassword } from '../../../../lib/confirm'
+import { useFormValidation } from '../../../../lib/forms'
+import { toaster } from '../../../../main'
 import { useStore } from '../../../../store'
 import { useToggle, whenever, refDefault, toRefs } from '@vueuse/core'
-import { useVuelidate } from '@vuelidate/core'
-import { maxLength, minLength, helpers, required } from '@vuelidate/validators'
 import { storeToRefs } from 'pinia'
-import { RevealConfirm } from '../../../../components/types'
+import * as yup from 'yup'
 
 const store = useStore()
 const { isLocalAccount } = storeToRefs(store)
-const { elevatedApiCall } = usePassConfirm()
-const { error, close:closeToaster } = useFormToaster()
-const reveal: RevealConfirm = useConfirm().reveal;
+const apiCall = useApiCall({ toaster })
 
 const isSupported = store.mfa.isSupported('fido')
 const fido = useFidoApi(store.mfa)
 
-const fidoSlot = store.mfa.getDataFor<{ 
-  devices: IFidoDevice[], 
+const fidoSlot = store.mfa.getDataFor<{
+  devices: IFidoDevice[],
   can_add_devices: boolean,
   data_size: number,
   max_size: number
@@ -36,98 +28,102 @@ const fidoData = refDefault(fidoSlot, { devices: [], can_add_devices: false, dat
 const { devices, can_add_devices, data_size, max_size } = toRefs(fidoData)
 
 const [isOpen, toggleOpen] = useToggle()
+const { validate } = useFormValidation({ toaster })
 
-const refresh = () => store.mfa.refresh()
+const vState = reactive({ deviceName: '' })
 
-const vState = reactive({ deviceName: ''})
-const rules = computed(() =>{
-  return {
-    deviceName: {
-      notEmpty: helpers.withMessage('Device name is required', required),
-      alphaNumOnly: helpers.withMessage('Device name must be alphanumeric', helpers.regex(/^[a-zA-Z0-9\s]+$/)),
-      minLength: helpers.withMessage('Device name must be at least 1 characters', minLength(1)),
-      maxLength: helpers.withMessage('Device name must have less than 32 characters', maxLength(32))
-    }
-  }
+const deviceSchema = yup.object({
+  deviceName: yup
+    .string()
+    .required('Device name is required')
+    .matches(/^[a-zA-Z0-9\s]+$/, 'Device name must be alphanumeric')
+    .min(1, 'Device name must be at least 1 character')
+    .max(32, 'Device name must have less than 32 characters')
 })
 
-const v$ = useVuelidate(rules, vState)
-const { validate } = useVuelidateWrapper(v$ as Ref<VuelidateInstance>)
-
 const onRemoveDevice = async (single: IFidoDevice) => {
-    const { isCanceled } = await reveal({
-        title: 'Are you sure?',
-        text: `Are you sure you want to remove the device ${single.n}? This action cannot be undone.`,
-        isWarning: true
-    })
-    if (isCanceled) {
-        return;
-    }
-
-    await elevatedApiCall(async ({ toaster, password }) => {
-      
-        const text = await fido.disableDevice(single, { password });
-
-        toaster.general.info({ title: 'Success', text })
-
-        //Refresh the status
-        refresh();
-    })
-}
-
-const onDisable = async () => {
-  const { isCanceled } = await reveal({
+  const { isCanceled } = await confirm({
     title: 'Are you sure?',
-    text: 'This will disable fido authentication for your account.',
+    message: `Are you sure you want to remove the device ${single.n}? This action cannot be undone.`,
     isWarning: true
   })
   if (isCanceled) {
     return;
   }
 
-  await elevatedApiCall(async ({ toaster, password }) => {
-    const text = await fido.disableAllDevices({ password });
+  const password = await promptForPassword()
+  if (!password) {
+    return
+  }
 
-    toaster.general.success({ title: 'FIDO disabled', text })
-  
-    //Refresh the status
-    refresh()
-  });
+  await apiCall(async () => {
+    const result = await fido.disableDevice(single, { password })
+
+    toaster.success(result.result)
+
+    store.mfa.refresh()
+  })
+}
+
+const onDisable = async () => {
+  const { isCanceled } = await confirm({
+    title: 'Are you sure?',
+    message: 'This will disable fido authentication for your account.',
+    isWarning: true
+  })
+  if (isCanceled) {
+    return;
+  }
+
+  const password = await promptForPassword()
+  if (!password) {
+    return
+  }
+
+  await apiCall(async () => {
+    const result = await fido.disableAllDevices({ password })
+
+    toaster.success(result.result)
+
+    store.mfa.refresh()
+  })
 }
 
 const onRegisterDevice = async () => {
 
   if (!isSupported.value) {
-    error({ title: "Your browser does not support FIDO authentication." })
-    return;
+    toaster.error("Your browser does not support FIDO authentication.")
+    return
   }
 
-  const isValid = await validate()
-  if(!isValid){
-    return;
+  if (!await validate(vState, deviceSchema)) {
+    return
   }
 
-  toggleOpen(false);
+  toggleOpen(false)
 
-  const result = await elevatedApiCall(async ({ toaster, password }) => {
-    
-    const text = await fido.registerDefaultDevice(v$.value.deviceName.$model, { password });
+  const password = await promptForPassword()
+  if (!password) {
+    toggleOpen(true)
+    return
+  }
 
-    toaster.general.info({ title: 'Device registered', text })
-    
-    return true;
+  const result = await apiCall(async () => {
+    const response = await fido.registerDefaultDevice(vState.deviceName, { password })
+
+    toaster.success(response.result)
+
+    return true
   })
 
   //Reopen the dialog if the result is not successful
-  if(!result){
-    toggleOpen(true);
-    return;
+  if (!result) {
+    toggleOpen(true)
+    return
   }
 
-  v$.value.deviceName.$model = '';
-  v$.value.$reset();
-  refresh();
- 
+  vState.deviceName = ''
+  store.mfa.refresh()
 }
 
 const getAlgNameFromCode = (code: number) => {
@@ -145,8 +141,7 @@ const getAlgNameFromCode = (code: number) => {
 
 //When the form opens, clear the device name
 whenever(isOpen, () => {
-  v$.value.deviceName.$model = '';
-  v$.value.$reset();
+  vState.deviceName = ''
 })
 
 </script>
@@ -166,13 +161,14 @@ whenever(isOpen, () => {
 
       <div v-if="!isEmpty(devices)" class="join">
         <button class="btn join-item tooltip tooltip-top max-sm:tooltip-left" data-tip="Add a new security key"
-         :disabled="!can_add_devices || !fido.isSupported()" @click.prevent="toggleOpen()">
+          :disabled="!can_add_devices || !fido.isSupported()" @click.prevent="toggleOpen()">
           <fa-icon icon="plus" />
           <span class="pl-2 max-sm:hidden">Add Key</span>
         </button>
-        <button class="btn join-item tooltip max-sm:tooltip-left tooltip-top tooltip-error text-error" data-tip="Removes all of your Webauthn Keys" @click.prevent="onDisable()">
-            <fa-icon icon="minus-circle" />
-            <span class="pl-2 max-sm:hidden">Disable</span>
+        <button class="btn join-item tooltip max-sm:tooltip-left tooltip-top tooltip-error text-error"
+          data-tip="Removes all of your Webauthn Keys" @click.prevent="onDisable()">
+          <fa-icon icon="minus-circle" />
+          <span class="pl-2 max-sm:hidden">Disable</span>
         </button>
       </div>
 
@@ -204,7 +200,7 @@ whenever(isOpen, () => {
 
         <tbody class="divide-y divide-base-100 text-base-content">
           <tr v-for="device in devices">
-            <td class="p-2 max-w-[8rem] whitespace-nowrap">
+            <td class="p-2 max-w-32 whitespace-nowrap">
               <span class="truncate max-w-40">
                 {{ device.n }}
               </span>
@@ -259,15 +255,8 @@ whenever(isOpen, () => {
           <fieldset>
             <label for="device-name" class="block text pl-0.5 pb-1">Device name</label>
 
-            <input type="text" tabindex="1" v-model="v$.deviceName.$model" :class='{
-                "dirty": v$.deviceName.$dirty,
-                "data-invalid": v$.deviceName.$invalid
-              }' class="w-full input input-primary" placeholder="My YubiKey..." @input="closeToaster()" />
-
-            <p v-if="v$.deviceName.$errors.length > 0 && v$.deviceName.$model?.length > 0"
-              class="mt-1 ml-1 text-xs text-red-500">
-              {{ v$.deviceName.$errors[0].$message }}
-            </p>
+            <input type="text" tabindex="1" v-model="vState.deviceName" class="w-full input input-primary"
+              placeholder="My YubiKey..." />
 
           </fieldset>
 

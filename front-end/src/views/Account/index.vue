@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useStore } from '../../store'
-import Settings from './components/settings/Settings.vue'
 import Profile from './components/profile/Profile.vue'
-import OauthApps from './components/oauth/Oauth.vue'
+import Security from './components/security/Security.vue'
 
 const store = useStore()
 store.setPageTitle('Account')
-
-const oauthEnabled = computed(() => !!store.oauth2)
 
 </script>
 <template>
@@ -22,9 +18,8 @@ const oauthEnabled = computed(() => !!store.oauth2)
 
       <Profile />
 
-      <Settings />
+      <Security />
 
-      <OauthApps v-if="oauthEnabled" />
     </div>
   </div>
 </template>

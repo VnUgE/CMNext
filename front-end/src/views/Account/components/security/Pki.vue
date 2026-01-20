@@ -1,21 +1,24 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash-es'
-import { useConfirm, debugLog, useFormToaster, type PkiPublicKey, useOtpApi, usePassConfirm } from '@vnuge/vnlib.browser'
+import { useOtpApi, type OtpPublicKey } from '@vnuge/vnlib.browser'
+import { useApiCall } from '@vnuge/vnlib.browser/vue'
 import { ref } from 'vue'
 import { useToggle, set, toRefs, refDefault } from '@vueuse/core'
 import { useStore } from '../../../../store'
+import { toaster } from '../../../../main'
+import { confirm, promptForPassword } from '../../../../lib/confirm'
+import * as yup from 'yup'
+import type { ValidationError } from 'yup'
 
 const store = useStore()
-const { reveal } = useConfirm()
-const { error } = useFormToaster()
+const apiCall = useApiCall({ toaster })
 const { refresh } = store.mfa
-const { elevatedApiCall } = usePassConfirm()
 
 const isSupported = store.mfa.isSupported('pkotp')
 const pkiConfig = useOtpApi(store.mfa)
 
-const _otpData = store.mfa.getDataFor<{ 
-    keys: PkiPublicKey[], 
+const _otpData = store.mfa.getDataFor<{
+    keys: OtpPublicKey[],
     can_add_keys: boolean,
     data_size: number,
     max_size: number
@@ -25,30 +28,39 @@ const {
     keys: publicKeys,
     can_add_keys: canAddKeys,
     data_size: dataSize,
-    max_size 
+    max_size
 } = toRefs(otpData)
 
-const [ isOpen, toggleOpen ] = useToggle()
+const [isOpen, toggleOpen] = useToggle()
 const keyData = ref('')
 const pemFormat = ref(false)
 const explicitCurve = ref("")
 
-
-const onRemoveKey = async (single: PkiPublicKey) => {
-    const { isCanceled } = await reveal({
+const onRemoveKey = async (single: OtpPublicKey) => {
+    const conf = await confirm({
         title: 'Are you sure?',
-        text: `This will remove key ${single.kid} from your account.`,
+        message: `This will remove key ${single.kid} from your account.`,
         isWarning: true
     })
-    if (isCanceled) {
+    if (conf.isCanceled) {
         return;
     }
 
-    await elevatedApiCall(async ({ toaster, password }) => {
+    const password = await promptForPassword();
+    if (!password) {
+        return;
+    }
 
-        const text = await pkiConfig.removeKey(single, { password });
+    await apiCall(async () => {
 
-        toaster.general.success({ title: 'Success', text })
+        const { result, code } = await pkiConfig.removeKey(single, { password });
+
+        if (code == 401) {
+            toaster.error('Error', 'Invalid password provided.')
+            return;
+        }
+
+        toaster.success('Success', result);
 
         //Refresh the status
         refresh()
@@ -56,69 +68,104 @@ const onRemoveKey = async (single: PkiPublicKey) => {
 }
 
 const onDisable = async () => {
-    const { isCanceled } = await reveal({
+    const { isCanceled } = await confirm({
         title: 'Are you sure?',
-        text: 'This will disable PKI authentication for your account.',
+        message: 'This will disable PKI authentication for your account.',
         isWarning: true
     })
     if (isCanceled) {
         return;
     }
-  
-    await elevatedApiCall(async ({ toaster, password }) => {
+
+    const password = await promptForPassword();
+    if (!password) {
+        return;
+    }
+
+    await apiCall(async () => {
 
         //Disable all keys
-        const text = await pkiConfig.disable({ password});
+        const { result } = await pkiConfig.disable({ password });
 
-        toaster.general.success({ title: 'Success', text })
+        toaster.success('Success', result);
 
         refresh()
     });
 }
 
+const jwkSchema = yup.object({
+    kty: yup
+        .string()
+        .required('Key type (kty) is required'),
+    use: yup
+        .string()
+        .required('Key use (use) is required'),
+    alg: yup
+        .string()
+        .required('Algorithm (alg) is required'),
+    kid: yup
+        .string()
+        .required('Key ID (kid) is required'),
+    x: yup
+        .string()
+        .required('X coordinate (x) is required'),
+    y: yup
+        .string()
+        .required('Y coordinate (y) is required'),
+    crv: yup
+        .string()
+        .optional()
+})
+
 const onSubmitKeys = async () => {
 
     if (window.crypto.subtle == null) {
-        error({ title: "Your browser does not support PKI authentication." })
+        toaster.error("Your browser does not support PKI authentication.")
         return;
     }
 
     //Validate key data
     if (isEmpty(keyData.value)) {
-        error({ title: "Please enter key data" })
+        toaster.error("Please enter key data")
         return;
     }
 
-    let jwk: PkiPublicKey & JsonWebKey;
+    let jwk: OtpPublicKey & JsonWebKey;
     try {
         //Try to parse as jwk
         jwk = JSON.parse(keyData.value)
-        if (isEmpty(jwk.use)
-            || isEmpty(jwk.kty)
-            || isEmpty(jwk.alg)
-            || isEmpty(jwk.kid)
-            || isEmpty(jwk.x)
-            || isEmpty(jwk.y)) {
-            throw new Error("Invalid JWK");
-        }
     }
     catch (e) {
         //Write error to debug log
-        debugLog(e)
-        error({ title: "The key is not a valid Json Web Key (JWK)" })
+        console.error('Invalid JWK:', e);
+        toaster.error('Invalid JWK', 'The key is not a valid Json Web Key (JWK): Unable to parse JSON.')
+        return;
+    }
+
+    try {
+        await jwkSchema.validate(jwk, { abortEarly: false })
+    }
+    catch (ve: unknown) {
+        const validationError = ve as ValidationError
+        toaster.error('Invalid Key', "The key is not a valid Json Web Key (JWK): " + validationError.errors.join(", "))
         return;
     }
 
     //Close the form before the passworm prompt appears
     toggleOpen(false)
 
+    const password = await promptForPassword();
+    if (!password) {
+        return;
+    }
+
     //Send to server
-    const result = await elevatedApiCall(async ({ toaster, password }) => {
+    const result = await apiCall(async () => {
 
         //init/update the key
-        const text = await pkiConfig.addOrUpdate(jwk, { password });
+        const { result } = await pkiConfig.addOrUpdate(jwk, { password });
 
-        toaster.general.success({ title: 'Key Added', text })
+        toaster.success('Success', result);
 
         set(keyData, '')
         set(pemFormat, false)
@@ -145,8 +192,9 @@ const onSubmitKeys = async () => {
                 <h5 class="font-bold">OTP Authentication</h5>
                 <div class="">
                     <div v-if="publicKeys.length > 0" class="join">
-                        <button class="btn join-item tooltip tooltip-top max-sm:tooltip-left" data-tip="Add a new OTP public key"
-                            :disabled="!canAddKeys" @click.prevent="toggleOpen(true)">
+                        <button class="btn join-item tooltip tooltip-top max-sm:tooltip-left"
+                            data-tip="Add a new OTP public key" :disabled="!canAddKeys"
+                            @click.prevent="toggleOpen(true)">
                             <fa-icon icon="plus" />
                             <span class="pl-2 max-sm:hidden">Add Key</span>
                         </button>
@@ -184,7 +232,7 @@ const onSubmitKeys = async () => {
                         <tbody class="divide-y divide-base-200 text-base-content">
                             <tr v-for="key in publicKeys">
                                 <td class="p-2 whitespace-nowrap tooltip tooltip-bottom" :data-tip="key.kid">
-                                    <div class="truncate max-w-[10rem]">
+                                    <div class="truncate max-w-40">
                                         {{ key.kid }}
                                     </div>
                                 </td>
@@ -195,7 +243,8 @@ const onSubmitKeys = async () => {
                                     {{ key.crv }}
                                 </td>
                                 <td class="p-2 text-right whitespace-nowrap">
-                                    <button class="btn btn-sm hover:text-error duration-75 ease-linear" @click="onRemoveKey(key)">
+                                    <button class="btn btn-sm hover:text-error duration-75 ease-linear"
+                                        @click="onRemoveKey(key)">
                                         <span class="hidden sm:inline">Remove</span>
                                         <fa-icon icon="trash-can" class="inline sm:hidden" />
                                     </button>
@@ -229,8 +278,9 @@ const onSubmitKeys = async () => {
                     kid (key id) and a kty (key type) field.
                 </p>
                 <div class="p-2 mt-3">
-                    <textarea class="w-full px-2 py-1 text-sm border input-primary rounded-none input input-bordered min-h-48" rows="8"
-                        v-model="keyData" />
+                    <textarea
+                        class="w-full px-2 py-1 text-sm border input-primary rounded-none input input-bordered min-h-48"
+                        rows="8" v-model="keyData" />
                 </div>
                 <div class="flex justify-end gap-2 mt-4 join">
                     <button class="btn btn-primary join-item" @click.prevent="onSubmitKeys">Submit</button>
@@ -242,5 +292,3 @@ const onSubmitKeys = async () => {
     </Dialog>
 
 </template>
-
-

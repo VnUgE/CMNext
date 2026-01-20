@@ -3,30 +3,27 @@ import { isNil, chunk, defaultTo, map, join, toSafeInteger } from 'lodash-es'
 import base32Encode from 'base32-encode'
 import { computed, ref } from 'vue'
 import { get } from '@vueuse/core'
+import { useApiCall } from '@vnuge/vnlib.browser/vue'
 import {
   useSession,
-  useMessage,
-  useConfirm,
-  usePassConfirm,
   useTotpApi,
-  apiCall,
   type TotpUpdateResponse
 } from '@vnuge/vnlib.browser'
-import { useStore } from '../../../../store';
-import { storeToRefs } from 'pinia';
+import { useStore } from '../../../../store'
+import { confirm, promptForPassword } from '../../../../lib/confirm'
+import { vnlib, toaster } from '../../../../main'
+import { storeToRefs } from 'pinia'
 import QrCodeVue from 'qrcode.vue'
-import VOtpInput from "vue3-otp-input";
+import VOtpInput from "vue3-otp-input"
 
-const store = useStore();
-const { isLocalAccount } = storeToRefs(store);
+const store = useStore()
+const { isLocalAccount } = storeToRefs(store)
 
-const { KeyStore } = useSession()
-const { reveal } = useConfirm()
-const { elevatedApiCall } = usePassConfirm()
-const { onInput, setMessage } = useMessage()
+const session = useSession(vnlib)
+const apiCall = useApiCall({ toaster })
+const totpApi = useTotpApi(store.mfa)
 const totpSupported = store.mfa.isSupported('totp')
 const totpEnabled = store.mfa.isEnabled('totp')
-const totpApi = useTotpApi(store.mfa);
 
 const totpMessage = ref<TotpUpdateResponse>()
 const showSubmitButton = ref(false)
@@ -59,13 +56,17 @@ const qrCode = computed(() => {
 })
 
 const ProcessAddOrUpdate = async () => {
-  await elevatedApiCall(async ({ password }) => {
+  const password = await promptForPassword()
+  if (!password) {
+    return
+  }
 
+  await apiCall(async () => {
     // Init or update the totp method and get the encrypted totp message
     const totp = await totpApi.enable({ password })
 
     // Decrypt the totp secret
-    const secretBuf = await KeyStore.decryptDataAsync(totp.secret)
+    const secretBuf = await session.decryptPayload(totp.secret)
 
     // Encode the secret to base32
     totp.secret = base32Encode(secretBuf, 'RFC3548', { padding: false })
@@ -75,9 +76,9 @@ const ProcessAddOrUpdate = async () => {
 }
 
 const configTotp = async () => {
-  const { isCanceled } = await reveal({
+  const { isCanceled } = await confirm({
     title: 'Enable TOTP multi factor?',
-    text: 'Are you sure you understand TOTP multi factor and wish to enable it?',
+    message: 'Are you sure you understand TOTP multi factor and wish to enable it?',
   })
 
   if (!isCanceled) {
@@ -91,9 +92,9 @@ const regenTotp = async () => {
     return
   }
 
-  const { isCanceled } = await reveal({
+  const { isCanceled } = await confirm({
     title: 'Are you sure?',
-    text: 'If you continue your previous TOTP authenticator and recovery codes will no longer be valid.'
+    message: 'If you continue your previous TOTP authenticator and recovery codes will no longer be valid.'
   })
 
   if (!isCanceled) {
@@ -103,9 +104,9 @@ const regenTotp = async () => {
 
 const disable = async () => {
   // Show a confrimation prompt
-  const { isCanceled } = await reveal({
+  const { isCanceled } = await confirm({
     title: 'Disable TOTP',
-    text: 'Are you sure you want to disable TOTP? You may re-enable TOTP later.',
+    message: 'Are you sure you want to disable TOTP? You may re-enable TOTP later.',
     isWarning: true
   })
 
@@ -113,38 +114,36 @@ const disable = async () => {
     return
   }
 
-  await elevatedApiCall(async ({ password, toaster }) => {
-    // Disable the totp method
-    const text = await totpApi.disable({ password });
+  const password = await promptForPassword()
+  if (!password) {
+    return
+  }
 
-    toaster.general.success({ title: 'Success', text})
+  await apiCall(async () => {
+    // Disable the totp method
+    const result = await totpApi.disable({ password })
+
+    toaster.success(result.result)
 
     store.mfa.refresh()
   })
 }
 
 const VerifyTotp = (code: string) => {
+  apiCall(async () => {
+    try {
+      await totpApi.verify(toSafeInteger(code))
 
- apiCall(async ({ toaster }) => {
+      showSubmitButton.value = true
 
-  try{
-    
-    await totpApi.verify(toSafeInteger(code));
-
-    showSubmitButton.value = true;
-
-    toaster.general.success({
-      title: 'Success',
-      text: 'Your TOTP code is valid and is now enabled'
-    })
-  }
-  catch(e){
-    setMessage('Your TOTP code is not valid.')
-  }
- 
- })
+      toaster.success('Your TOTP code is valid and is now enabled')
+    }
+    catch (e) {
+      toaster.error('Your TOTP code is not valid.')
+    }
+  })
 }
- 
+
 
 const CloseQrWindow = () => {
   showSubmitButton.value = false
@@ -193,7 +192,7 @@ const CloseQrWindow = () => {
 
       <div class="m-auto w-min">
         <VOtpInput class="otp-input" input-type="letter-numeric" separator="" value="" :is-disabled="showSubmitButton"
-          input-classes="primary input rounded" :num-inputs="6" @on-change="onInput" @on-complete="VerifyTotp" />
+          input-classes="primary input rounded" :num-inputs="6" @on-complete="VerifyTotp" />
       </div>
 
       <div v-if="showSubmitButton" class="flex flex-row justify-end my-2">
@@ -208,11 +207,13 @@ const CloseQrWindow = () => {
         <h6 class="font-bold">TOTP Authenticator App</h6>
 
         <div v-if="totpEnabled" class="join">
-          <button class="btn join-item tooltip max-sm:tooltip-left" data-tip="Reset your TOTP secret" @click.prevent="regenTotp">
+          <button class="btn join-item tooltip max-sm:tooltip-left" data-tip="Reset your TOTP secret"
+            @click.prevent="regenTotp">
             <fa-icon icon="sync" />
             <span class="pl-2 max-sm:hidden">Regenerate</span>
           </button>
-          <button class="btn text-error join-item tooltip max-sm:tooltip-left tooltip-error" data-tip="Disable TOTP 2fa" @click.prevent="disable">
+          <button class="btn text-error join-item tooltip max-sm:tooltip-left tooltip-error" data-tip="Disable TOTP 2fa"
+            @click.prevent="disable">
             <fa-icon icon="minus-circle" />
             <span class="pl-2 max-sm:hidden">Disable</span>
           </button>

@@ -1,60 +1,70 @@
-
 <script setup lang="ts">
 import { defaultTo } from 'lodash-es'
-import { useVuelidate } from '@vuelidate/core'
-import { ref, computed, watch, type Ref } from 'vue'
-import { Rules, FormSchema } from './profile-schema.ts'
-import { apiCall, useMessage, useWait, useVuelidateWrapper, type VuelidateInstance } from '@vnuge/vnlib.browser'
+import { ref, computed } from 'vue'
+import { useApiCall } from '@vnuge/vnlib.browser/vue'
+import { toaster } from '../../../../main'
 import { useStore } from '../../../../store'
+import { useFormValidation } from '../../../../lib/forms'
+import * as yup from 'yup'
+import { UserProfile } from '@vnuge/vnlib.browser'
 
-const { waiting } = useWait()
-const { onInput, clearMessage } = useMessage()
+interface Profile extends UserProfile {
+  first: string
+  last: string
+}
 
 const store = useStore()
 const editMode = ref(false)
 
-// Create validator based on the profile buffer as a data model
-const v$ = useVuelidate(Rules, store.userProfile.buffer as any, { $lazy: true })
+// Create API call handler with toaster
+const apiCall = useApiCall({ toaster })
+const { validate } = useFormValidation({ toaster })
 
-// Setup the validator wrapper
-const { validate } = useVuelidateWrapper(v$ as Ref<VuelidateInstance>);
+// Yup validation schema matching profile-schema rules
+const profileSchema = yup.object({
+  first: yup
+    .string()
+    .matches(/^[a-zA-Z]*$/, 'First name must contain only letters')
+    .max(50, 'First name must be less than 50 characters'),
+  last: yup
+    .string()
+    .matches(/^[a-zA-Z]*$/, 'Last name must contain only letters')
+    .max(50, 'Last name must be less than 50 characters'),
+})
 
-//const modified = computed(() => profile.value.Modified)
-const createdTime = computed(() => defaultTo(store.userProfile.data.created?.toLocaleString(), ''))
+const createdTime = computed(() => defaultTo(store.user.profile.created?.toLocaleString(), ''))
+
+// Type assertion to access profile fields (buffer has all fields at runtime)
+const profileBuffer = store.user.edit.buffer as Profile
 
 const revertProfile = () => {
   //Revert the buffer
-  store.userProfile.revert()
-  clearMessage()
+  store.user.edit.revert()
+  toaster.close();
   editMode.value = false
 }
 
 const onSubmit = async () => {
-  if (waiting.value) {
-    return;
-  }
-  // Validate the form
-  if (!await validate()) {
+  if (apiCall.waiting.value) {
     return
   }
-  // Init the api call
-  await apiCall(async ({ toaster }) => {
-    const res = await store.userProfile.update();
 
-    const successm = res.getResultOrThrow();
+  // Validate the form (buffer has all fields at runtime even though type only shows email)
+  if (!await validate(store.user.edit.buffer, profileSchema as any)) {
+    return
+  }
+
+  // Make the API call
+  await apiCall(async () => {
+    await store.user.edit.save()
 
     //No longer in edit mode
     editMode.value = false
 
     //Show success message
-    toaster.general.success({
-      title: 'Update successful',
-      text: successm,
-    })
+    toaster.success('Your profile has been updated successfully.')
   })
 }
-
-watch(editMode, () => v$.value.$reset())
 
 </script>
 <template>
@@ -62,7 +72,7 @@ watch(editMode, () => v$.value.$reset())
 
     <div class="acnt-content profile-container panel-content">
 
-      <div id="profile-control-container" class="flex flex-row" :modified="store.userProfile.modified">
+      <div id="profile-control-container" class="flex flex-row" :modified="store.user.edit.modified">
         <div class="m-0">
           <div class="flex rounded-full w-14 h-14 bg-primary">
             <div class="m-auto text-base-200">
@@ -77,7 +87,7 @@ watch(editMode, () => v$.value.$reset())
 
         <div class="gap-3 ml-auto">
           <div v-if="editMode" class="join">
-            <button form="profile-edit-form" class="btn btn-primary join-item" :disabled="waiting"
+            <button form="profile-edit-form" class="btn btn-primary join-item" :disabled="apiCall.waiting.value"
               @click="onSubmit">Submit</button>
             <button class="btn join-item" @click="revertProfile">Cancel</button>
           </div>
@@ -97,7 +107,7 @@ watch(editMode, () => v$.value.$reset())
         <div class="locked-info">
           <div class="mx-auto my-1 sm:mx-0 sm:my-2">
             <span class="pr-2">Email:</span>
-            <span class="">{{ store.userProfile.data.email }}</span>
+            <span class="">{{ store.user.profile.email }}</span>
           </div>
           <div class="mx-auto my-1 sm:mx-0 sm:my-2">
             <span class="pr-2">Created:</span>
@@ -105,14 +115,25 @@ watch(editMode, () => v$.value.$reset())
           </div>
         </div>
 
-        <dynamic-form 
-          id="profile-edit-form" 
-          :form="FormSchema" 
-          :disabled="!editMode" 
-          :validator="v$" 
-          @submit="onSubmit"
-          @input="onInput" 
-        />
+        <form id="profile-edit-form" @submit.prevent="onSubmit">
+          <fieldset :disabled="!editMode">
+            <div class="form-control">
+              <label for="first-name" class="label">
+                <span class="label-text">First</span>
+              </label>
+              <input id="first-name" v-model="profileBuffer.first" type="text" class="input input-bordered w-full"
+                placeholder="First" />
+            </div>
+
+            <div class="form-control">
+              <label for="last-name" class="label">
+                <span class="label-text">Last</span>
+              </label>
+              <input id="last-name" v-model="profileBuffer.last" type="text" class="input input-bordered w-full"
+                placeholder="Last" />
+            </div>
+          </fieldset>
+        </form>
       </div>
 
     </div>
