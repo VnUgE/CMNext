@@ -1,6 +1,6 @@
 import 'pinia'
 import { computed, type Ref } from 'vue';
-import { useScopedAppDataApi } from '@vnuge/vnlib.browser';
+import { type ApiConfig, useScopedAppDataApi } from '@vnuge/vnlib.browser';
 import { PiniaPluginContext, PiniaPlugin } from 'pinia'
 import { useAsyncState, get } from '@vueuse/core'
 import { cloneDeep, filter, includes } from 'lodash-es';
@@ -29,11 +29,11 @@ declare module 'pinia' {
     }
 }
 
-export const userPreferencesPlugin = (endpointUrl: string, storageScope: string): PiniaPlugin => {
+export const userPreferencesPlugin = (config: ApiConfig, endpointUrl: string, storageScope: string): PiniaPlugin => {
 
     return ({ store }: PiniaPluginContext): UserPreferencesStore => {
 
-         const appData = useScopedAppDataApi(endpointUrl, storageScope);
+        const appData = useScopedAppDataApi({ dataScope: storageScope, endpoint: endpointUrl, config });
 
          const prefs = useAsyncState<UserPreferences>(async () => {
             const { status } = await store.account.wait();

@@ -3,21 +3,23 @@ import { computed, type Ref } from 'vue';
 import { 
     type AccountRpcGetResult,
     type AccountRpcMethod,
-    useAccountRpc
+    type ApiConfig,
+    useAccountRpc,
+    useOauthLogin
 } from '@vnuge/vnlib.browser';
-import { get, syncRef, useAsyncState } from '@vueuse/core';
+import { get, syncRef, toReactive, useAsyncState } from '@vueuse/core';
 import { PiniaPluginContext, PiniaPlugin, storeToRefs } from 'pinia'
 import { defaultsDeep, filter } from 'lodash-es';
 import { storeExport } from './index';
 
 export interface AccountStateStore{
-    readonly loggedIn: boolean,
     readonly account: {
         readonly data: AccountRpcGetResult
         readonly refresh: () => void
         readonly isMethodSupported: (type: string) => Ref<boolean>
         readonly getPropertyData: <T>(name: string, defaultValue: T) => Ref<T>
         readonly wait: () => Promise<AccountRpcGetResult>
+        readonly logout: () => Promise<void>
     }
 }
 
@@ -26,9 +28,10 @@ declare module 'pinia' {
     }
 }
 
-export const accountStatePlugin = (): PiniaPlugin => {
+export const accountStatePlugin = (config: ApiConfig): PiniaPlugin => {
 
-    const accRpc = useAccountRpc();
+    const accRpc = useAccountRpc(config);
+    const { logout } = useOauthLogin(config);
 
     return ({ store }: PiniaPluginContext): AccountStateStore => {
 
@@ -48,12 +51,12 @@ export const accountStatePlugin = (): PiniaPlugin => {
         //This plugin is authoritatively setting the value of isLocalAccount and loggedIn
         syncRef(
             isLocalAccount,
-            computed(() => accountRpcState.isReady && accountRpcState.state.value.status.is_local_account),
+            computed(() => accountRpcState.state.value.status.is_local_account),
             { direction: 'rtl' }
         );
         syncRef(
             loggedIn,
-            computed(() => accountRpcState.isReady && accountRpcState.state.value.status.authenticated),
+            computed(() => accountRpcState.state.value.status.authenticated),
             { direction: 'rtl' }
         );
 
@@ -79,11 +82,12 @@ export const accountStatePlugin = (): PiniaPlugin => {
 
         return storeExport<AccountStateStore>({
             account: {
-                data: accountRpcState.state,
+                data: toReactive(accountRpcState.state),
                 refresh: accountRpcState.execute,
                 getPropertyData,
                 wait,
-                isMethodSupported
+                isMethodSupported,
+                logout
             }
         })
     }

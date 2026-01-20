@@ -1,18 +1,18 @@
 import 'pinia'
 import { computed, type Ref } from 'vue';
-import { 
+import {
     useMfaApi,
-    type MfaMethod, 
+    type MfaMethod,
     type MfaApi,
     type MfaGetResponse,
-    useGeneralToaster
+    type ApiConfig
 } from '@vnuge/vnlib.browser';
 import { useAsyncState } from '@vueuse/core';
 import { PiniaPluginContext, PiniaPlugin } from 'pinia'
 import { find, includes } from 'lodash-es';
 import { storeExport } from './index';
 
-export interface MfaSettingsStore{
+export interface MfaSettingsStore {
     readonly mfa: {
         readonly data: MfaGetResponse
         /**
@@ -38,7 +38,7 @@ export interface MfaSettingsStore{
         /**
          * Refreshes the mfa data from the server
          */
-        refresh: () => void
+        readonly refresh: () => void
     } & MfaApi
 }
 
@@ -47,12 +47,10 @@ declare module 'pinia' {
     }
 }
 
-export const mfaSettingsPlugin = (): PiniaPlugin => {
+export const mfaSettingsPlugin = (config: ApiConfig): PiniaPlugin => {
 
     return ({ store }: PiniaPluginContext): MfaSettingsStore => {
-        const mfaConfig = useMfaApi()
-
-        const { error } = useGeneralToaster();
+        const mfaConfig = useMfaApi(config)
 
         const { state: data, execute } = useAsyncState<MfaGetResponse>(async () => {
             //Wait for the account rpc data to be loaded from the server
@@ -63,13 +61,13 @@ export const mfaSettingsPlugin = (): PiniaPlugin => {
                 return {} as MfaGetResponse
             }
 
-            try{
+            try {
 
                 //errors are swallowed here
                 return await mfaConfig.getData()
             }
-            catch(e){
-                error({ title: 'MFA Failure', text: "Failed to load MFA settings"});
+            catch (e) {
+                console.error('MFA Failure', "Failed to load MFA settings");
                 return {} as MfaGetResponse
             }
         }, {} as any, { delay: 100, immediate: true })

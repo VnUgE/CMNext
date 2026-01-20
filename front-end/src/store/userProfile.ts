@@ -1,42 +1,42 @@
 import 'pinia'
-import { computed, watch } from 'vue';
-import { 
-    type ServerDataBuffer, 
-    type ServerObjectBuffer, 
-    type UserProfile, 
-    type WebMessage, 
-    apiCall,
-    useDataBuffer, 
-    useAccount, 
-    useAccountRpc
+import { computed, reactive } from 'vue';
+import {
+    type UserProfile,
+    type ApiConfig,
+    useProfile,
+    isLoggedIn
 } from '@vnuge/vnlib.browser';
-import { syncRef, useToggle } from '@vueuse/core';
+import { syncRef, useAsyncState } from '@vueuse/core';
 import { PiniaPlugin, PiniaPluginContext, storeToRefs } from 'pinia'
-import { defer } from 'lodash-es';
+import { cloneDeep, isEqual, assign } from 'lodash-es';
 import { storeExport } from './index';
-
-export interface OAuth2Application {
-    readonly Id: string,
-    readonly name: string,
-    readonly description: string,
-    readonly permissions: string[],
-    readonly client_id: string,
-    readonly Created: Date,
-    readonly LastModified: Date,
-}
-
-export interface NewAppResponse {
-    readonly secret: string
-    readonly app: ServerDataBuffer<OAuth2Application, WebMessage<string>>
-}
 
 interface ExUserProfile extends UserProfile {
     created: string | Date
 }
 
-export interface UserProfileStore{
-    readonly userProfile: ServerDataBuffer<ExUserProfile, WebMessage<string>>
-    refreshProfile(): void;
+export interface UserProfileStore {
+    readonly user: {
+        readonly edit: {
+            readonly buffer: UserProfile
+            readonly modified: boolean
+            readonly revert: () => void
+            /**
+             * Saves the user profile buffer to the server
+             * @returns 
+             */
+            readonly save: () => Promise<void>
+        }
+        /**
+         * The user profile data buffer for editing and syncing with server
+         */
+        readonly profile: ExUserProfile
+        /**
+         * Refreshes the user profile from the server
+         */
+        readonly refresh: () => void;
+    }
+
 }
 
 declare module 'pinia' {
@@ -44,50 +44,58 @@ declare module 'pinia' {
     }
 }
 
-export const profilePlugin = () :PiniaPlugin => {
+export const profilePlugin = (config: ApiConfig): PiniaPlugin => {
+
+    const { getProfile, updateProfile } = useProfile(config)
 
     return ({ store }: PiniaPluginContext): UserProfileStore => {
 
-        const { loggedIn, userName } = storeToRefs(store)
-        const { getProfile } = useAccount()
-        const { exec } = useAccountRpc()
+        const { userName } = storeToRefs(store)
 
-        const [onRefresh, refreshProfile] = useToggle()
+        const serverProfile = useAsyncState<ExUserProfile>(async () => {
+            //Wait for the account rpc data to be loaded from the server
+            const accStatus = await store.account.wait();
 
-        const updateUserProfile = async (profile: ServerObjectBuffer<ExUserProfile>) => {
-            // Apply the buffer to the profile
-            const data = await exec<string>('profile.update', profile.buffer)
+            //Ensure the user is logged in
+            if (!isLoggedIn(accStatus)) throw new Error("Not logged in");
 
-            //Get the new profile from the server
-            const newProfile = await getProfile() as ExUserProfile
+            return getProfile<ExUserProfile>();
 
-            //Apply the new profile to the buffer
-            profile.apply(newProfile)
+        }, {} as ExUserProfile, { delay: 100, immediate: false });
 
-            return data;
+        const buffer = reactive<UserProfile>({} as UserProfile)
+        const modified = computed(() => isEqual(buffer, serverProfile.state.value) === false)
+
+        const revert = () => {
+            assign(buffer, cloneDeep(serverProfile.state.value))
         }
 
-        const userProfile = useDataBuffer({} as any, updateUserProfile)
+        const save = async () => {
+            // Save the buffer to the server and refresh the server profile
+            const { getResultOrThrow } = await updateProfile(buffer)
 
-        const loadProfile = async () => {
-            //Get the user profile
-            const profile = await getProfile() as ExUserProfile
-            //Apply the profile to the buffer
-            userProfile.apply(profile)
+            getResultOrThrow()
+
+            await serverProfile.execute()
+
+            // Reset the buffer to the updated profile
+            revert()
         }
 
-        //If the user is logged in, load the profile buffer
-        watch([loggedIn, onRefresh], ([li]) => li ? apiCall(loadProfile) : userProfile.apply({} as any))
+        // Sync global username value with profile email
+        syncRef(userName, computed(() => serverProfile.state.value.email), { direction: 'rtl' })
 
-        //Defer intiial profile load
-        defer(refreshProfile);
-
-        //sync global username value with profile email
-        syncRef(userName, computed(() => userProfile.data.email), { direction: 'rtl' })
-
-        return storeExport({
-            userProfile,
-            refreshProfile
-        }) as unknown as UserProfileStore
+        return storeExport<UserProfileStore>({
+            user: {
+                edit: {
+                    buffer,
+                    modified,
+                    revert,
+                    save,
+                },
+                profile: serverProfile.state,
+                refresh: serverProfile.execute,
+            }
+        })
     }
 }

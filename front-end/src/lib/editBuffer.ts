@@ -1,4 +1,4 @@
-import { get, set, toReactive, watchDebounced } from "@vueuse/core";
+import { get, set, watchDebounced } from "@vueuse/core";
 import { isEqual } from "lodash-es";
 import { watch, MaybeRef, ref, computed, Ref, toRef } from "vue";
 import * as Yup from "yup";
@@ -10,18 +10,21 @@ export interface ErrorObject {
 
 export interface EditBuffer<T> {
     readonly raw: Readonly<Ref<T>>;
-    readonly editBuffer: T;
-    readonly modified: Ref<Readonly<boolean>>;
+    readonly editBuffer: Ref<T>;
+    readonly modified: Ref<boolean>;
     readonly errors: Ref<Record<keyof T, ErrorObject>>;
     revert(): void;
     validate(): Promise<boolean>;
 }
 
-export const useEditBuffer = <T extends Yup.AnyObject>(initialValue: MaybeRef<T | undefined>, schema: Yup.ObjectSchema<T>): EditBuffer<T> => {
+export const useEditBuffer = <T extends Yup.AnyObject>(
+    initialValue: MaybeRef<T | undefined>,
+    schema: Yup.ObjectSchema<T>
+): EditBuffer<T> => {
     const raw = toRef(() => get(initialValue) || {} as T);
     const editBuffer = ref<T>(raw.value || {} as T);
     const rawErrors = ref<Record<keyof T, ErrorObject>>({});
-    
+
     const modified = computed(() => {
         const rawValue = { ...raw.value };
         const editValue = { ...editBuffer.value };
@@ -48,14 +51,12 @@ export const useEditBuffer = <T extends Yup.AnyObject>(initialValue: MaybeRef<T 
     const revert = () => set(editBuffer, { ...raw.value });
 
     const validate = async () => {
-        try
-        {
+        try {
             await schema.validate(editBuffer.value, { abortEarly: false });
             set(rawErrors, {}); // Clear errors if validation passes
             return true;
-        } 
-        catch (validationError: any)
-        {
+        }
+        catch (validationError: any) {
             const validationErrors: Record<keyof T, ErrorObject> = {} as Record<keyof T, ErrorObject>;
 
             if (validationError.inner) {
@@ -78,7 +79,7 @@ export const useEditBuffer = <T extends Yup.AnyObject>(initialValue: MaybeRef<T 
 
     return {
         raw,
-        editBuffer: toReactive(editBuffer),
+        editBuffer,
         modified,
         errors,
         revert,

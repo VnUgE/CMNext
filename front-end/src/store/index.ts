@@ -16,10 +16,7 @@
 import { set, useLocalStorage, watchDebounced, toRefs, type DeepMaybeRef } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { defaultsDeep } from 'lodash-es';
-import { useAutoHeartbeat } from '@vnuge/vnlib.browser';
 import { computed, shallowRef, type UnwrapNestedRefs } from "vue";
-
-export type * from './sharedTypes';
 
 export const storeExport = <T>(val: DeepMaybeRef<T>): UnwrapNestedRefs<T> => val as UnwrapNestedRefs<T>;
 
@@ -35,14 +32,16 @@ export const useStore = defineStore('main', () => {
     const headerRoutes = shallowRef(Array<string>());
     const authRoutes = shallowRef(Array<string>());
     const pageTitle = shallowRef("");
+    
 
     //Get shared global state storage
     const mainState = useLocalStorage<GlobalState | undefined>("vn-state", defaultState);
     defaultsDeep(mainState.value, defaultState);
     const stateRefs = toRefs<GlobalState>(mainState as any);
 
-    //Setup heartbeat for 5 minutes
-    useAutoHeartbeat(5 * 60 * 1000, stateRefs.autoHeartbeat);
+    // TODO: Re-implement auto-heartbeat using useAccount().heartbeat() and useIntervalFn
+    // Previous: useAutoHeartbeat(5 * 60 * 1000, stateRefs.autoHeartbeat);
+    // Need to pass ApiConfig to store factory or create a heartbeat plugin
 
     /**
      * The current routes to display in the header depending on the 

@@ -13,14 +13,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { computed, Ref } from 'vue';
-import { helpers, required, maxLength, alphaNum, numeric } from "@vuelidate/validators"
-import { useVuelidate } from "@vuelidate/core"
-import { MaybeRef } from '@vueuse/core';
-import { useVuelidateWrapper } from '@vnuge/vnlib.browser';
+import * as yup from 'yup';
 import type { ContentMeta, FeedProperty } from '@vnuge/cmnext-admin';
 
-export interface EnclosureEntity{
+export interface EnclosureEntity {
     fileId: string;
     contentUrl: string;
     contentLength: number;
@@ -28,106 +24,42 @@ export interface EnclosureEntity{
     explicit: boolean;
 }
 
-export interface PodcastEntity extends EnclosureEntity{
+export interface PodcastEntity extends EnclosureEntity {
     episodeType: string;
     duration: number;
 }
 
-export const getPodcastForm = (editMode?: Ref<boolean>) => {
-    const schema = computed(() => {
-        return {
-            fields: [
-                {
-                    id: 'episode-type',
-                    type: 'text',
-                    label: 'Episode Type',
-                    name: 'episodeType',
-                    placeholder: '',
-                    description: 'The itunes episode type, typically "full" or "trailer"',
-                },
-                {
-                    id: 'episode-duration',
-                    type: 'text',
-                    label: 'Duration',
-                    name: 'duration',
-                    placeholder: '',
-                    description: 'The duration in seconds for the episode',
-                },
-                {
-                    id: 'ep-content-id',
-                    type: 'text',
-                    label: 'File Id',
-                    name: 'fileId',
-                    placeholder: '',
-                    disabled: true,
-                },
-                {
-                    id: 'content-url',
-                    type: 'text',
-                    label: 'Content url',
-                    name: 'contentUrl',
-                    placeholder: '',
-                    disabled: true,
-                },
-                {
-                    id: 'content-length',
-                    type: 'text',
-                    label: 'Content length',
-                    name: 'contentLength',
-                    placeholder: '',
-                    disabled: true,
-                },
-                {
-                    id: 'content-type',
-                    type: 'text',
-                    label: 'MIME content type',
-                    name: 'contentType',
-                    placeholder: '',
-                    disabled: true,
-                }
-            ]
-        }
-    });
-
-
-    const alphaNumSlash = helpers.regex(/^[a-zA-Z0-9\/]*$/);
-
-    const rules = {
-        fileId: {
-            required:helpers.withMessage('The file id is required', required),
-            maxLength: helpers.withMessage('The file id must be less than 64 characters', maxLength(64)),
-            alphaNumeric: helpers.withMessage('The file id must be alpha numeric', alphaNum)
-        },
-        episodeType: {
-            required: helpers.withMessage('The episode type is required', required),
-            maxLength: helpers.withMessage('The episode type must be less than 64 characters', maxLength(64)),
-            alphaNumeric: helpers.withMessage('The episode type must be alpha numeric', alphaNum)
-        },
-        duration: {
-            required: helpers.withMessage('The duration is required', required),
-            numeric: helpers.withMessage('The duration must be a number', numeric)
-        },
-        contentUrl: {
-            required: helpers.withMessage('The content url is required', required),
-            maxLength: helpers.withMessage('The content url must be less than 256 characters', maxLength(256))
-        },
-        contentLength: {
-            required: helpers.withMessage('The content length is required', required),
-            numeric: helpers.withMessage('The content length must be a number', numeric)
-        },
-        contentType: {
-            required: helpers.withMessage('The content type is required', required),
-            maxLength: helpers.withMessage('The content type must be less than 64 characters', maxLength(64)),
-            alphaNumeric: helpers.withMessage('The content type must be in MIME format', alphaNumSlash)
-        }
-    }
-
-    const getValidator = <T extends PodcastEntity>(buffer: MaybeRef<T>) => {
-        const v$ = useVuelidate(rules, buffer, { $lazy: true, $autoDirty: true });
-        const { validate } = useVuelidateWrapper(v$);
-
-        return { v$, validate, reset: v$.value.$reset };
-    }
+export const getPodcastForm = () => {
+    const podcastSchema = yup.object({
+        fileId: yup
+            .string()
+            .required('The file id is required')
+            .max(64, 'The file id must be less than 64 characters')
+            .matches(/^[a-zA-Z0-9]*$/, 'The file id must be alpha numeric'),
+        episodeType: yup
+            .string()
+            .required('The episode type is required')
+            .max(64, 'The episode type must be less than 64 characters')
+            .matches(/^[a-zA-Z0-9]*$/, 'The episode type must be alpha numeric'),
+        duration: yup
+            .number()
+            .required('The duration is required')
+            .typeError('The duration must be a number'),
+        contentUrl: yup
+            .string()
+            .required('The content url is required')
+            .max(256, 'The content url must be less than 256 characters'),
+        contentLength: yup
+            .number()
+            .required('The content length is required')
+            .typeError('The content length must be a number'),
+        contentType: yup
+            .string()
+            .required('The content type is required')
+            .max(64, 'The content type must be less than 64 characters')
+            .matches(/^[a-zA-Z0-9\/]*$/, 'The content type must be in MIME format'),
+        explicit: yup.boolean()
+    })
 
     const setEnclosureContent = (enclosure: EnclosureEntity, content: ContentMeta, url: string) => {
         enclosure.fileId = content.id;
@@ -136,10 +68,10 @@ export const getPodcastForm = (editMode?: Ref<boolean>) => {
         enclosure.contentUrl = url;
     }
 
-    const exportProperties = (podcast: PodcastEntity) : FeedProperty[] => {
+    const exportProperties = (podcast: PodcastEntity): FeedProperty[] => {
         return [
-            { 
-                name: 'episodeType', 
+            {
+                name: 'episodeType',
                 namespace: 'itunes',
                 value: podcast.episodeType
             },
@@ -150,8 +82,8 @@ export const getPodcastForm = (editMode?: Ref<boolean>) => {
             },
             //Setup the enclosure
             {
-                name:"enclosure",
-                attributes:{
+                name: "enclosure",
+                attributes: {
                     url: podcast.contentUrl,
                     length: podcast.contentLength?.toString(),
                     type: podcast.contentType
@@ -163,12 +95,10 @@ export const getPodcastForm = (editMode?: Ref<boolean>) => {
                 value: podcast.explicit ? 'true' : 'false'
             }
         ]
-    } 
+    }
 
     return {
-        schema,
-        rules,
-        getValidator,
+        podcastSchema,
         setEnclosureContent,
         exportProperties
     };
