@@ -1,32 +1,36 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash-es';
-import { apiCall, debugLog, useMessage, useOtpAuth } from '@vnuge/vnlib.browser';
+import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { ref } from 'vue'
 import { decodeJwt } from 'jose'
 import { useRouter } from 'vue-router';
+import { useOtpLogin } from '@vnuge/vnlib.browser';
+import { vnlib, toaster } from '../../../main';
 
-const { setMessage } = useMessage()
 const { push } = useRouter()
-const { login } = useOtpAuth()
+const { login } = useOtpLogin({ config: vnlib })
+const { invoke: apiCall, waiting } = useApiCall({ toaster })
 
 const otp = ref('')
 
 const submit = () => {
 
+    if (isEmpty(otp.value)) {
+        toaster.error('OTP cannot be empty')
+        return
+    }
+
     apiCall(async () => {
-        if (isEmpty(otp.value)) {
-            setMessage('Please enter your OTP')
-            return
-        }
+        //Console log decoded JWT for debugging
+        console.log('Decoded JWT:', decodeJwt(otp.value));
 
-        //try to decode the jwt to confirm its form is valid
-        const jwt = decodeJwt(otp.value)
-        debugLog(jwt)
+        const result = await login(otp.value);
+        result.getResultOrThrow();
 
-        await login(otp.value)
+        toaster.success('Login successful')
 
         //Go back to login page
-        push({ name: 'Login' })
+        await push('/login')
     })
 }
 
@@ -39,9 +43,11 @@ const submit = () => {
 
                 <h4 class="text-xl">Enter your OTP</h4>
 
-                <form id="otp-login-form" method="post" action="#" class="p-3" @submit.prevent="submit">
+                <form id="otp-login-form" method="post" action="#" class="p-3" :disabled="waiting"
+                    @submit.prevent="submit">
                     <div class="">
-                        <textarea v-model="otp" class="w-full py-2 px-3 rounded-sm input input-bordered min-h-40" rows="10"></textarea>
+                        <textarea v-model="otp" class="w-full py-2 px-3 rounded-sm input input-bordered min-h-40"
+                            rows="10"></textarea>
                     </div>
 
                     <div class="flex justify-between mt-4">

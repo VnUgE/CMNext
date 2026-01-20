@@ -1,47 +1,46 @@
-
-
 <script setup lang="ts">
-import { ref, shallowRef, reactive, computed, type Ref, watch } from 'vue'
+import { ref, shallowRef, reactive, computed, watch } from 'vue'
 import { useTimeoutFn, set } from '@vueuse/core'
-import { useVuelidate } from '@vuelidate/core'
 import { isEmpty, isArray } from 'lodash-es'
-import { required, maxLength, minLength, email, helpers } from '@vuelidate/validators'
-import { 
-    useVuelidateWrapper, useMfaLogin, totpMfaProcessor,
-    apiCall, useMessage, useWait, debugLog,
+import {
+    useMfaLogin,
+    totpMfaProcessor,
     fidoMfaProcessor,
     type WebMessage,
-    type IMfaFlow,
-    type IMfaContinuation,
-    type VuelidateInstance,
+    type MfaFlow,
+    type MfaContinuation,
     type MfaMethod
 } from '@vnuge/vnlib.browser'
+import { useApiCall } from '@vnuge/vnlib.browser/vue'
+import { useFormValidation } from '../../../lib/forms'
+import { vnlib, toaster } from '../../../main'
+import * as yup from 'yup'
 import Fido from './Fido.vue'
 import Totp from './Totp.vue'
 import { useStore } from '../../../store'
 
-const { onInput, setMessage } = useMessage();
-const { waiting } = useWait();
 const { account } = useStore()
 
-interface LoginAccountPropertyData{
+interface LoginAccountPropertyData {
     readonly enforce_email: boolean;
     readonly username_max_chars: number;
 }
 
 //Stores dynamic account data from the server
-const loginData = account.getPropertyData<LoginAccountPropertyData>('login', { 
-    enforce_email: false, 
-    username_max_chars: 50 
+const loginData = account.getPropertyData<LoginAccountPropertyData>('login', {
+    enforce_email: false,
+    username_max_chars: 50
 });
 
-const { login } = useMfaLogin([ 
-    totpMfaProcessor(),     //Enable totp mfa support
-    fidoMfaProcessor()      //Enable fido mfa support
- ])
+const { invoke: apiCall, waiting } = useApiCall({ toaster })
 
-const mfaUpgrades = shallowRef<IMfaFlow[]>();
-const selectedUpgrade = shallowRef<IMfaFlow>(); 
+const { login } = useMfaLogin({
+    config: vnlib,
+    handlers: [totpMfaProcessor(), fidoMfaProcessor()]
+})
+
+const mfaUpgrades = shallowRef<MfaFlow<any>[]>();
+const selectedUpgrade = shallowRef<MfaFlow<any>>();
 
 const clearUpgrade = () => {
     set(mfaUpgrades, []);
@@ -52,52 +51,56 @@ const mfaTimeout = ref<number>(600 * 1000);
 const mfaTimer = useTimeoutFn(() => {
     //Clear upgrade message
     clearUpgrade();
-    setMessage('Your request has expired')
+    toaster.info(
+        'MFA Upgrade Timed Out',
+        'The two-factor upgrade process has timed out. Please log in again to continue.'
+    );
 }, mfaTimeout, { immediate: false })
 
 const vState = reactive({ username: '', password: '' })
+const { validate } = useFormValidation({ toaster })
 
-const rules = computed(() => ({
-    username: {
-        required: helpers.withMessage('Email cannot be empty', required),
-        email: helpers.withMessage('Your email address is not valid', loginData.value.enforce_email ? email : () => true),
-        maxLength: helpers.withMessage('Email address must be less than 50 characters', maxLength(loginData.value.username_max_chars))
-    },
-    password: {
-        required: helpers.withMessage('Password cannot be empty', required),
-        minLength: helpers.withMessage('Password must be at least 8 characters', minLength(8)),
-        maxLength: helpers.withMessage('Password must have less than 128 characters', maxLength(128))
-    }
-}));
-
-const v$ = useVuelidate(rules, vState)
-const { validate } = useVuelidateWrapper(v$ as Ref<VuelidateInstance>);
+// Yup validation schema
+const loginSchema = computed(() => yup.object({
+    username: yup
+        .string()
+        .required('Email cannot be empty')
+        .test('email-if-enforced', 'Your email address is not valid', function (value) {
+            if (!loginData.value.enforce_email) return true
+            return yup.string().email().isValidSync(value)
+        })
+        .max(loginData.value.username_max_chars, `Email address must be less than ${loginData.value.username_max_chars} characters`),
+    password: yup
+        .string()
+        .required('Password cannot be empty')
+        .min(8, 'Password must be at least 8 characters')
+        .max(128, 'Password must have less than 128 characters')
+}))
 
 const SubmitLogin = async () => {
 
     // If the form is not valid set the error message
-    if (!await validate()) {
+    if (!await validate(vState, loginSchema.value)) {
         return
     }
-    
+
     // Run login in an apicall wrapper
-    await apiCall(async ({ toaster }) => {
-        
+    await apiCall(async () => {
+
         //Attempt to login
         const response = await login({
-            userName: v$.value.username.$model, 
-            password: v$.value.password.$model
+            userName: vState.username,
+            password: vState.password
         });
 
-        debugLog('Mfa-login', response);
 
         //See if the response is a web message
-        if((response as WebMessage).getResultOrThrow){
+        if ((response as WebMessage).getResultOrThrow) {
             (response as WebMessage).getResultOrThrow();
         }
 
         //Try to get response as a flow continuation
-        const { methods, expires } = response as IMfaContinuation
+        const { methods, expires } = response as MfaContinuation
 
         // Response is an mfa upgrade
         if (isArray(methods) && methods.length > 0) {
@@ -109,20 +112,17 @@ const SubmitLogin = async () => {
              * All mfa upgrades will have a token expiration, and an assoicated 
              * type string name (string) 
              */
-           
+
             set(mfaUpgrades, methods);
-          
+
             set(mfaTimeout, expires! * 1000);
-            
+
             mfaTimer.start();
         }
         //If login without mfa was successful
         else if ((response as WebMessage).success) {
             // Push a new toast message
-            toaster.general.success({
-                title: 'Success',
-                text: 'You have been logged in',
-            })
+            toaster.success('Success', 'You have been logged in')
         }
     })
 }
@@ -135,7 +135,7 @@ const mfaClear = () => {
 
 const goBackToSelect = () => set(selectedUpgrade, undefined);
 
-const isMethodSelected = (upgrade: IMfaFlow | undefined, type: MfaMethod) =>  upgrade?.type === type;
+const isMethodSelected = (upgrade: MfaFlow<any> | undefined, type: MfaMethod) => upgrade?.type === type;
 const isSelectectionReady = computed(() => !selectedUpgrade.value && !isEmpty(mfaUpgrades.value));
 
 const getIconUrl = (method: MfaMethod) => {
@@ -203,26 +203,24 @@ watch(loginData, console.log)
 
             <fieldset class="mt-10" :disabled="waiting">
                 <div class="pt-3">
-                    <label class="input input-bordered flex items-center gap-2 w-full"
-                        :class="{ 'input-error': (v$.username.$invalid && v$.username.$model.length > 0) }">
+                    <label class="input input-bordered flex items-center gap-2 w-full">
 
                         <fa-icon icon="user" />
 
                         <!-- Enforce an email address only if the server requires it, otherwise a username is acceptable -->
-                        <input tabindex="1" id="username" v-if="loginData.enforce_email" v-model="v$.username.$model" type="email" autocomplete="username"
-                            class="grow" placeholder="Email" @input="onInput">
-                        
-                        <input tabindex="1" id="username" v-else v-model="v$.username.$model" type="text" autocomplete="username"
-                            class="grow" placeholder="Username" @input="onInput">
+                        <input tabindex="1" id="username" v-if="loginData.enforce_email" v-model="vState.username"
+                            type="email" autocomplete="username" class="grow" placeholder="Email">
+
+                        <input tabindex="1" id="username" v-else v-model="vState.username" type="text"
+                            autocomplete="username" class="grow" placeholder="Username">
                     </label>
                 </div>
                 <div class="py-5">
-                    <label class="input input-bordered flex items-center gap-2 w-full"
-                        :class="{ 'input-error': v$.password.$invalid && v$.password.$model.length > 0 }">
+                    <label class="input input-bordered flex items-center gap-2 w-full">
                         <fa-icon icon="lock" />
 
-                        <input tabindex="2" id="password" v-model="v$.password.$model" type="password"
-                            autocomplete="current-password" class="grow" placeholder="Password" @input="onInput">
+                        <input tabindex="2" id="password" v-model="vState.password" type="password"
+                            autocomplete="current-password" class="grow" placeholder="Password">
                     </label>
                     <div class="label text-sm w-full flex flex-row justify-between mt-1">
                         <span class="label-text-alt link link-hover"></span>
@@ -234,7 +232,8 @@ watch(loginData, console.log)
                     </div>
                 </div>
             </fieldset>
-            <button tabindex="3" type="submit" form="user-pass-submit-form" class="btn btn-primary w-full" :disabled="waiting">
+            <button tabindex="3" type="submit" form="user-pass-submit-form" class="btn btn-primary w-full"
+                :disabled="waiting">
                 <!-- Display spinner if waiting, otherwise the sign-in icon -->
                 <fa-icon :class="{ 'animate-spin': waiting }" :icon="waiting ? 'spinner' : 'sign-in-alt'" />
                 <span class="ml-2"> Login </span>

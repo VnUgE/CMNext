@@ -1,50 +1,47 @@
-
 <script setup lang="ts">
 import { defer } from 'lodash-es'
-import { set, tryOnMounted } from '@vueuse/core'
-import { useWait, useApiCall } from '@vnuge/vnlib.browser'
+import { tryOnMounted } from '@vueuse/core'
+import { useOauthLogin } from '@vnuge/vnlib.browser';
+import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { useRouter } from 'vue-router';
-import { ref } from 'vue'
 import { storeToRefs } from 'pinia';
 import { useStore } from '../../../store';
+import { vnlib, toaster } from '../../../main';
 
 const store = useStore();
 const { loggedIn } = storeToRefs(store)
-const { waiting } = useWait()
 
-const router = useRouter()
-const message = ref('')
-
-//Override the message handler to capture the error message and display it
-const { apiCall } = useApiCall({ notifyError: (t) => (message.value = t), close: () => {} })
-
-//Set the page title
 store.setPageTitle('Social Login')
 
-tryOnMounted(() => defer(() => {
+const { push } = useRouter()
+
+//Override the message handler to capture the error message and display it
+const { invoke: apiCall, waiting } = useApiCall({ toaster })
+const { completeLogin } = useOauthLogin(vnlib)
+
+tryOnMounted(() => defer(async () => {
+
+  // Wait for account data to load
+  await store.account.wait();
 
   //If logged-in redirect to login page
   if (loggedIn.value) {
-    router.push({ name: 'Login' })
+    await push('/login');
+    return
   }
 
   //try to complete an oauth login
-  apiCall(async ({ toaster }) => {
+  apiCall(async () => {
     try {
-      const { completeLogin } = await store.socialOauth();
-
       //Complete the login
       await completeLogin();
 
-      toaster.general.success({
-        title: 'Login Successful',
-        text: 'You have successfully logged in.'
-      })
+      toaster.success('You have successfully logged in.')
 
-      router.push({ name: 'Login' })
+      await push('/login');
     }
     catch (err: any) {
-      set(message, err.message)
+      toaster.error('Social Login Failed', err?.message || 'An unknown error occurred while attempting to log you in via social login.');
     }
   })
 }))
@@ -58,30 +55,15 @@ tryOnMounted(() => defer(() => {
         <div class="entry-container">
           <h3>Finalizing login</h3>
           <div class="mt-6 mb-4">
-            <div v-if="message?.length > 0" class="text-lg text-error">
-              <p>{{ message }}</p>
-              <div class="flex justify-center mt-5">
-                <router-link to="/login">
-                  <button type="submit" class="btn primary" :disabled="waiting">
-                    <fa-icon icon="sign-in-alt" />
-                    Try again
-                  </button>
-                </router-link>
+            <div class="flex justify-center">
+              <div class="m-auto">
+                <fa-icon v-if="waiting" class="animate-spin" icon="spinner" size="2x" />
               </div>
             </div>
-            <div v-else>
-              <div class="flex justify-center">
-                <div class="m-auto">
-                  <fa-icon class="animate-spin" icon="spinner" size="2x"/>
-                </div>
-              </div>
-              <p>Please wait while we log you in.</p>
-            </div>
+            <p>Please wait while we log you in.</p>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-

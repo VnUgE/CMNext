@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { apiCall, useWait, useOauthLogin, useAccount } from '@vnuge/vnlib.browser'
+import { defineAsyncComponent } from 'vue'
+import { useOauthLogin, useAccount } from '@vnuge/vnlib.browser'
 import { get } from '@vueuse/core'
 import { useStore } from '../../store'
 import { storeToRefs } from 'pinia'
 import { useRouteQuery } from '@vueuse/router'
 import { RouteLocation, useRouter } from 'vue-router'
 import { defer, isEmpty } from 'lodash-es'
+import { useApiCall } from '@vnuge/vnlib.browser/vue'
+import { vnlib, toaster } from '../../main'
 import UserPass from './components/UserPass.vue'
-import Social from './components/Social.vue'
+const Social = defineAsyncComponent(() => import('./components/Social.vue'))
 
 const store = useStore();
 const { loggedIn } = storeToRefs(store)
@@ -16,17 +19,18 @@ const redirectRoute = useRouteQuery('redirect');
 
 store.setPageTitle('Login')
 
-const { waiting } = useWait()
-const { logout } = useAccount()
-const socialOauth = useOauthLogin()
+const { invoke: apiCall, waiting } = useApiCall({ toaster })
+
+const { logout } = useAccount(vnlib)
+const socialOauth = useOauthLogin(vnlib)
 
 const otpEnabled = store.account.isMethodSupported('otp.login');
 
 const submitLogout = async () => {
   //Submit logout request
-  await apiCall(async ({ toaster }) => {
+  await apiCall(async () => {
 
-    if(socialOauth.isEnabled(store.account.data)){
+    if (socialOauth.isEnabled(store.account.data)) {
       //Logout using oauth
       await socialOauth.logout({ autoRedirect: true })
       return
@@ -36,13 +40,7 @@ const submitLogout = async () => {
     await apiCall(logout);
 
     // Push a new toast message
-    toaster.general.success({
-      id: 'logout-success',
-      title: 'Success',
-      text: 'You have been logged out',
-      duration: 5000
-    })
-    
+    toaster.success('You have been logged out')
     store.account.refresh()
   })
 }
@@ -56,7 +54,7 @@ defer(async () => {
   await store.account.wait();
   const isLoggedIn = get(loggedIn);
   const redirect = get(redirectRoute);
-  
+
   if (isLoggedIn && !isEmpty(redirect)) {
     push({ path: redirect } as RouteLocation);
   }
@@ -68,7 +66,7 @@ defer(async () => {
 <template>
 
   <div class="default-page-template md:mb-30 mb-20">
-    <div class="mx-auto max-w-[25rem] space-y-6 bg-base-100 rounded-lg md:p-6 p-3" data-id="3">
+    <div class="mx-auto max-w-100 space-y-6 bg-base-100 rounded-lg md:p-6 p-3" data-id="3">
       <div class="space-y-2 text-center" data-id="4">
         <h1 class="text-3xl font-bold" data-id="5">Login</h1>
       </div>
@@ -106,7 +104,17 @@ defer(async () => {
             </router-link>
           </div>
 
-          <Social />
+          <Suspense>
+            <template #default>
+              <Social />
+            </template>
+            <template #fallback>
+              <div class="flex items-center justify-center h-64">
+                <div class="loading loading-spinner loading-lg"></div>
+                <span class="ml-2">Loading social login options...</span>
+              </div>
+            </template>
+          </Suspense>
 
           <div class="mt-4 text-center text-sm" data-id="18">
             Don't have an account? <router-link data-id="19" class="underline" to="/register">Sign up</router-link>
@@ -118,4 +126,3 @@ defer(async () => {
   </div>
 
 </template>
-

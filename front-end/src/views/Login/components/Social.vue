@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { apiCall, useOauthLogin, useWait, type SocialOAuthMethod } from '@vnuge/vnlib.browser'
+import { useOauthLogin, type SocialOAuthMethod } from '@vnuge/vnlib.browser';
+import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { useStore } from '../../../store';
 import { get, useArrayFilter } from '@vueuse/core';
 import { computed } from 'vue';
+import { toaster, vnlib } from '../../../main';
 
 const store = useStore()
-const { waiting } = useWait()
 
-const { getPortals, beginLoginFlow } = useOauthLogin()
+const { getPortals, beginLoginFlow } = useOauthLogin(vnlib)
+const { invoke: apiCall, waiting } = useApiCall({ toaster })
+
 const methods = computed(() => {
     const data = get(store.account.data);
     return data?.properties ? getPortals(data) : []
 })
 
 const enabledMethods = useArrayFilter(methods, m => m.data.enabled)
+const errorMethods = useArrayFilter(methods, m => m.data.error)
 
 //Invoke login wrapped in api call
 const submitLogin = (method: SocialOAuthMethod) => apiCall(async () => {

@@ -1,28 +1,30 @@
 <script setup lang="ts">
 import { defer } from 'lodash-es'
 import { tryOnMounted } from '@vueuse/core'
-import { useWait, useOauthLogin, useApiCall, useFormToaster } from '@vnuge/vnlib.browser'
+import { useOauthLogin } from '@vnuge/vnlib.browser'
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useStore } from '../../store';
+import { useApiCall } from '@vnuge/vnlib.browser/vue';
+import { vnlib, toaster } from '../../main';
 
 const store = useStore();
-const { loggedIn } = storeToRefs(store)
-const { waiting } = useWait()
-const toast = useFormToaster()
-const { apiCall } = useApiCall(toast)
-
 const router = useRouter()
+const { loggedIn } = storeToRefs(store)
+const { invoke: apiCall, waiting } = useApiCall({ toaster })
 
 //Set the page title
 store.setPageTitle('Social Login')
-const { completeLogin } = useOauthLogin();
+const { completeLogin } = useOauthLogin(vnlib);
 
-tryOnMounted(() => defer(() => {
+tryOnMounted(() => defer(async () => {
+
+    // Wait for account data to load
+    await store.account.wait();
 
     //If logged-in redirect to login page
     if (loggedIn.value) {
-        router.push({ name: 'Login' })
+        router.push({ path: '/login' })
         return
     }
 
@@ -35,11 +37,11 @@ tryOnMounted(() => defer(() => {
         await store.account.wait();
 
         await completeLogin()
-        
+
         //Trigger the account rpc state to update the account state
         store.account.refresh();
 
-        await router.push({ name: 'Login' })
+        await router.push('/login')
     })
 }))
 
@@ -69,7 +71,7 @@ tryOnMounted(() => defer(() => {
                         </div>
                         <div v-else class="">
                             <div class="flex justify-center mt-5">
-                                <router-link :to="{ name: 'Login' }">
+                                <router-link to="/login">
                                     <button type="submit" class="btn btn-primary" :disabled="waiting">
                                         <fa-icon icon="sign-in-alt" />
                                         Back to login
