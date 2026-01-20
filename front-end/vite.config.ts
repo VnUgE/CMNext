@@ -16,7 +16,9 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
-import { capitalize } from 'lodash-es'
+import mkcert from 'vite-plugin-mkcert'
+import { realpathSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 //Pages setup
 import VueRouter from 'unplugin-vue-router/vite'
@@ -25,8 +27,49 @@ import VueRouter from 'unplugin-vue-router/vite'
 export default defineConfig(() => { 
 
   return {
+    // Fix for Windows path resolution issues with symlinks/subst drives
+    // Only apply in build mode to avoid dev server issues
+    // See: https://github.com/vitejs/vite/issues/20420
+    root: realpathSync(resolve('./')),
+    
+    // Fix for CommonJS dependencies that need ESM interop
+    // tiny-case (used by yup) uses CommonJS exports, needs conversion to ESM
+    // needsInterop is experimental in Vite 7 for forcing ESM interop
+    optimizeDeps: {
+      include: ['tiny-case', 'yup'],
+      needsInterop: ['tiny-case']
+    },
+    
+    // Only apply build config in production mode
     build: {
-      cssCodeSplit: true,
+      // Optimized for self-hosted, single-user/small-team deployment
+      // Fewer chunks = fewer HTTP requests, better for local/private networks
+      cssCodeSplit: false,
+      
+      // Suppress chunk size warnings - not critical for self-hosted apps
+      chunkSizeWarningLimit: 2000,
+      
+      rollupOptions: {
+        output: {
+          // Consolidate chunks for better caching in self-hosted scenario
+          manualChunks: {
+            // Group vendor libraries together
+            'vendor': [
+              'vue',
+              'vue-router',
+              'pinia',
+              '@vueuse/core',
+              '@vueuse/router',
+              'axios'
+            ],
+            // Keep large editors separate for optional lazy loading
+            'editors': [
+              'json-editor-vue',
+              'suneditor'
+            ]
+          }
+        }
+      }
     },
     plugins: [
       //Setup the vite pages plugin
@@ -35,15 +78,11 @@ export default defineConfig(() => {
         routesFolder: 'src/views',
         exclude: ['**/components/**'],
         logs: true,
-        getRouteName:(node) => {
-          const trimSlashes = /^\/|\/$/g
-          const name = node.fullPath.replace(trimSlashes, '')
-          return capitalize(name)
-        },
         importMode: 'async',
       }),
       vue(),
-      tailwindcss()
+      tailwindcss(),
+      mkcert()
     ],
    
   }
