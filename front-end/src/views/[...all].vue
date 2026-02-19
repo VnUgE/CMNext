@@ -13,8 +13,8 @@
 <script setup lang="ts">
 import { useStore } from '../store';
 
-const { setPageTitle } = useStore()
-setPageTitle('404 - Resource not found')
+const { setPageTitle } = useStore();
+setPageTitle('404 - Resource not found');
 
 </script>
 

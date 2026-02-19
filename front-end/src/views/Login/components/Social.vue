@@ -6,44 +6,43 @@ import { get, useArrayFilter } from '@vueuse/core';
 import { computed } from 'vue';
 import { toaster, vnlib } from '../../../main';
 
-const store = useStore()
+const store = useStore();
 
-const { getPortals, beginLoginFlow } = useOauthLogin(vnlib)
-const { invoke: apiCall, waiting } = useApiCall({ toaster })
+const { getPortals, beginLoginFlow } = useOauthLogin(vnlib);
+const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
 const methods = computed(() => {
     const data = get(store.account.data);
-    return data?.properties ? getPortals(data) : []
-})
+    return data?.properties ? getPortals(data) : [];
+});
 
-const enabledMethods = useArrayFilter(methods, m => m.data.enabled)
-const errorMethods = useArrayFilter(methods, m => m.data.error)
+const enabledMethods = useArrayFilter(methods, m => m.data.enabled);
+const errorMethods = useArrayFilter(methods, m => m.data.error);
 
 //Invoke login wrapped in api call
 const submitLogin = (method: SocialOAuthMethod) => apiCall(async () => {
-    await beginLoginFlow({ method, autoRedirect: true })
-})
+    await beginLoginFlow({ method, autoRedirect: true });
+});
 
 </script>
 
 <template>
-
-    <hr v-show="methods.length > 0" class="my-6 border-base-content" />
+    <hr v-show="methods.length > 0" class="my-6 border-base-content">
 
     <ul v-for="method in enabledMethods" :key="method.method_id" class="">
         <li class="my-2">
-            <button type="submit" class="btn flex flex-row w-full" :disabled="waiting"
-                @click.prevent="submitLogin(method)">
-
-                <img v-if="method.data.icon_url" :src="method.data.icon_url" class="w-6 h-6" />
-
+            <button
+                type="submit" class="btn flex flex-row w-full" :disabled="waiting"
+                @click.prevent="submitLogin(method)"
+            >
+                <img v-if="method.data.icon_url" :src="method.data.icon_url" class="w-6 h-6">
                 {{ method.data.friendly_name }}
             </button>
         </li>
     </ul>
 
     <div v-if="errorMethods.length" class="collapse collapse-arrow border border-base-300 rounded-lg mt-4">
-        <input type="checkbox" />
+        <input type="checkbox">
         <div class="collapse-title font-medium text-sm">
             Failed to load {{ errorMethods.length }} method(s)
         </div>
@@ -58,5 +57,4 @@ const submitLogin = (method: SocialOAuthMethod) => apiCall(async () => {
             </ul>
         </div>
     </div>
-
 </template>

@@ -1,93 +1,90 @@
 <script setup lang="ts">
-import { useVuelidate } from '@vuelidate/core'
-import { reactive, Ref } from 'vue'
-import { helpers, required, maxLength } from '@vuelidate/validators'
-import { useWait, useMessage, usePassConfirm, useVuelidateWrapper, type VuelidateInstance } from '@vnuge/vnlib.browser'
+import { reactive, computed, ref } from 'vue';
+import { passConfirm as dialog, type ConfirmMessage } from '../lib/confirm';
+import { useFormValidation } from '../lib/forms';
+import { toaster } from '../main';
+import * as yup from 'yup';
 
-//Use component side of pw prompt
-const { isRevealed, confirm, cancel } = usePassConfirm()
+const { validate } = useFormValidation({ toaster });
 
-const { waiting } = useWait()
-const { onInput } = useMessage()
+const pwState = reactive({ password: '' });
+const message = ref<ConfirmMessage>({ title: '', message: '' });
+const revealed = computed(() => dialog.isRevealed.value);
 
-const pwState = reactive({ password: '' })
+// Yup validation schema
+const passwordSchema = yup.object({
+    password: yup
+        .string()
+        .required('Please enter your password')
+        .max(100, 'Password must be less than 100 characters'),
+});
 
-const rules = {
-  password: {
-    required: helpers.withMessage('Please enter your password', required),
-    maxLength: helpers.withMessage('Password must be less than 100 characters', maxLength(100))
-  }
-}
+// When revealed, set the message
+dialog.onReveal(m => message.value = m || { title: '', message: '' });
 
-const v$ = useVuelidate(rules, pwState, { $lazy: true })
+const formSubmitted = async () => {
+    // Validate the password
+    if (!await validate(pwState, passwordSchema)) {
+        return;
+    }
 
-//Wrap validator so we an display error message on validation, defaults to the form toaster
-const { validate } = useVuelidateWrapper(v$ as Ref<VuelidateInstance>);
+    // Store password copy
+    const password = pwState.password;
 
-const formSubmitted = async function () {
-  //Calls validate on the vuelidate instance
-  if (!await validate()) {
-    return
-  }
+    // Clear the password form
+    pwState.password = '';
 
-  //Store pw copy
-  const password = v$.value.password.$model;
+    // Pass the password to the confirm function
+    dialog.confirm({ password });
+};
 
-  //Clear the password form
-  v$.value.password.$model = '';
-  v$.value.$reset();
+const close = () => {
+    // Clear the password form
+    pwState.password = '';
 
-  //Pass the password to the confirm function
-  confirm({ password });
-}
+    // Close prompt using base cancel
+    dialog.cancel();
+};
 
-const close = function () {
-  // Clear the password form
-  v$.value.password.$model = '';
-  v$.value.$reset();
-
-  //Close prompt
-  cancel(null);
-}
+// Compute title and description from message
+const title = computed(() => message.value?.title || 'Enter your password');
+const description = computed(() => message.value?.message || 'To confirm your identity, please enter your password.');
 
 </script>
 
 <template>
-  <div id="password-prompt" class="z-40">
-    <Dialog :open="isRevealed" @close="close()">
+    <div id="password-prompt" class="z-40">
+        <Dialog :open="revealed" @close="close()">
+            <template #title>
+                {{ title }}
+            </template>
 
-      <template v-slot:title>
-        Enter your password
-      </template>
+            <template #description>
+                <div class="w-full text-center">
+                    <p class="my-1 text-sm">
+                        {{ description }}
+                    </p>
 
-      <template v-slot:description>
-        <div class="w-full text-center">
-
-          <p class="my-1 text-sm ">
-            To confirm your identity, please enter your password.
-          </p>
-
-          <form id="password-form" class="my-2 w-full" @submit.prevent="formSubmitted()" :disabled="waiting">
-            <fieldset>
-              <div class="input-container">
-                <input tabindex="1" v-model="v$.password.$model" id="password-prompt-input" type="password"
-                  class="input input-primary" placeholder="Password" @input="onInput">
-              </div>
-            </fieldset>
-          </form>
-
-          <div class="join mt-4 w-fit float-right">
-            <button class="btn btn-primary join-item" form="password-form">
-              Submit
-            </button>
-            <button class="btn join-item" @click.prevent="close()">
-              Close
-            </button>
-          </div>
-        </div>
-      </template>
-
-    </Dialog>
-  </div>
-
+                    <form id="password-form" class="my-2 w-full" @submit.prevent="formSubmitted()">
+                        <fieldset>
+                            <div class="input-container">
+                                <input
+                                    id="password-prompt-input" v-model="pwState.password" tabindex="1" type="password"
+                                    class="input input-primary w-full" placeholder="Password" autofocus
+                                >
+                                <div class="join mt-4 w-fit float-right">
+                                    <button class="btn btn-primary join-item" form="password-form">
+                                        Submit
+                                    </button>
+                                    <button class="btn join-item" @click.prevent="close()">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </template>
+        </Dialog>
+    </div>
 </template>

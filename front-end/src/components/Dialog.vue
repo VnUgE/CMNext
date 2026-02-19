@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import { onClickOutside } from '@vueuse/core';
-import { ref, computed, toRefs } from 'vue'
-import { useEnvSize } from '@vnuge/vnlib.browser'
+import { onClickOutside, useElementSize } from '@vueuse/core';
+import { ref, computed, toRefs } from 'vue';
 
-const emit = defineEmits(['close', 'submit'])
-const props = defineProps<{ open: boolean }>()
-const { open } = toRefs(props)
+const emit = defineEmits(['close', 'submit']);
+const props = defineProps<{ open: boolean }>();
+const { open } = toRefs(props);
 
-const dialogRef = ref(null)
+const dialogRef = ref(null);
 
-onClickOutside(dialogRef, () => emit('close'))
+onClickOutside(dialogRef, () => emit('close'));
 
-const { headerHeight } = useEnvSize()
+// TODO: useElementSize(null) always returns {width: 0, height: 0}.
+// Need to track an actual header element ref or use a different approach
+// to calculate dialog positioning relative to app header.
+const header = useElementSize(null);
 
 const style = computed(() => {
     return {
-        'height': `calc(100vh - ${headerHeight.value}px)`,
-        'top': `${headerHeight.value}px`
-    }
-})
+        'height': `calc(100vh - ${header.height.value}px)`,
+        'top': `${header.height.value}px`,
+    };
+});
 
-const modalClass = computed(() => ({ 'modal-open': open.value }))
+const modalClass = computed(() => ({ 'modal-open': open.value }));
 
 </script>
 
 <template>
-
     <dialog :style="style" :class="modalClass" class="modal modal-bottom sm:modal-middle">
-        <div class="modal-box" ref="dialogRef">
+        <div ref="dialogRef" class="modal-box">
             <slot name="main">
                 <h3 as="div" class="text-lg font-bold">
-                    <slot name="title"></slot>
+                    <slot name="title" />
                 </h3>
 
                 <div class="modal-action">
-                    <slot name="description"></slot>
+                    <slot name="description" />
                 </div>
             </slot>
         </div>
     </dialog>
-
 </template>

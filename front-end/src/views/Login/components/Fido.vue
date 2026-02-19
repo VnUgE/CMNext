@@ -4,29 +4,29 @@ import { fidoMfaAuthenticate, type MfaFlow, useFidoApi } from '@vnuge/vnlib.brow
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { toaster } from '../../../main';
 
-const emit = defineEmits(['clear', 'back'])
-const props = defineProps<{ upgrade: MfaFlow<'fido'> }>()
+const emit = defineEmits(['clear', 'back']);
+const props = defineProps<{ upgrade: MfaFlow<'fido'> }>();
 
-const { upgrade } = toRefs(props)
-const { invoke: apiCall, waiting } = useApiCall({ toaster })
-const { isSupported } = useFidoApi()
+const { upgrade } = toRefs(props);
+const { invoke: apiCall, waiting } = useApiCall({ toaster });
+const { isSupported } = useFidoApi();
 
 const authenticateFido = () => {
 
     //If a request is still pending, do nothing
-    if (waiting.value) return
+    if (waiting.value) return;
 
     apiCall(async () => {
         //Submit totp code
         const res = await fidoMfaAuthenticate(upgrade.value, { useAutoFill: false });
-        res.getResultOrThrow()
+        res.getResultOrThrow();
 
-        emit('clear')
+        emit('clear');
 
         // Push a new toast message
-        toaster.success('You have been logged in')
-    })
-}
+        toaster.success('You have been logged in');
+    });
+};
 
 </script>
 
@@ -34,15 +34,15 @@ const authenticateFido = () => {
     <div id="fido-login-form" class="py-6">
         <div class="">
             <button :disabled="!isSupported()" class="btn w-full btn-primary" @click="authenticateFido()">
-                <!-- Display spinner if waiting, otherwise the sign-in icon -->
-                <fa-icon :class="{ 'animate-spin': waiting }" :icon="waiting ? 'spinner' : ''" />
+                <!-- Display spinner if waiting -->
+                <span v-if="waiting" class="loading loading-spinner loading-sm" />
                 <span class="text-base">
                     Complete Login
                 </span>
             </button>
         </div>
         <div class="mt-3 w-fit mx-auto">
-            <button @click="emit('back')" class="mt-3">
+            <button class="mt-3" @click="emit('back')">
                 <div class="flex flex-row items-center justify-center gap-2">
                     <fa-icon icon="arrow-left" />
                     <span>Back</span>

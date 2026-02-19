@@ -1,67 +1,61 @@
 <script setup lang="ts">
-import { apiCall, useAccount, useOauthLogin } from '@vnuge/vnlib.browser';
-import { defineAsyncComponent } from 'vue'
-import { useStore } from './store'
+import { defineAsyncComponent } from 'vue';
+import { useStore } from './store';
 import { storeToRefs } from 'pinia';
-import Sidebar from './components/Sidebar.vue'
+import Sidebar from './components/Sidebar.vue';
+import { whenever } from '@vueuse/core';
+import { cmnext, toaster } from './main';
 const ConfirmPrompt = defineAsyncComponent(() => import('./components/ConfirmPrompt.vue'));
 const PasswordPrompt = defineAsyncComponent(() => import('./components/PasswordPrompt.vue'));
 
-const store = useStore()
-const { pageTitle } = storeToRefs(store)
-const oauthLogout = useOauthLogin();
-const account = useAccount();
+const store = useStore();
+const { pageTitle, loggedIn } = storeToRefs(store);
 
 store.setPageTitle('Home');
 
-const logout = async () => {
-  if (oauthLogout.isEnabled(store.account.data)) {
-    await apiCall(() => oauthLogout.logout({ autoRedirect: true }));
-  }
-  else {
-    await apiCall(account.logout);
-  }
-
-  store.account.refresh();
-}
-
+// Refresh channels whenever the user logs in
+whenever(loggedIn, () => cmnext.channels.refresh());
+whenever(
+    () => store.account.error,
+    (err) => {
+        toaster.error('Load error', err);
+    }
+);
 </script>
 
 <template>
+    <head>
+        <title>{{ pageTitle }} | CMNext Admin</title>
+    </head>
 
-  <head>
-    <title>{{ pageTitle }} | CMNext Admin</title>
-  </head>
+    <div class="drawer lg:drawer-open">
+        <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+        <div ref="content" class="drawer-content flex flex-col min-h-screen">
+            <!-- Notifications - positioned at top of content -->
+            <div class="relative w-full">
+                <notifications class="general-toast top-4" group="general" position="top" />
+                <notifications class="form-toast top-4" group="form" position="top" />
+            </div>
 
-  <div class="drawer lg:drawer-open">
-    <input id="main-drawer" type="checkbox" class="drawer-toggle" />
-    <div class="drawer-content flex flex-col min-h-screen" ref="content">
-      <!-- Notifications - positioned at top of content -->
-      <div class="relative w-full">
-        <notifications class="general-toast top-4" group="general" position="top" />
-        <notifications class="form-toast top-4" group="form" position="top" />
-      </div>
+            <!-- Main body for router-view -->
+            <div id="env-body" class="grow w-full">
+                <router-view />
+            </div>
 
-      <!-- Main body for router-view -->
-      <div id="env-body" class="flex-grow w-full">
-        <router-view />
-      </div>
+            <!-- Hamburger button for mobile to open drawer -->
+            <div class="lg:hidden fixed top-4 left-4 z-50">
+                <label for="main-drawer" class="btn btn-primary drawer-button">
+                    <fa-icon icon="bars" />
+                </label>
+            </div>
+        </div>
 
-      <!-- Hamburger button for mobile to open drawer -->
-      <div class="lg:hidden fixed top-4 left-4 z-50">
-        <label for="main-drawer" class="btn btn-primary drawer-button">
-          <fa-icon icon="bars" />
-        </label>
-      </div>
-
+        <div class="drawer-side z-50">
+            <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay" />
+            <Sidebar />
+        </div>
     </div>
 
-    <div class="drawer-side z-50">
-      <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
-      <Sidebar @logout="logout" />
-    </div>
-  </div>
-
-  <PasswordPrompt />
-  <ConfirmPrompt />
+    <PasswordPrompt />
+    <ConfirmPrompt />
 </template>

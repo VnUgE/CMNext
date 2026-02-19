@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { defer } from 'lodash-es'
-import { tryOnMounted } from '@vueuse/core'
-import { useOauthLogin } from '@vnuge/vnlib.browser'
+import { defer } from 'lodash-es';
+import { tryOnMounted } from '@vueuse/core';
+import { useOauthLogin } from '@vnuge/vnlib.browser';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useStore } from '../../store';
@@ -9,12 +9,12 @@ import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { vnlib, toaster } from '../../main';
 
 const store = useStore();
-const router = useRouter()
-const { loggedIn } = storeToRefs(store)
-const { invoke: apiCall, waiting } = useApiCall({ toaster })
+const router = useRouter();
+const { loggedIn } = storeToRefs(store);
+const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
 //Set the page title
-store.setPageTitle('Social Login')
+store.setPageTitle('Social Login');
 const { completeLogin } = useOauthLogin(vnlib);
 
 tryOnMounted(() => defer(async () => {
@@ -24,8 +24,8 @@ tryOnMounted(() => defer(async () => {
 
     //If logged-in redirect to login page
     if (loggedIn.value) {
-        router.push({ path: '/login' })
-        return
+        router.push({ path: '/login' });
+        return;
     }
 
     //try to complete an oauth login
@@ -36,14 +36,14 @@ tryOnMounted(() => defer(async () => {
         // session cookie mismatch
         await store.account.wait();
 
-        await completeLogin()
+        await completeLogin();
 
         //Trigger the account rpc state to update the account state
         store.account.refresh();
 
-        await router.push('/login')
-    })
-}))
+        await router.push('/login');
+    });
+}));
 
 </script>
 
@@ -64,7 +64,7 @@ tryOnMounted(() => defer(async () => {
                         <div v-if="waiting">
                             <div class="flex justify-center mb-4">
                                 <div class="m-auto">
-                                    <fa-icon class="animate-spin" icon="spinner" size="2x" />
+                                    <span class="loading loading-spinner loading-lg" />
                                 </div>
                             </div>
                             <p>Please wait while we log you in.</p>

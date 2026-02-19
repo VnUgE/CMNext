@@ -1,43 +1,46 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { filter, includes } from 'lodash-es'
-import { useStore } from '../store'
-import { storeToRefs } from 'pinia'
-import { get } from '@vueuse/core'
-import { BlogChannel } from '@vnuge/cmnext-admin'
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { filter, includes, get as _get } from 'lodash-es';
+import { useStore, themeNames } from '../store';
+import { storeToRefs } from 'pinia';
+import { get } from '@vueuse/core';
+import { BlogChannel } from '@vnuge/cmnext-admin';
+import { cmnext } from '../main';
 
-defineEmits(['logout'])
-
-const route = useRoute()
-const store = useStore()
-const { userName } = storeToRefs(store)
-const { all: channels, refresh } = store.channels;
+const route = useRoute();
+const store = useStore();
+const { userName, theme, loggedIn } = storeToRefs(store);
+const { all: channels } = cmnext.channels;
 
 // Get user profile data from store
-const userProfileData = computed(() => store.userProfile?.data || {})
-const userEmail = computed(() => userProfileData.value.email || userName.value || 'user@example.com')
-const userDisplayName = computed(() => {
-  const profile = userProfileData.value as any // Type assertion since we don't have exact type info
-  if (profile.first_name && profile.last_name) {
-    return `${profile.first_name} ${profile.last_name}`
-  }
-  return profile.first_name || profile.last_name || userEmail.value.split('@')[0]
-})
+const userProfileData = computed(() => store.user.profile || {});
 
-const { pinnedChannels } = store.preferences
+const userEmail = computed(
+    () => userProfileData.value.email || userName.value || 'user@example.com'
+);
+
+const userDisplayName = computed(() => {
+    const profile = userProfileData.value;
+    const firstName = _get(profile, 'first_name', '') as string;
+    const lastName = _get(profile, 'last_name', '') as string;
+
+    if (firstName && lastName) {
+        return `${firstName} ${lastName}`;
+    }
+    return firstName || lastName || userEmail.value.split('@')[0];
+});
+
+const { pinnedChannels } = store.preferences;
 
 const pinned = computed<BlogChannel[]>(() => {
     const pinnedIds = get(pinnedChannels.current);
-    const c = get(store.channels.all);
-    return filter(c, (channel: BlogChannel) => includes(pinnedIds, channel.id)) ?? []
-})
+    return filter(get(channels), (channel: BlogChannel) => includes(pinnedIds, channel.id)) ?? [];
+});
 
-// Load channels when component mounts
-onMounted(() => {
-  refresh()
-})
-
+const logout = () => {
+    store.account.logout();
+};
 </script>
 
 <template>
@@ -53,34 +56,66 @@ onMounted(() => {
             </div>
         </div>
         <!-- Navigation Menu -->
-        <div class="flex-grow overflow-y-auto">
+        <div class="grow overflow-y-auto">
             <ul class="menu w-full">
+                <!-- Theme Section -->
+                <li class="menu-title">
+                    <span>Appearance</span>
+                </li>
+                <li>
+                    <details>
+                        <summary>
+                            <fa-icon icon="palette" class="mr-2" />
+                            Theme
+                            <span class="badge badge-sm badge-ghost ml-auto">
+                                {{ theme }}
+                            </span>
+                        </summary>
+                        <ul class="max-h-60 overflow-y-auto">
+                            <li v-for="av in themeNames" :key="av">
+                                <a :class="{ active: theme === av }" @click="theme = av">
+                                    {{ av }}
+                                </a>
+                            </li>
+                        </ul>
+                    </details>
+                </li>
                 <li class="menu-title">
                     <span>Navigation</span>
                 </li>
                 <li>
-                    <router-link to="/blog" :class="{ 'active': route.path === '/blog' }">
+                    <router-link to="/" :class="{ active: route.path === '/' }">
                         <fa-icon icon="blog" class="mr-2" />
-                        Blog Admin
+                        Dashboard
+                    </router-link>
+                    <router-link to="/channels" :class="{ active: route.path === '/channels' }">
+                        <fa-icon icon="folder" class="mr-2" />
+                        Channels
+                    </router-link>
+                    <router-link to="/login" :class="{ active: route.path === '/login' }">
+                        <fa-icon icon="sign-in-alt" class="mr-2" />
+                        Login
                     </router-link>
                 </li>
                 <li class="menu-title mt-4">
-                    <span>Pinned</span>
+                    <span>Pinned Channels</span>
                 </li>
                 <li v-for="channel in pinned" :key="channel.id">
-                    <router-link :to="`/blog/channels/${channel.id}`">
+                    <router-link :to="`/channels/${channel.id}`">
                         <fa-icon icon="bullhorn" class="mr-2" />
                         {{ channel.name }}
                         <span>
-                            <button @click.prevent="pinnedChannels.remove(channel.id)"
-                                class="btn btn-xs btn-ghost text-error/30 hover:text-error ml-2">
+                            <button
+                                class="btn btn-xs btn-ghost text-error/30 hover:text-error ml-2"
+                                @click.prevent="pinnedChannels.remove(channel.id)"
+                            >
                                 <fa-icon icon="thumbtack-slash" />
                             </button>
                         </span>
                     </router-link>
                 </li>
                 <li class="mt-2">
-                    <router-link to="/blog/channels" class="text-sm opacity-70 hover:opacity-100">
+                    <router-link to="/channels" class="text-sm opacity-70 hover:opacity-100">
                         <fa-icon icon="eye" class="mr-2" />
                         View All Channels
                     </router-link>
@@ -91,13 +126,17 @@ onMounted(() => {
         <!-- User Profile Menu -->
         <div class="mt-auto pt-4 border-t border-base-300">
             <!-- User Avatar/Name Section with Popover -->
-            <div class="relative">
+            <div v-show="loggedIn" class="relative">
                 <div class="dropdown dropdown-top dropdown-end w-full">
-                    <div tabindex="0" role="button"
-                        class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-300 cursor-pointer w-full transition-colors">
+                    <div
+                        tabindex="0"
+                        role="button"
+                        class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-300 cursor-pointer w-full transition-colors"
+                    >
                         <div class="avatar placeholder">
                             <div
-                                class="bg-neutral text-neutral-content w-10 rounded-full flex items-center justify-center">
+                                class="bg-neutral text-neutral-content w-10 rounded-full flex items-center justify-center"
+                            >
                                 <fa-icon icon="user" class="text-sm" />
                             </div>
                         </div>
@@ -108,12 +147,14 @@ onMounted(() => {
                         <fa-icon icon="ellipsis-h" class="text-xs opacity-50" />
                     </div>
 
-                    <ul tabindex="0"
-                        class="dropdown-content menu bg-base-100 rounded-box z-[1] w-64 p-2 shadow-lg border border-base-300">
+                    <ul
+                        tabindex="0"
+                        class="dropdown-content menu bg-base-100 rounded-box z-1 w-64 p-2 shadow-lg border border-base-300"
+                    >
                         <!-- Account Section -->
                         <li class="menu-title"><span>Account</span></li>
                         <li>
-                            <router-link :to="{ path: '/account', hash: '#profile'}">
+                            <router-link :to="{ path: '/account', hash: '#profile' }">
                                 <fa-icon icon="user" class="mr-2" />
                                 Profile
                             </router-link>
@@ -125,19 +166,21 @@ onMounted(() => {
                             </router-link>
                         </li>
                         <li>
-                            <a @click="$emit('logout')" class="text-error">
+                            <a class="text-error" @click="logout()">
                                 <fa-icon icon="sign-out-alt" class="mr-2" />
                                 Logout
                             </a>
                         </li>
 
-                        <li class="divider-sm"></li>
+                        <li class="divider-sm" />
 
                         <!-- Resources Section -->
                         <li class="menu-title"><span>Resources</span></li>
                         <li>
-                            <a href="https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext"
-                                target="_blank">
+                            <a
+                                href="https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext"
+                                target="_blank"
+                            >
                                 <fa-icon icon="book" class="mr-2" />
                                 Documentation
                             </a>
@@ -154,26 +197,28 @@ onMounted(() => {
 
             <!-- Footer Info -->
             <div class="mt-4 pt-3 border-t border-base-300">
-                <p class="text-xs opacity-70 text-center mb-2">
-                    CMNext - AGPL3 licensed
-                </p>
+                <p class="text-xs opacity-70 text-center mb-2">CMNext - AGPL3 licensed</p>
                 <div class="flex justify-center gap-2">
-                    <a href="https://github.com/VnUgE/CMNext" target="_blank"
-                        class="text-xs opacity-50 hover:opacity-100" title="GitHub">
+                    <a
+                        href="https://github.com/VnUgE/CMNext"
+                        target="_blank"
+                        class="text-xs opacity-50 hover:opacity-100"
+                        title="GitHub"
+                    >
                         <fa-icon :icon="['fab', 'github']" />
                     </a>
-                    <a href="https://www.vaughnnugent.com" target="_blank" class="text-xs opacity-50 hover:opacity-100"
-                        title="Website">
+                    <a
+                        href="https://www.vaughnnugent.com"
+                        target="_blank"
+                        class="text-xs opacity-50 hover:opacity-100"
+                        title="Website"
+                    >
                         <fa-icon icon="globe" />
                     </a>
                     <!-- Nostr icon placeholder - to be added later -->
-                    <span class="text-xs opacity-30" title="Nostr (coming soon)">
-                        ₦
-                    </span>
+                    <span class="text-xs opacity-30" title="Nostr (coming soon)"> ₦ </span>
                 </div>
-                <p class="text-xs opacity-50 text-center mt-2">
-                    © 2025 Vaughn Nugent
-                </p>
+                <p class="text-xs opacity-50 text-center mt-2">© 2025 Vaughn Nugent</p>
             </div>
         </div>
     </div>
