@@ -13,7 +13,9 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "lint": "eslint src --ext .vue,.ts,.tsx --report-unused-disable-directives",
+        "lint:fix": "eslint src --ext .vue,.ts,.tsx --fix"
     },
     "dependencies": {
         "@fontsource/source-sans-pro": "^5.0.8",
@@ -26,7 +28,7 @@
         "@simplewebauthn/browser": "^13.2.x",
         "@tailwindcss/vite": "^4.1.4",
         "@vnuge/cmnext-admin": "../lib/admin",
-        "@vnuge/vnlib.browser": "../../plugins.essentials/lib/vnlib.browser",
+        "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/@vnuge-vnlib.browser/release.tgz",
         "@vueuse/core": "^14.0.x",
         "@vueuse/router": "^14.0.x",
         "axios": "^1.12.2",

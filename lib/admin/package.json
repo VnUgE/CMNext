@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "author": "Vaughn Nugent",
   "description": "A browser client library for CMNext admin UI development",
-  "copyright": "Copyright © 2025 Vaughn Nugent",
+  "copyright": "Copyright © 2026 Vaughn Nugent",
   "repository": "https://github.com/VnUgE/CMNext/tree/master/lib/admin",
   "output_dir": "bin",
   "type": "module",
@@ -20,11 +20,11 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@vueuse/core": "^13.x",
+    "@vueuse/core": "^14.x",
     "lodash-es": "^4.x",
     "vue": "^3.x",
     "axios": "^1.x",
     "jose": "^6.0.x",
-    "@vnuge/vnlib.browser": "../../../plugins.essentials/lib/vnlib.browser"
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/@vnuge-vnlib.browser/release.tgz"
   }
 }

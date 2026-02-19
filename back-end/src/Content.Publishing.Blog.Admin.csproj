@@ -11,28 +11,28 @@
     <Company>Vaughn Nugent</Company>
     <Product>CMNext.Admin</Product>
     <Description>A VNLib.Plugins.Essentials administration plugin for the CMNext content publishing platform.</Description>
-    <Copyright>Copyright © 2025 Vaughn Nugent</Copyright>
+    <Copyright>Copyright © 2026 Vaughn Nugent</Copyright>
     <PackageProjectUrl>https://www.vaughnnugent.com/resources/software/modules/CMNext.Admin</PackageProjectUrl>
     <RepositoryUrl>https://github.com/VnUgE/CMNext/tree/master/</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Include="..\..\LICENSE.txt">
+    <None Include="..\..\LICENSE">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="53.0.1" />
+    <PackageReference Include="FluentFTP" Version="53.0.2" />
     <PackageReference Include="Minio" Version="6.0.5" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.3" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.3" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.5" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.5" />
   </ItemGroup>
   <ItemGroup>
     <None Update="CMNext.json">

@@ -6,50 +6,49 @@
 version: "3"
 
 vars:
-
-  PLUGIN_NAME: 'CMNext'
+  PLUGIN_NAME: "CMNext"
 
   BINARY_DIR: '{{ .BINARY_DIR | default "bin" }}'
 
   SQLITE_OUT_DIR: "plugins/assets/vnlib.plugins.extensions.loading.sql.sqlite"
 
   # vnlip_compress only supports amd64 platforms
-  TARGET_ARCHES: [ 'windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'posix' ]
+  TARGET_ARCHES: ["windows-x86_64", "linux-x86_64", "osx-x86_64", "posix"]
 
   RM: '{{ if eq OS "windows" }}powershell rm -Recurse -Force{{ else }}rm -rf{{ end }}'
 
-includes:
-  install:
-    taskfile: install.taskfile.yaml
-
 tasks:
-
   build:
-    desc: 'WARNING: For vnbuild use only. Do not run manually.'
+    desc: "WARNING: For vnbuild use only. Do not run manually."
+    deps:
+      - task: build-front-end
+      - task: build-server-package
+
+  build-server-package:
+    desc: "Build server package for all target environments"
     deps:
       - compile-config
-      - build-front-end
+      - build-plugin
+      - prune-plugin-libs
     cmds:
+      - cmd: cd build/ && {{ .RM }} **/package.json
+      - cmd: mkdir -p build/dist/
 
-    - cmd: cd build/ && {{ .RM }} **/package.json
+        #remove runtime-shared libs before they are copied
+      - task: prune-plugin-libs
+      - task: parallel-envs
 
-    - task: build-plugin
+      #runtimes must be pruned for specific targets
+      - task: prune-runtimes
 
-     #remove runtime-shared libs before they are copied
-    - task: prune-plugin-libs
-    - task: parallel-envs
+      - cmd: echo "Server package build complete"
 
-    #runtimes must be pruned for specific targets
-    - task: prune-runtimes
-
-    - cmd: echo "Server package build complete"
-  
   build-front-end:
     internal: false
     cmds:
-    - cmd: cd ../front-end && task build
-    - cmd: mkdir -p "build/dist/"
-    - cmd: cp -rf "../front-end/dist/" "build/dist/"
+      - cmd: cd ../front-end && task build
+      - cmd: mkdir -p "build/dist/"
+      - cmd: cp -rf "../front-end/dist/" "build/dist/"
 
   build-plugin:
     internal: true
@@ -58,22 +57,22 @@ tasks:
     vars:
       PLUGIN_DIR: "{{ .TASKFILE_DIR }}/build/plugins/{{ .PLUGIN_NAME }}"
     cmds:
-     - cmd: mkdir -p "{{ .PLUGIN_DIR }}"
-     - cmd: cd .. && task 
-        -t Module.Taskfile.yaml
-        CONFIGURATION=release -- 
-        --output "{{ .PLUGIN_DIR }}"
-        --verbosity detailed
+      - cmd: mkdir -p "{{ .PLUGIN_DIR }}"
+      - cmd: cd .. && task
+          -t Module.Taskfile.yaml
+          CONFIGURATION=release --
+          --output "{{ .PLUGIN_DIR }}"
+          --verbosity detailed
 
   parallel-envs:
     internal: true
     requires:
       vars: [TARGET_ARCHES]
     deps:
-     - for: { var: TARGET_ARCHES }
-       task: create-env
-       vars: { TARGET_OS: '{{ .ITEM }}' }
-     - task: setup-container
+      - for: { var: TARGET_ARCHES }
+        task: create-env
+        vars: { TARGET_OS: "{{ .ITEM }}" }
+      - task: setup-container
 
   #similar to create-env task, except specialized for a container deployment
   setup-container:
@@ -82,13 +81,13 @@ tasks:
       ENV_OUT_DIR: "build/arch/container"
     cmds:
       - task: create-env
-        vars: { TARGET_OS: 'container/app' }
-      
+        vars: { TARGET_OS: "container/app" }
+
       #copy config templates to the app/config directory
-      - cmd: cp -rf "config-templates" "{{ .ENV_OUT_DIR }}/app" 
+      - cmd: cp -rf "config-templates" "{{ .ENV_OUT_DIR }}/app"
 
       #docker specific files go in the root dir
-      - for: [ Dockerfile, docker-compose.yaml ]
+      - for: [Dockerfile, docker-compose.yaml]
         cmd: cp -rf {{ .ITEM }} "{{ .ENV_OUT_DIR }}"
 
       # copy the compile script and taskfile, rename the taskfile to Taskfile.yaml
@@ -102,30 +101,35 @@ tasks:
     vars:
       ENV_OUT_DIR: "build/arch/{{ .TARGET_OS }}"
     cmds:
-    #create dir for env
-    - cmd: mkdir -p "{{ .ENV_OUT_DIR }}"
+      #create dir for env
+      - cmd: mkdir -p "{{ .ENV_OUT_DIR }}"
 
-    #copy build files for target os
-    - for: [ plugins, lib, config, webserver, dist ]
-      cmd: mkdir -p "{{ .ENV_OUT_DIR }}/{{ .ITEM }}" 
-        && cp -rf "build/{{ .ITEM }}" "{{ .ENV_OUT_DIR }}/"
+      #copy build files for target os
+      - for: [plugins, lib, config, webserver, dist]
+        cmd: mkdir -p "{{ .ENV_OUT_DIR }}/{{ .ITEM }}"
+          && cp -rf "build/{{ .ITEM }}" "{{ .ENV_OUT_DIR }}/"
 
-    #copy release taskfile and rename it
-    - cmd: cp -rf release.taskfile.yaml "{{ .ENV_OUT_DIR }}/Taskfile.yaml"
+      #copy release taskfile and rename it
+      - cmd: cp -rf release.taskfile.yaml "{{ .ENV_OUT_DIR }}/Taskfile.yaml"
 
   compile-config:
     internal: true
-    dotenv: ['build.env']  #use the local .env file when compiling config variables
+    dotenv: ["build.env"] #use the local .env file when compiling config variables
     cmds:
-     - cmd: mkdir -p "build/config/"
-     - cmd: powershell './compile.ps1' -InputDir 'config-templates/' -OutputDir 'build/config/'
-     - cmd: cp -rf config-templates/routes.xml build/config/routes.xml
+      - cmd: mkdir -p "build/config/"
+      - cmd: powershell './compile.ps1' -InputDir 'config-templates/' -OutputDir 'build/config/'
+        platforms: [windows]
+
+      - cmd: find ./config-templates/ -type f -exec bash -c './compile.sh "$0" "build/config/$(basename "$0")"' {} \;
+        platforms: [linux, darwin]
+
+      - cmd: cp -rf config-templates/routes.xml build/config/routes.xml
 
   prune-plugin-libs:
     internal: true
     dir: build/plugins
     vars:
-      FILES: '
+      FILES: "
         */VNLib.Utils.dll
         */VNLib.Net.Http.dll
         */VNLib.Hashing.Portable.dll
@@ -135,69 +139,69 @@ tasks:
         */Serilog.Sinks.Console.dll
         */Serilog.Sinks.File.dll
         */*.xml
-        */*.pdb'
+        */*.pdb"
     cmds:
-    - for: { var: FILES }
-      cmd: '{{ .RM }} "{{ .ITEM }}"'
+      - for: { var: FILES }
+        cmd: '{{ .RM }} "{{ .ITEM }}"'
 
   prune-runtimes:
     vars:
-      WIN: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-arm,win-arm64'
-      LINUX: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-musl-arm,linux-musl-arm64,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-arm,win-arm64,win-x86,win-x64'
-      OSX: 'browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,win-arm,win-arm64,win-x86,win-x64'
+      WIN: "browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-arm,win-arm64"
+      LINUX: "browser-wasm,linux-arm,linux-arm64,linux-armel,linux-musl-arm,linux-musl-arm64,maccatalyst-arm64,maccatalyst-x64,osx-arm64,osx-x64,win-arm,win-arm64,win-x86,win-x64"
+      OSX: "browser-wasm,linux-arm,linux-arm64,linux-armel,linux-mips64,linux-musl-arm,linux-musl-arm64,linux-musl-x64,linux-ppc64le,linux-s390x,linux-x64,linux-x86,maccatalyst-arm64,win-arm,win-arm64,win-x86,win-x64"
       #NOTE: The container targets debian builds (arm, x86 and x64)
-      CONTAINER: '{{ .LINUX }},linux-ppc64le,linux-s390x,linux-mips64,linux-musl-x64'
+      CONTAINER: "{{ .LINUX }},linux-ppc64le,linux-s390x,linux-mips64,linux-musl-x64"
     deps:
-    #prune sqlite runtime native libraries that Im not targeting
-    #windows
-    - task: prune-files 
-      vars: { ITEMS: '{{ .WIN }}', DIR: 'windows-x86_64' }
-    #linux x64
-    - task: prune-files
-      vars: { ITEMS: '{{ .LINUX }}', DIR: 'linux-x86_64' }
-    #osx x64
-    - task: prune-files
-      vars: { ITEMS: '{{ .OSX }}', DIR: 'osx-x86_64' }
-    #container is linux amd64 target
-    - task: prune-files
-      vars: { ITEMS: '{{ .CONTAINER }}', DIR: 'container/app' }
+      #prune sqlite runtime native libraries that Im not targeting
+      #windows
+      - task: prune-files
+        vars: { ITEMS: "{{ .WIN }}", DIR: "windows-x86_64" }
+      #linux x64
+      - task: prune-files
+        vars: { ITEMS: "{{ .LINUX }}", DIR: "linux-x86_64" }
+      #osx x64
+      - task: prune-files
+        vars: { ITEMS: "{{ .OSX }}", DIR: "osx-x86_64" }
+      #container is linux amd64 target
+      - task: prune-files
+        vars: { ITEMS: "{{ .CONTAINER }}", DIR: "container/app" }
 
   prune-files:
     internal: true
     requires:
       vars: [DIR, ITEMS, SQLITE_OUT_DIR]
     cmds:
-     - for: { var: ITEMS, split: ','}
-       cmd: cd build/arch/{{ .DIR }}/{{ .SQLITE_OUT_DIR }}/runtimes && rm -rf "{{ .ITEM }}"
-       ignore_error: true
+      - for: { var: ITEMS, split: "," }
+        cmd: cd build/arch/{{ .DIR }}/{{ .SQLITE_OUT_DIR }}/runtimes && rm -rf "{{ .ITEM }}"
+        ignore_error: true
 
   postbuild_success:
-    desc: 'WARNING: For vnbuild use only. Do not run manually.'
+    desc: "WARNING: For vnbuild use only. Do not run manually."
     requires:
       vars: [BINARY_DIR]
     cmds:
-    - cmd: mkdir -p {{ .BINARY_DIR }}
-    - task: pb-parallel
+      - cmd: mkdir -p {{ .BINARY_DIR }}
+      - task: pb-parallel
 
-    #cleanup unnecessary build files that clog up the pipeline
-    - for: [ build ]
-      cmd: rm -rf "{{ .ITEM }}"
-      ignore_error: true
+      #cleanup unnecessary build files that clog up the pipeline
+      - for: [build]
+        cmd: rm -rf "{{ .ITEM }}"
+        ignore_error: true
 
   pb-parallel:
     internal: true
     requires:
       vars: [TARGET_ARCHES]
     deps:
-     - for: { var: TARGET_ARCHES }
-       task: pack 
-       vars: { TARGET_OS: '{{ .ITEM }}' }
-    
-    # container is built separately
-     - task: pack
-       vars: { TARGET_OS: 'container' }
+      - for: { var: TARGET_ARCHES }
+        task: pack
+        vars: { TARGET_OS: "{{ .ITEM }}" }
+
+      # container is built separately
+      - task: pack
+        vars: { TARGET_OS: "container" }
     cmds:
-    - echo "Packing complete"
+      - echo "Packing complete"
 
   pack:
     internal: true
@@ -205,14 +209,13 @@ tasks:
       vars: [TARGET_OS]
     vars:
     cmds:
-    - cmd: mkdir -p "build/arch/{{ .TARGET_OS }}/"
-      ignore_error: true
-    - cmd: cd build/arch/{{ .TARGET_OS }} && 
-        tar{{ if eq OS "windows" }}.exe{{ end }} -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_OS }}-release.tgz" . 
+      - cmd: mkdir -p "build/arch/{{ .TARGET_OS }}/"
+        ignore_error: true
+      - cmd: cd build/arch/{{ .TARGET_OS }} &&
+          tar{{ if eq OS "windows" }}.exe{{ end }} -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_OS }}-release.tgz" .
 
   clean:
     ignore_error: true
     cmds:
-    - for: [ build/, bin/ ]
-      cmd: rm -rf "{{ .ITEM }}"
-
+      - for: [build/, bin/]
+        cmd: rm -rf "{{ .ITEM }}"
