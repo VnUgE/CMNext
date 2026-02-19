@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useConfirmDialog, type UseConfirmDialogReturn } from '@vueuse/core'
+import { useConfirmDialog, type UseConfirmDialogReturn } from '@vueuse/core';
 
 export interface ConfirmMessage {
     /**
@@ -32,13 +32,10 @@ export interface ConfirmMessage {
     readonly isWarning?: boolean
 }
 
-
-
-
 export const confirm = (() => {
     const _confirm = useConfirmDialog<ConfirmMessage>();
     return Object.assign(_confirm.reveal, { ..._confirm });
-})()
+})();
 
 export interface PasswordConfirmResult {
     /**
@@ -50,17 +47,17 @@ export interface PasswordConfirmResult {
 /**
  * A confirm dialog specialized for password confirmation
  */
-export const passConfirm = useConfirmDialog<ConfirmMessage>() as UseConfirmDialogReturn<ConfirmMessage, PasswordConfirmResult, boolean>
+export const passConfirm = useConfirmDialog<ConfirmMessage>() as UseConfirmDialogReturn<ConfirmMessage, PasswordConfirmResult, boolean>;
 
 export const promptForPassword = async (): Promise<string | undefined> => {
     const pc = await passConfirm.reveal({
         title: 'Confirm your password',
-        message: 'Please enter your password to confirm removing this key.'
-    })
+        message: 'Please enter your password to confirm removing this key.',
+    });
     // User cancelled the prompt
     if (pc.isCanceled) {
         return;
     }
     // Get the password
     return pc.data?.password;
-}
+};

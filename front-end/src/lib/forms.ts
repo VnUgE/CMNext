@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { type MaybeRef, toValue } from 'vue'
-import { type ObjectSchema, type AnyObject, ValidationError } from 'yup'
-import { type Toaster } from '@vnuge/vnlib.browser/vue'
+import { type MaybeRef, toValue } from 'vue';
+import { type ObjectSchema, type AnyObject, ValidationError } from 'yup';
+import { type Toaster } from '@vnuge/vnlib.browser/vue';
 
 export interface UseFormValidationOptions {
     /**
@@ -70,55 +70,55 @@ export interface UseFormValidationReturn {
  */
 export const useFormValidation = (options: UseFormValidationOptions): UseFormValidationReturn => {
 
-    const { toaster } = options
+    const { toaster } = options;
 
     /**
      * Validates data against a Yup schema and displays errors via toaster
      */
     const validate = async <T extends AnyObject>(data: MaybeRef<T>, schema: ObjectSchema<T>): Promise<boolean> => {
-        const unwrappedData = toValue(data)
+        const unwrappedData = toValue(data);
 
         try {
             // Close any existing toasts before validation
-            toaster.close()
+            toaster.close();
 
             // Validate the data against the schema
-            await schema.validate(unwrappedData, { abortEarly: false })
+            await schema.validate(unwrappedData, { abortEarly: false });
 
-            return true
+            return true;
 
         } catch (error) {
             // Handle Yup validation errors
             if (error instanceof ValidationError) {
                 // Display the first error (Yup provides all errors)
-                const firstError = error.errors[0]
+                const firstError = error.errors[0];
 
                 // Extract field name from path if available
-                const fieldName = error.path || 'form'
+                const fieldName = error.path || 'form';
 
                 toaster.error(
                     `Please verify your ${fieldName}`,
                     firstError
-                )
+                );
             } else {
                 // Handle unexpected errors
-                console.error('Validation error:', error)
-                toaster.error('Validation failed', 'An unexpected error occurred')
+                console.error('Validation error:', error);
+                toaster.error('Validation failed', 'An unexpected error occurred');
             }
 
-            return false
+            return false;
         }
-    }
+    };
 
     /**
      * Creates a validator function bound to a specific schema
      */
     const createValidator = <TData extends AnyObject>(schema: ObjectSchema<TData>) => {
-        return (data: MaybeRef<TData>) => validate(data, schema)
-    }
+        return (data: MaybeRef<TData>) => validate(data, schema);
+    };
 
     return {
         validate,
-        createValidator
-    }
-}
+        createValidator,
+    };
+};

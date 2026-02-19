@@ -1,14 +1,14 @@
-import 'pinia'
+import 'pinia';
 import { computed, type Ref } from 'vue';
 import {
     useMfaApi,
     type MfaMethod,
     type MfaApi,
     type MfaGetResponse,
-    type ApiConfig
+    type ApiConfig,
 } from '@vnuge/vnlib.browser';
 import { useAsyncState } from '@vueuse/core';
-import { PiniaPluginContext, PiniaPlugin } from 'pinia'
+import { PiniaPluginContext, PiniaPlugin } from 'pinia';
 import { find, includes } from 'lodash-es';
 import { storeExport } from './index';
 
@@ -50,7 +50,7 @@ declare module 'pinia' {
 export const mfaSettingsPlugin = (config: ApiConfig): PiniaPlugin => {
 
     return ({ store }: PiniaPluginContext): MfaSettingsStore => {
-        const mfaConfig = useMfaApi(config)
+        const mfaConfig = useMfaApi(config);
 
         const { state: data, execute } = useAsyncState<MfaGetResponse>(async () => {
             //Wait for the account rpc data to be loaded from the server
@@ -58,37 +58,37 @@ export const mfaSettingsPlugin = (config: ApiConfig): PiniaPlugin => {
 
             //Ensure the user is logged in and MFA is enabled
             if (!accStatus.status.authenticated || !mfaConfig.isEnabled(accStatus)) {
-                return {} as MfaGetResponse
+                return {} as MfaGetResponse;
             }
 
             try {
 
                 //errors are swallowed here
-                return await mfaConfig.getData()
+                return await mfaConfig.getData();
             }
             catch (e) {
-                console.error('MFA Failure', "Failed to load MFA settings");
-                return {} as MfaGetResponse
+                console.error('MFA Failure', 'Failed to load MFA settings');
+                return {} as MfaGetResponse;
             }
-        }, {} as any, { delay: 100, immediate: true })
+        }, {} as any, { delay: 100, immediate: false });
 
         const isEnabled = (type: MfaMethod): Ref<boolean> => {
             return computed(() => {
-                const m = find(data.value.methods, m => m.type === type)
-                return m ? m.enabled : false
-            })
-        }
+                const m = find(data.value.methods, m => m.type === type);
+                return m ? m.enabled : false;
+            });
+        };
 
         const isSupported = (type: MfaMethod): Ref<boolean> => {
-            return computed(() => includes(data.value.supported_methods, type))
-        }
+            return computed(() => includes(data.value.supported_methods, type));
+        };
 
         const getDataFor = <T>(type: MfaMethod): Ref<T | undefined> => {
             return computed(() => {
-                const m = find(data.value.methods, m => m.type === type)
-                return m ? m.data as T : undefined
-            })
-        }
+                const m = find(data.value.methods, m => m.type === type);
+                return m ? m.data as T : undefined;
+            });
+        };
 
         return storeExport({
             mfa: {
@@ -99,6 +99,6 @@ export const mfaSettingsPlugin = (config: ApiConfig): PiniaPlugin => {
                 getDataFor,
                 refresh: execute,
             },
-        }) as unknown as MfaSettingsStore
-    }
-}
+        }) as unknown as MfaSettingsStore;
+    };
+};

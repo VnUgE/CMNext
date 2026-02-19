@@ -1,7 +1,7 @@
-import { get, set, watchDebounced } from "@vueuse/core";
-import { isEqual } from "lodash-es";
-import { watch, MaybeRef, ref, computed, Ref, toRef } from "vue";
-import * as Yup from "yup";
+import { get, set, watchDebounced } from '@vueuse/core';
+import { assign, forEach, isEqual } from 'lodash-es';
+import { type MaybeRef, shallowRef, computed, type Ref, watch, reactive, Reactive } from 'vue';
+import * as Yup from 'yup';
 
 export interface ErrorObject {
     readonly isError: boolean;
@@ -9,8 +9,8 @@ export interface ErrorObject {
 }
 
 export interface EditBuffer<T> {
-    readonly raw: Readonly<Ref<T>>;
-    readonly editBuffer: Ref<T>;
+    readonly raw: Ref<T>;
+    readonly buffer: Reactive<T>;
     readonly modified: Ref<boolean>;
     readonly errors: Ref<Record<keyof T, ErrorObject>>;
     revert(): void;
@@ -21,19 +21,43 @@ export const useEditBuffer = <T extends Yup.AnyObject>(
     initialValue: MaybeRef<T | undefined>,
     schema: Yup.ObjectSchema<T>
 ): EditBuffer<T> => {
-    const raw = toRef(() => get(initialValue) || {} as T);
-    const editBuffer = ref<T>(raw.value || {} as T);
-    const rawErrors = ref<Record<keyof T, ErrorObject>>({});
+    const raw = computed(() => get(initialValue) || {} as T);
+    const buffer = reactive<T>({} as T);
+    
+    const rawErrors = shallowRef<Record<keyof T, ErrorObject>>({} as Record<keyof T, ErrorObject>);
 
     const modified = computed(() => {
-        const rawValue = { ...raw.value };
-        const editValue = { ...editBuffer.value };
         // Extract plain object values for comparison
-        return !isEqual(editValue, rawValue);
+        return !isEqual({ ...buffer }, { ...raw.value });
     });
 
+    const revert = () => assign(buffer, raw.value);
+
+    const validate = async () => {
+        try {
+            await schema.validate({ ...buffer }, { abortEarly: false });
+            set(rawErrors, {}); // Clear errors if validation passes
+            return true;
+        }
+        catch (validationError: any) {
+            const validationErrors: Record<keyof T, ErrorObject> = {} as Record<keyof T, ErrorObject>;
+
+            if (validationError.inner) {
+                forEach(validationError.inner, (err: any) => {
+                    validationErrors[err.path as keyof T] = {
+                        isError: true,
+                        message: err.message,
+                    };
+                });
+            }
+
+            set(rawErrors, validationErrors); // Populate errors object
+            return false;
+        }
+    };
+
     // Proxy to ensure default ErrorObject for any property
-    const errors = computed(() => {
+    const errors = computed<Record<keyof T, ErrorObject>>(() => {
         return new Proxy(rawErrors.value, {
             get(target, prop: string) {
                 if (!(prop in target)) {
@@ -48,38 +72,14 @@ export const useEditBuffer = <T extends Yup.AnyObject>(
         });
     });
 
-    const revert = () => set(editBuffer, { ...raw.value });
-
-    const validate = async () => {
-        try {
-            await schema.validate(editBuffer.value, { abortEarly: false });
-            set(rawErrors, {}); // Clear errors if validation passes
-            return true;
-        }
-        catch (validationError: any) {
-            const validationErrors: Record<keyof T, ErrorObject> = {} as Record<keyof T, ErrorObject>;
-
-            if (validationError.inner) {
-                validationError.inner.forEach((err: any) => {
-                    validationErrors[err.path as keyof T] = {
-                        isError: true,
-                        message: err.message,
-                    };
-                });
-            }
-
-            set(rawErrors, validationErrors); // Populate errors object
-            return false;
-        }
-    };
-
     // If the raw/initial data changes, revert the editBuffer to the new raw data
-    watch(raw, revert);
-    watchDebounced(editBuffer, validate, { debounce: 300 });
+    watch(raw, v => assign(buffer, v), { immediate: true });
+
+    watchDebounced(buffer, validate, { debounce: 300 });
 
     return {
         raw,
-        editBuffer,
+        buffer,
         modified,
         errors,
         revert,
