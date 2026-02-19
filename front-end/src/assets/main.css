@@ -1,11 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @plugin "daisyui" {
     base: true;
     styled: true;
     dark: dim;
     utils: true;
-    themes: winter, dim --default, cupcake, dracula, forest, luxury, corporate;
+    themes: all;
 }
 
 textarea.input {
@@ -56,7 +56,7 @@ h6 {
 .float-label {
     @apply mt-5 relative;
 
-    &>label {
+    & > label {
         @apply absolute top-0 left-0 bottom-0 block pl-3 ease-linear duration-75 opacity-0;
     }
 
@@ -78,7 +78,7 @@ h6 {
 }
 
 .form-toast,
-.general-toast{
+.general-toast {
     .vue-notification-template {
         @apply rounded border-s-4 p-4 bg-base-200;
 
@@ -108,128 +108,10 @@ h6 {
     }
 }
 
-#account-security-settings .modal-body {
-    @apply w-full sm:max-w-md;
-}
-#account-template{  
-
-  .page-link{
-    font-size: 1.1rem;
-    @apply border-b-2 border-transparent cursor-pointer mx-2 px-1;
-  }
-
-  .page-link.active{
-    @apply border-primary;
-  }
-
-  .acnt-content-container{
-    @apply m-auto w-full max-w-3xl;
-  }
-
-  .panel-container{
-
-  }
-
-  .text-color-foreground{
-    @apply text-base-content;
-  }
-
-  .panel-container .panel-header{
-    @apply flex flex-row px-2;
-  }
-
-  .panel-container .panel-content{
-    @apply bg-base-100 border border-base-content/10;
-    @apply m-auto w-full border sm:rounded shadow-md sm:p-4 p-3 sm:my-3 my-2;
-  }
-
-  .panel-container .panel-header .panel-title{
-    @apply my-auto;
-  }
-}
-
-#account-profile {
-
-  p.profile-text{
-    @apply p-2 md:py-3 md:my-1 text-sm;
-  }
-  
-  .locked-info{
-    @apply w-full flex flex-col sm:flex-row sm:justify-evenly pt-3 sm:pb-1;
-  }
-
-  #profile-edit-form .input-group {
-    @apply pt-4;
-
-    .input-container{
-      @apply sm:p-2 px-2 py-0.5 rounded-md flex sm:flex-row sm:gap-4;
-
-      &.dirty.data-invalid.dynamic-form .dynamic-input{
-        @apply border-red-600;
-      }
-
-      &.dirty.data-invalid.dynamic-form label.dynamic-form{
-        @apply text-red-500;
-      }
-
-      &.dirty.dynamic-form label.dynamic-form{
-        @apply text-primary;
-      }
-
-      select:disabled{
-        @apply appearance-none;
-      }
-    }
-
-    .input-container:nth-child(odd) {
-      @apply bg-base-100;
-    }
-
-    .dynamic-form.dynamic-input {
-      @apply py-2 w-full bg-transparent border-x-0 border-t-0 border-b border-base-200 pl-2;
-
-      &:disabled {
-        @apply py-1 border-transparent; 
-      }
-    }
-
-    .dynamic-form.select {
-
-    }
-
-    label.dynamic-form{
-      flex-basis: 15%;
-      @apply sm:text-right my-auto;
-    }
-  }
-}
-
-#password-reset-form{
-
-  .dynamic-form.input-container{
-    @apply flex flex-col sm:flex-row my-4 max-w-lg mx-auto;
-    
-    label{
-      flex-basis: 40%;
-      @apply pl-1 text-sm sm:text-right my-auto mr-2 mb-1 sm:mb-auto;
-    }
-  }
-  
-  .dynamic-form.dynamic-input.input {
-    @apply p-2 w-full border rounded-md;
-    @apply focus:border-primary-content bg-base-100;
-  }
-  .dirty.data-invalid.dynamic-form.input-container input{
-    @apply border-red-500 focus:border-red-500;
-  }
-}
-
-#totp-settings .otp-input input {
-    @apply w-12 text-center text-lg mx-1 focus:border-primary;
-}
+/* Legacy account styles removed - migrated to DaisyUI components */
 
 #totp-login-form {
-   .otp-input {
+    .otp-input {
         @apply rounded-sm gap-2;
 
         input {
@@ -241,7 +123,7 @@ h6 {
 }
 
 #oauth-apps .app-container .no-apps-container {
-  @apply w-full flex h-36 sm:border sm:rounded-md mt-4 mb-20 border-base-200;
+    @apply w-full flex h-36 sm:border sm:rounded-md mt-4 mb-20 border-base-200;
 }
 
 #reg-template .content-container {
@@ -254,91 +136,88 @@ h6 {
 }
 
 #enclosure-dialog {
-  .dialog {
-      @apply w-full max-w-3xl px-8 pb-8 pt-4 mx-auto mb-auto border rounded shadow-md;
-      @apply bg-base-100 text-base-content border-base-300;
-  }
-  
-  .dynamic-form.input-group {
-      @apply grid grid-cols-2 gap-4;
-  }
+    .dialog {
+        @apply w-full max-w-3xl px-8 pb-8 pt-4 mx-auto mb-auto border rounded shadow-md;
+        @apply bg-base-100 text-base-content border-base-300;
+    }
 
-  .dynamic-form.input-container {
-      @apply flex flex-col;
-  }
+    .dynamic-form.input-group {
+        @apply grid grid-cols-2 gap-4;
+    }
+
+    .dynamic-form.input-container {
+        @apply flex flex-col;
+    }
 }
 
-
 #social-login-template {
-  .entry-container {
-    @apply w-full max-w-[28rem] p-6 text-center sm:border rounded-sm sm:shadow-sm;
-    @apply bg-base-100 text-base-content border-base-300;
-  }
+    .entry-container {
+        @apply w-full max-w-[28rem] p-6 text-center sm:border rounded-sm sm:shadow-sm;
+        @apply bg-base-100 text-base-content border-base-300;
+    }
 }
 
 button.page-button {
-  @apply btn btn-circle btn-sm btn-ghost;
+    @apply btn btn-circle btn-sm btn-ghost;
 }
 
 .md-pannel {
-  @apply p-6 min-w-[32rem] bg-base-100 shadow-md border border-base-300;
+    @apply p-6 min-w-[32rem] bg-base-100 shadow-md border border-base-300;
 }
 
 .preview-image {
-  @apply max-h-[53rem];
+    @apply max-h-[53rem];
 }
 
-
 .search-results {
-  @apply mt-3;
+    @apply mt-3;
 }
 
 .result {
-  @apply flex flex-row items-center justify-between;
-  @apply p-1 cursor-pointer hover:bg-base-200;
+    @apply flex flex-row items-center justify-between;
+    @apply p-1 cursor-pointer hover:bg-base-200;
 
-  .id {
-      @apply text-sm;
-  }
+    .id {
+        @apply text-sm;
+    }
 
-  .controls {
-      @apply min-w-[4rem] text-center;
-  }
+    .controls {
+        @apply min-w-[4rem] text-center;
+    }
 
-  &.name {
-      @apply text-sm;
-  }
+    &.name {
+        @apply text-sm;
+    }
 }
 
-
 #feed-custom-fields {
-  @apply w-full max-w-[80%] mx-auto py-4 my-5;
+    @apply w-full max-w-[80%] mx-auto py-4 my-5;
 
-  .json > .jse-main {
-      @apply w-full min-h-[40rem] rounded bg-transparent mx-auto;
-  }
+    .json > .jse-main {
+        @apply w-full min-h-[40rem] rounded bg-transparent mx-auto;
+    }
 
-  .feed-fields {
-      @apply mx-auto gap-4 flex flex-row justify-center my-6;
-      
-      input.primary {
-          @apply w-full;
-      }
+    .feed-fields {
+        @apply mx-auto gap-4 flex flex-row justify-center my-6;
 
-      textarea.primary {
-          @apply w-full h-full tracking-wider font-mono p-3 text-sm;
-      }
+        input.primary {
+            @apply w-full;
+        }
 
-      textarea.invalid {
-          @apply border-error;
-      }
-  }
+        textarea.primary {
+            @apply w-full h-full tracking-wider font-mono p-3 text-sm;
+        }
 
-  .xml {
-      @apply tracking-wider font-mono p-3 text-sm border border-base-300 rounded whitespace-pre-wrap;
-  }
+        textarea.invalid {
+            @apply border-error;
+        }
+    }
 
-  .xml.invalid {
-      @apply border-error;
-  }
+    .xml {
+        @apply tracking-wider font-mono p-3 text-sm border border-base-300 rounded whitespace-pre-wrap;
+    }
+
+    .xml.invalid {
+        @apply border-error;
+    }
 }
