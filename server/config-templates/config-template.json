@@ -193,6 +193,7 @@
   "passwords": {
     "custom_assembly": "${PASSWORD_ASM_PATH}",  //A custom assembly path empty string will load default
     "argon2_lib_path": "${ARGON2_LIB_PATH}",    //The path to the Argon2 native library, if not specified, the default will be used
+    "disable_pepper": ${PASSWORD_PEPPER_DISABLED:-false},
 
     //Optionally specify parameters, or use defaults. If defined, you must specify all parameters
     //Not all Argon2 native libraries support these options
