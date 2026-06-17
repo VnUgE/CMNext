@@ -50,7 +50,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         ///<inheritdoc/>
         public override async Task ConfigureServiceAsync(PluginBase plugin)
         {
-            using ISecretResult? secret = await plugin.Secrets().GetSecretAsync("storage_secret");
+            using ISecretResult? secret = await plugin.Secrets().GetAsync("storage_secret");
 
             Client.WithEndpoint(Config.ServerAddress)
                     .WithCredentials(Config.ClientId, secret.Result.ToString())

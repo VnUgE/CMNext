@@ -70,7 +70,7 @@ namespace Content.Publishing.Blog.Admin.Storage
 
         public override async Task ConfigureServiceAsync(PluginBase plugin)
         {
-            using ISecretResult password = await plugin.Secrets().GetSecretAsync("storage_secret");
+            using ISecretResult password = await plugin.Secrets().GetAsync("storage_secret");
 
             //Init client credentials
             _client.Credentials = new NetworkCredential(_storageConf.ClientId, password?.Result.ToString());
