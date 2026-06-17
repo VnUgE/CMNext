@@ -12,7 +12,7 @@ tasks:
       - for: ["argon2", "vnlib_compress", "vnlib_rpmalloc"]
         cmd: cp "{{ .DEV_SERVER_DIR }}/arch/windows-x86_64/lib/{{ .ITEM }}/{{ .ITEM }}.dll" "{{ .DEV_SERVER_DIR }}/lib/{{ .ITEM }}/{{ .ITEM }}.dll"
 
-  mise-install-vnlib:
+  mise-postinstall:
     dir: server/
     cmds:
       - cmd: vnbuild deps install --file "{{ .CMNEXT_SERVER_DIR }}/deps.json" --show-progress
@@ -71,5 +71,5 @@ tasks:
 
   clean:
     cmds:
-      - cmd: rm -rf "{{ .DEV_SERVER_DIR }}"
-      - cmd: rm -rf data/
+      - for: [ config/, dist/, lib/, plugins/, ssl/, webserver/, data/, taskfile.yaml]
+        cmd: rm -rf "{{ .DEV_SERVER_DIR }}/{{ .ITEM }}"

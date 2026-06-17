@@ -46,7 +46,7 @@ DEV_SERVER_DIR = "{{ config_root }}/server"
 _.file = "{{ config_root }}/dev.env"
 
 [hooks]
-postinstall = "task mise-install-vnlib"
+postinstall = "task mise-postinstall"
 
 [tasks.setup]
 description = "Pull dependencies and build the server package (first-time setup)"
