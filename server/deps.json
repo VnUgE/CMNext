@@ -1,94 +1,132 @@
 {
   "dependencies": [
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/VNLib.WebServer/linux-x64-release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/VNLib.WebServer/linux-x64-release.tgz",
       "dest": "build/webserver",
-      "checksum": "sha256:D1C180A08949FF0E749172E14EAF36CF6113EF60CE1BF23BF702D6EFCAB42649",
-      "unpack": true
+      "checksum": "sha256:258C1AE0993D7A4FDCA8351F98B8276CF14B49655F3C4815167AFBF183FC59F8",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/VNLib.Net.Compression/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/VNLib.Net.Compression/release.tgz",
       "dest": "build/lib/vnlib.net.compression",
-      "checksum": "sha256:E9BB3CA6BB803B9923ACF2A233ECE1D8BA1B00B2C9F8CA0F52A78B7A0AF080DE",
-      "unpack": true
+      "checksum": "sha256:5A3336F5E2775F0CA68C62B993838BCAAED8A13172A38C24D61AD8AA8B75615B",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/vnlib_compress/msvc-x64-release-vnlib_compress.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/vnlib_compress/msvc-x64-release-vnlib_compress.tgz",
       "dest": "build/arch/windows-x86_64/lib/vnlib_compress",
-      "checksum": "sha256:AFE14238AE71C23EAA3DE0EE23075B30639C1EEB894ED87ECBD862D0D4998BDA",
-      "unpack": true
+      "checksum": "sha256:0797D68F1519B41680472C4947F01DE6527A27C7553C92F907E0A813A2729A2B",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/vnlib_compress/src.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/vnlib_compress/src.tgz",
       "dest": "build/lib/vnlib_compress",
-      "checksum": "sha256:743758BF648DE46B195938C4A0C365E3F349762CFDBBBBAA48609397BE7A08A2",
-      "unpack": true
+      "checksum": "sha256:F0065BFC14440AF46FB4CB51F856E3B52620753B844B04C573B7F9F4972E0BD4",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/argon2/msvc-x64-release-argon2.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/argon2/msvc-x64-release-argon2.tgz",
       "dest": "build/arch/windows-x86_64/lib/argon2",
-      "checksum": "sha256:5AE667D9E5B7A0B8C9C0721D2365430B7BBCE63CEDD0372F3AEB83909C60DA19",
-      "unpack": true
+      "checksum": "sha256:3425AEFB0AAB99462E464610CDA822FD31FF9D6BF76E7863C6FA128105C1C569",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/argon2/src.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/argon2/src.tgz",
       "dest": "build/lib/argon2",
-      "checksum": "sha256:AEA31275174AD9CB0B8BB111AECF01F5B0C71DA74C472CB09B8175A137B3E8A0",
-      "unpack": true
+      "checksum": "sha256:E834506F25F4B4C5B340B76771DBF61A149D29BE0FD1CF263E40861BCBA79152",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/vnlib_rpmalloc/src.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/vnlib_rpmalloc/src.tgz",
       "dest": "build/lib/vnlib_rpmalloc",
-      "checksum": "sha256:334E999BB4B406FB4077C8D1A11CE3446DC9B37ABEDF2868A73477840FC9AB0A",
-      "unpack": true
+      "checksum": "sha256:0E30E13C8F68EEAEE3A66956C30D13615EA083F7E65508FBEA10049732CC239C",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/de4a8659092678518a95ffc25afe22b3b257e7b2/vnlib_rpmalloc/msvc-x64-release-vnlib_rpmalloc.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Core/1d65bcfd099f98e41f4f96c6ae003509d92ea506/vnlib_rpmalloc/msvc-x64-release-vnlib_rpmalloc.tgz",
       "dest": "build/arch/windows-x86_64/lib/vnlib_rpmalloc",
-      "checksum": "sha256:737820765B6017BE8D13E2A2086FC8994125F8B1F2D34153B187BD619ED300E9",
-      "unpack": true
+      "checksum": "sha256:4ACD82E4B9489D7E2FFB04C90138A871F8EACC6280D2720541F6FA9C6935F86C",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Plugins.Extensions/5e88df1a9086015b8acf69802cd642edf74cfe96/VNLib.Plugins.Extensions.Loading.Sql.SQLite/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Plugins.Extensions/30d7296576af28de5b6299e530f086e415901528/VNLib.Plugins.Extensions.Loading.Sql.SQLite/release.tgz",
       "dest": "build/plugins/assets/vnlib.plugins.extensions.loading.sql.sqlite",
-      "checksum": "sha256:4DD63973E5401D2DC119E5A5EB31A0A3D26EE83E03336A5EBA869A912CC8DEC1",
-      "unpack": true
+      "checksum": "sha256:F8DE776E5CD4F2CDEF83807FC758AE43E2818CFC3F73D6997947857BD62545C7",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/e8bfb4047cb4fe6cab38bbbb8551af6bf9d3dc88/VNLib.Plugins.Essentials.Accounts/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/VNLib.Plugins.Essentials.Accounts/release.tgz",
       "dest": "build/plugins/Essentials.Accounts",
-      "checksum": "sha256:083F2B2F21D3A10BAAA58AF091D6D7BE720DCD2DD65882B850C30912048D8286",
-      "unpack": true
+      "checksum": "sha256:096F83E9EF381939FB29D07125BD8993AB5D49798FAB51BC698CC122D878EDB9",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/e8bfb4047cb4fe6cab38bbbb8551af6bf9d3dc88/VNLib.Plugins.Essentials.Content.Routing/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/VNLib.Plugins.Essentials.Content.Routing/release.tgz",
       "dest": "build/plugins/PageRouter",
-      "checksum": "sha256:CA225FA1D6A7CFC950305C994AAEAA57DA16FF22EDC232D83103866E4B662E54",
-      "unpack": true
+      "checksum": "sha256:A80CEA4BE32C3ED9EA39925DAD86CA7171807F297D242FAF1FE551ABE3C42412",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/e8bfb4047cb4fe6cab38bbbb8551af6bf9d3dc88/VNLib.Plugins.Essentials.Users/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/VNLib.Plugins.Essentials.Users/release.tgz",
       "dest": "build/plugins/assets/vnlib.plugins.essentials.users",
-      "checksum": "sha256:A5E84FA4F3500B237988A923CFF28EF0E439AE82DF155CED6FF4D816845451D2",
-      "unpack": true
+      "checksum": "sha256:08D63EAD4876DB6759B7D956C9BB325BD12EA5B4B282B2DDCE9CFDA8E17DBFFE",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/e8bfb4047cb4fe6cab38bbbb8551af6bf9d3dc88/VNLib.Plugins.Sessions.VNCache/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/VNLib.Plugins.Sessions.VNCache/release.tgz",
       "dest": "build/plugins/assets/vnlib.plugins.sessions.vncache",
-      "checksum": "sha256:503E9E8096B4452C14B91544DA932E1AB5E6F04939C9F38C880370E5E4127C10",
-      "unpack": true
+      "checksum": "sha256:05E7D35B8F3634CB53CACA5E23E6061FE9D4A5D83E2FF00E61B0325D87A263B8",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/e8bfb4047cb4fe6cab38bbbb8551af6bf9d3dc88/VNLib.Plugins.Sessions.SessionProvider/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/VNLib.Plugins.Sessions.SessionProvider/release.tgz",
       "dest": "build/plugins/SessionProvider",
-      "checksum": "sha256:18E45D6AC8A368E38F006F21C192745BE06935E2DCAC49454EF2BEE97C355655",
-      "unpack": true
+      "checksum": "sha256:08CD76DF3785CF0663C0AF67710C9C374C9717AC501408381E97C6AA33005BCB",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     },
     {
-      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Data.Caching/648e8564bdc741f783ca83440557dd81188d55ed/VNLib.Data.Caching.Providers.VNCache/release.tgz",
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/VNLib.Plugins.Essentials.Accounts.AppData/release.tgz",
+      "dest": "build/plugins/Essentials.AppData",
+      "checksum": "sha256:C61D5CC63810687668645BC81AC6170A6962414B6B22429ACCE64EC65F1EC0BF",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
+    },
+    {
+      "source": "https://www.vaughnnugent.com/public/resources/software/builds/VNLib.Data.Caching/8897c8e10ddd2302cb72766737f43f1b1187cf80/VNLib.Data.Caching.Providers.VNCache/release.tgz",
       "dest": "build/plugins/assets/vnlib.data.caching.providers.vncache",
-      "checksum": "sha256:B8405031748ADF8A9B72CCB0C7CC2511754B6E2C6D9BA024E30D9CF8A6DB60FA",
-      "unpack": true
+      "checksum": "sha256:2107B2E7E5718B9D539CC96032930F9B9F3822446DCF2E1DD99E333349F8D9D0",
+      "insecure": false,
+      "unpack": true,
+      "allow_overwrite": true
     }
   ],
   "allow_duplicates": false
