@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2025 Vaughn Nugent
+* Copyright (c) 2026 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -19,12 +19,21 @@
 * along with this program. If not, see https://www.gnu.org/licenses/.
 */
 
-using VNLib.Plugins;
-using VNLib.Utils.Logging;
-using VNLib.Plugins.Extensions.Loading.Routing;
-using VNLib.Plugins.Extensions.Loading.Routing.Mvc;
+using System;
+using System.Diagnostics;
 
 using Content.Publishing.Blog.Admin.Endpoints;
+
+using VNLib.Plugins;
+using VNLib.Plugins.Essentials.Accounts;
+using VNLib.Plugins.Essentials.Users;
+using VNLib.Plugins.Extensions.Loading;
+using VNLib.Plugins.Extensions.Loading.Routing;
+using VNLib.Plugins.Extensions.Loading.Routing.Mvc;
+using VNLib.Plugins.Extensions.Loading.Users;
+using VNLib.Utils;
+using VNLib.Utils.Logging;
+using VNLib.Utils.Memory;
 
 namespace Content.Publishing.Blog.Admin
 {
@@ -37,9 +46,12 @@ namespace Content.Publishing.Blog.Admin
         { 
             this.Route<ChannelEndpoint>();
 
-            this.Route<PostsEndpoint>();            
+            this.Route<PostsEndpoint>();
             
             this.Route<ContentEndpoint>();
+
+            // Setup debug user
+            ConfigureDevUser();
 
             Log.Information("Plugin loaded");
             PrintHelloMessage();
@@ -67,6 +79,83 @@ namespace Content.Publishing.Blog.Admin
 ******************************************************************************";
            
             Log.Information(template);
+        }
+
+        // Only include on debug builds
+        [Conditional("DEBUG")]
+        private void ConfigureDevUser()
+        {
+            string? devUserName = Environment.GetEnvironmentVariable("CMNEXT_DEBUG_USERNAME");
+            string? devUserPass = Environment.GetEnvironmentVariable("CMNEXT_DEBUG_PASSWORD");
+
+            // See if the user defined a debug user for startup
+            if (!HostArgs.HasArgument("--cmnext-debug-setup"))
+            {
+                return;
+            }
+
+            if (!this.IsDebug())
+            {
+                Log.Error("Plugin is not in debug mode, cannot setup debug user. Restart the server with plugins in debug mode");
+                return;
+            }
+
+            UserManager users = this.GetOrCreateSingleton<UserManager>();          
+
+            if (string.IsNullOrWhiteSpace(devUserName))
+            {
+                Log.Error("CMNext debug username is empty or whitespace");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(devUserPass))
+            {
+                Log.Error("CMNext debug password is empty or whitespace");
+                return;
+            }
+
+            Log.Information("Setting up new cmnext debug user account");
+
+            _ = this.ObserveWork(async () =>
+            {
+                using (IUser? user = await users.GetUserFromUsernameAsync(devUserName))
+                {
+                    // Deletes user and recreates it
+                    if (user is not null)
+                    {
+                        if (!HostArgs.HasArgumentValue("--cmnext-debug-reset"))
+                        {
+                            Log.Warn("Debug account exists but '--cmnext-debug-reset' is not set. User account will not be re-created");
+                            return;
+                        }
+
+                        Log.Warn("User account exists and will be deleted and reset");
+
+                        user.Delete();
+                        await user.ReleaseAsync();
+                    }
+                }
+
+                //Create the user creation request
+                UserCreationRequest creation = new()
+                {
+                    Username        = devUserName,
+                    InitialStatus   = UserStatus.Active,
+                    Privileges      = AccountUtil.MINIMUM_LEVEL,
+                    Password        = PrivateString.ToPrivateString(devUserPass, false)
+                };
+
+                using (IUser user = await users.CreateUserAsync(creation, null, users.GetHashProvider()))
+                {
+                    //Set local account
+                    user.SetAccountOrigin(AccountUtil.LOCAL_ACCOUNT_ORIGIN);
+                    user.EmailAddress = devUserPass;
+
+                    await user.ReleaseAsync();
+                }
+
+                Log.Information("Successfully created user {id}", devUserName);
+            });
         }
     }
 }
