@@ -13,6 +13,16 @@ vars:
   TARGET_DIR: "{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}"
 
 tasks:
+  default:
+    dir: src/
+    cmds:
+      - cmd: dotnet build {{ .CLI_ARGS }}
+
+  dev:
+    dir: src/
+    cmds:
+      - cmd: dotnet watch build {{ .CLI_ARGS }}
+
   #postbuild to package artifacts into the archives for upload
   postbuild_success:
     desc: "WARNING: For vnbuild use only. Do not run manually."

@@ -1,0 +1,59 @@
+min_version = "2024.9.5"
+
+[bootstrap.packages]
+"apt:build-essential" = "latest"
+"apt:libicu-dev" = "latest"
+"dnf:gcc" = "latest"
+
+[tools]
+node = "24"
+dotnet = "8.0"
+task = "3.50"
+process-compose = "1.110"
+cmake = "4.3"
+
+[tools."http:minio"]
+version = "RELEASE.2025-09-07T16-13-09Z"
+
+[tools."http:minio".platforms]
+windows-x64 = { url = "https://dl.min.io/server/minio/release/windows-amd64/minio.exe", checksum = "sha256:af709e6ba68488404e85acdd22a3030d0f5e56a108d4b27d744f18ceb50861b4" }
+linux-x64 = { url = "https://dl.min.io/server/minio/release/linux-amd64/minio", checksum = "sha256:7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f" }
+linux-arm64 = { url = "https://dl.min.io/server/minio/release/linux-arm64/minio", checksum = "sha256:5c83cd2cf151717ba0243f73e1c7802ff36e272b67144bdd7f1f7d684fd6f03d" }
+osx-x64 = { url = "https://dl.min.io/server/minio/release/darwin-amd64/minio", checksum = "sha256:4759080aeef7385aaceaac1131c30aaeb99605921553967dc6d3ef4e16ac64f9" }
+osx-arm64 = { url = "https://dl.min.io/server/minio/release/darwin-arm64/minio", checksum = "sha256:7c3b3039b76e55a1b80935848ed83998d5e8d317374f87851f46a019ff5c0aa4" }
+
+[tools."http:vnbuild"]
+version = "1.3.0-no-ref-dep-manager.1"
+
+[tools."http:vnbuild".platforms]
+windows-x64 = { url = "https://www.vaughnnugent.com/public/resources/software/builds/vnbuild/5c45b67b82172479f5e57ab79b59553042f50e92/vnbuild/win-x64.tgz", checksum = "sha256:7CFB5A70C93AA5C407F5847992B5984F741B88B51680E0581FDB748E7CE6A779" }
+linux-x64 = { url = "https://www.vaughnnugent.com/public/resources/software/builds/vnbuild/5c45b67b82172479f5e57ab79b59553042f50e92/vnbuild/linux-x64.tgz", checksum = "sha256:9C4B616C91AC1FB5B453C800558FEDD7A9135FD5F6ECE76C320E1ADC6B16F881" }
+linux-arm64 = { url = "https://www.vaughnnugent.com/public/resources/software/builds/vnbuild/5c45b67b82172479f5e57ab79b59553042f50e92/vnbuild/linux-arm64.tgz", checksum = "sha256:A2D4A8898F194531A7CF919D571F3911E68B8E3D80940BA6B52EA24ECC577BD8" }
+osx-x64 = { url = "https://www.vaughnnugent.com/public/resources/software/builds/vnbuild/5c45b67b82172479f5e57ab79b59553042f50e92/vnbuild/osx-x64.tgz", checksum = "sha256:E0B8D988DF79DE2A56BB35CB20873202DEED6C89D9341622875F8B5A14BD56F0" }
+osx-arm64 = { url = "https://www.vaughnnugent.com/public/resources/software/builds/vnbuild/5c45b67b82172479f5e57ab79b59553042f50e92/vnbuild/osx-arm64.tgz", checksum = "sha256:B2E7C7A7BBF38F7A8E1810926912A55E3CCED578B0716DE7B1606B9C5B3BF2A9" }
+
+[env]
+DOTNET_CLI_TELEMETRY_OPTOUT=1
+DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+CMNEXT_ROOT = "{{ config_root }}/.."
+CMNEXT_FRONTEND_DIR = "{{ config_root }}/../front-end"
+CMNEXT_BACKEND_DIR = "{{ config_root }}/../back-end"
+CMNEXT_SERVER_DIR = "{{ config_root }}/../server"
+CMNEXT_LIB_DIR = "{{ config_root }}/../lib"
+MINIO_DATA_DIR = "{{ config_root }}/data/minio"
+DEV_SERVER_DIR = "{{ config_root }}/server"
+_.file = "{{ config_root }}/dev.env"
+
+[tasks.setup]
+description = "Pull dependencies and build the server package (first-time setup)"
+run = "task mise-setup"
+
+[tasks.dev]
+description = "Start dev environment, skip initial setup (for when build already exists)"
+run = "process-compose up"
+
+[tasks.dev-debug-server]
+run = "task debug-server"
+
+[tasks.clean]
+run = "task clean"

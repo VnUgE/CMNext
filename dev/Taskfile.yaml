@@ -1,0 +1,76 @@
+# https://taskfile.dev
+# CMNext Development Environment
+
+version: "3.45"
+
+tasks:
+  copy-native-libs:
+    desc: copies native windows dlls to our local lib/ directory tree, vnbuild deps file pre-configures them into their target arch dir
+    internal: true
+    platforms: [windows]
+    requires:
+      vars: [ITEM]
+    cmds:
+      - for: ["argon2", "vnlib_compress", "vnlib_rpmalloc"]
+        cmd: cp "{{ .DEV_SERVER_DIR }}/arch/windows-x86_64/lib/{{ .ITEM }}/{{ .ITEM }}.dll" "{{ .DEV_SERVER_DIR }}/lib/{{ .ITEM }}/{{ .ITEM }}.dll"
+
+  mise-setup:
+    cmds:
+      - cmd: vnbuild deps install --file "{{ .CMNEXT_SERVER_DIR }}/deps.json" --show-progress
+      - cmd: mv build/ "{{ .DEV_SERVER_DIR }}"
+
+      - task: copy-native-libs
+      - cmd: rm -rf "{{ .DEV_SERVER_DIR }}/arch"
+
+      # copy release taskfile into target server dir and run setup task to prepare the server
+      - cmd: cp "{{ .CMNEXT_SERVER_DIR }}/release.taskfile.yaml" "{{ .DEV_SERVER_DIR }}/taskfile.yaml"
+      - cmd: cd "{{ .DEV_SERVER_DIR }}" && task setup && echo "Please ignore the SETUP INCOMPLETE error"
+
+  startup:
+    cmds:
+      # build the cmnext plguin first
+      - cmd: echo "Preparing CMNext plugin for first startup"
+        silent: true
+      - cmd: cd "{{ .CMNEXT_BACKEND_DIR }}" && task -- --output "{{ .DEV_SERVER_DIR }}/plugins/CMNext"
+      # build configuration files on startup
+      - task: build-config
+      # build frontent libs without the watch flag to init frontend libs
+      - cmd: echo "Preparing frontend libraries for first startup"
+      - cmd: cd '{{ .CMNEXT_LIB_DIR }}' && task dev-init-all && task dev-all
+
+  build-config:
+    desc: "Builds the server configuration files and substitudes variables from dev.env into configuration templates"
+    cmds:
+      - cmd: rm -r "{{ .DEV_SERVER_DIR }}/config"
+      - cmd: mkdir -p "{{ .DEV_SERVER_DIR }}/config"
+
+      - cmd: powershell "{{ .CMNEXT_SERVER_DIR }}/compile.ps1"
+          -inputDir '{{ .CMNEXT_SERVER_DIR }}/config-templates/'
+          -outputDir '{{ .DEV_SERVER_DIR }}/config'
+        platforms: [windows]
+
+      - task: compile-template-nix
+      - cmd: cp -f "{{ .CMNEXT_SERVER_DIR }}/config-templates/routes.xml" "{{ .DEV_SERVER_DIR }}/config/routes.xml"
+
+  compile-template-nix:
+    internal: true
+    platforms: [linux, darwin]
+    vars:
+      CONFIG_TEMPLATES:
+        sh: find '{{ .CMNEXT_SERVER_DIR }}/config-templates/' -type f -name "*.json"
+    cmds:
+      - for: { var: CONFIG_TEMPLATES }
+        cmd: bash "{{ .CMNEXT_SERVER_DIR }}/compile.sh" '{{ .ITEM }}' '{{ .DEV_SERVER_DIR }}/config/{{ .ITEM | toSlash | base | replace `-template.` `.` }}'
+
+  debug-server:
+    interactive: true
+    deps:
+      - startup
+    cmds:
+      - cmd: cd "{{ .DEV_SERVER_DIR }}" &&
+          dotnet webserver/VNLib.WebServer.dll --config config/config.json --verbose --users-db-init --cmnext-debug-setup
+
+  clean:
+    cmds:
+      - cmd: rm -rf "{{ .DEV_SERVER_DIR }}"
+      - cmd: rm -rf data/

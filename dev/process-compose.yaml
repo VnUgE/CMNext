@@ -1,0 +1,88 @@
+version: "0.5"
+
+is_tui_disabled: true
+
+# disabled to avoid polluting the environment with dev env files. Only inherit environment
+# from miser.
+is_dotenv_disabled: true
+
+environment:
+
+log_level: info
+
+vars:
+  PLUGIN_OUTPUT: ${DEV_SERVER_DIR}/plugins/CMNext
+
+processes:
+  # initializes the plugin for first webserver load
+  startup:
+    command: task startup
+    availability:
+      exit_on_termination: true
+      restart: "no"
+
+  minio:
+    command: minio server ${MINIO_DATA_DIR} --address ${MINIO_ADDRESS}
+    environment:
+      - "MINIO_ROOT_USER=${STORAGE_USERNAME}"
+      - "MINIO_ROOT_PASSWORD=${STORAGE_USERNAME}"
+    availability:
+      restart: "always"
+      max_restarts: 5
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 9000
+        path: /minio/health/live
+      initial_delay_seconds: 3
+      period_seconds: 3
+
+  backend:
+    command: task dev -- -- /p:OutDir={{ .PLUGIN_OUTPUT }}
+    working_dir: ${CMNEXT_BACKEND_DIR}
+    availability:
+      restart: "always"
+    depends_on:
+      startup:
+        condition: process_completed_successfully
+
+  webserver:
+    command: dotnet webserver/VNLib.WebServer.dll --config config/config.json --input-off --verbose
+    working_dir: ${DEV_SERVER_DIR}
+    availability:
+      restart: "always"
+      max_restarts: 5
+    depends_on:
+      startup:
+        condition: process_completed_successfully
+      backend:
+        condition: process_started
+      minio:
+        condition: process_healthy
+
+  #builds and watches frontend libraries for live frontend development
+  frontend-libs:
+    command: task dev-all --watch
+    working_dir: ${CMNEXT_LIB_DIR}
+    availability:
+      restart: "always"
+    depends_on:
+      startup:
+        condition: process_completed_successfully
+
+  # Vite dev server — proxies /api to backend via VITE_BACKEND_URL
+  frontend:
+    command: npm run dev
+    working_dir: ${CMNEXT_FRONTEND_DIR}
+    environment:
+      - "VITE_BACKEND_URL=http://127.0.0.1:8089"
+    availability:
+      restart: "always"
+      max_restarts: 5
+    depends_on:
+      startup:
+        condition: process_completed_successfully
+      frontend-libs:
+        condition: process_started
+      webserver:
+        condition: process_started
