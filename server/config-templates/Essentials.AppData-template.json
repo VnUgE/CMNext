@@ -1,3 +1,26 @@
 {
-     "debug": ${DEBUG_PLUGINS:-false},
+  "debug": ${DEBUG_PLUGINS:-false},
+
+  "web_endpoint": {
+    "path": "/api/app-data",    // The http path to the endpoint
+    "max_data_size": 8128,  // max data size in bytes
+
+    //Allowed client scopes. If empty will deny all requests
+    "allowed_scopes": [
+     "cmnext-preferences"
+    ]
+  },
+  
+  "storage": {
+    "type": "sql", //sql
+
+    "run_db_init":  true, //if true will create the required tables if they do not exist
+
+    "cache": {
+      "enabled": true,            //enables global cache if the server loaded a cache plugin
+      "prefix": "appdata",        //a static security prefix
+      "ttl": 3600,                //cache time to live in seconds
+      "force_write_back": false   //force write back to storage
+    }
+  }
 }
