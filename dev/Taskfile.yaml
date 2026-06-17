@@ -8,17 +8,17 @@ tasks:
     desc: copies native windows dlls to our local lib/ directory tree, vnbuild deps file pre-configures them into their target arch dir
     internal: true
     platforms: [windows]
-    requires:
-      vars: [ITEM]
     cmds:
       - for: ["argon2", "vnlib_compress", "vnlib_rpmalloc"]
         cmd: cp "{{ .DEV_SERVER_DIR }}/arch/windows-x86_64/lib/{{ .ITEM }}/{{ .ITEM }}.dll" "{{ .DEV_SERVER_DIR }}/lib/{{ .ITEM }}/{{ .ITEM }}.dll"
 
-  mise-setup:
+  mise-install-vnlib:
+    dir: server/
     cmds:
       - cmd: vnbuild deps install --file "{{ .CMNEXT_SERVER_DIR }}/deps.json" --show-progress
-      - cmd: mv build/ "{{ .DEV_SERVER_DIR }}"
 
+  mise-setup:
+    cmds:
       - task: copy-native-libs
       - cmd: rm -rf "{{ .DEV_SERVER_DIR }}/arch"
 
@@ -41,7 +41,7 @@ tasks:
   build-config:
     desc: "Builds the server configuration files and substitudes variables from dev.env into configuration templates"
     cmds:
-      - cmd: rm -r "{{ .DEV_SERVER_DIR }}/config"
+      - cmd: rm -rf "{{ .DEV_SERVER_DIR }}/config"
       - cmd: mkdir -p "{{ .DEV_SERVER_DIR }}/config"
 
       - cmd: powershell "{{ .CMNEXT_SERVER_DIR }}/compile.ps1"
@@ -67,8 +67,7 @@ tasks:
     deps:
       - startup
     cmds:
-      - cmd: cd "{{ .DEV_SERVER_DIR }}" &&
-          dotnet webserver/VNLib.WebServer.dll --config config/config.json --verbose --users-db-init --cmnext-debug-setup
+      - cmd: cd "{{ .DEV_SERVER_DIR }}" && dotnet webserver/VNLib.WebServer.dll --config config/config.json --verbose
 
   clean:
     cmds:
