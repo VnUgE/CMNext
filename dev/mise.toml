@@ -4,9 +4,11 @@ min_version = "2024.9.5"
 "apt:build-essential" = "latest"
 "apt:libicu-dev" = "latest"
 "dnf:gcc" = "latest"
+"dnf:libicu" = "latest"
+"dnf:libatomic" = "latest"
 
 [tools]
-node = "24"
+node = "26"
 dotnet = "8.0"
 task = "3.50"
 process-compose = "1.110"
