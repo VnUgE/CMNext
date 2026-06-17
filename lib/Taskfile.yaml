@@ -1,6 +1,6 @@
 #taskfile for building the libraries for admin and clients and creating their packages
 
-version: "3"
+version: "3.45"
 
 vars:
   BINARY_DIR: '{{ .BINARY_DIR | default "bin" }}'
@@ -51,3 +51,24 @@ tasks:
     dir: "{{ .USER_WORKING_DIR }}"
     cmds:
       - cmd: npm install
+
+  dev-init-all:
+    cmds:
+      - cmd: cd admin/ && task dev-init
+      - cmd: cd client/ && task dev-init
+
+  dev-all:
+    desc: "Builds the front-end libraries during development"
+    dir: "{{ .USER_WORKING_DIR }}"
+    summary: |
+      Can be used with the --watch flag to automatically build the libraries
+      when files change. This is useful for development.
+    sources:
+      - admin/src/**
+      - admin/src/**/.*
+      - client/src/**
+      - client/src/**/.*
+
+    cmds:
+      - cmd: cd admin/src && npm run build
+      - cmd: cd client/src && npm run build

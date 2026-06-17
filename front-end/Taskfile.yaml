@@ -1,51 +1,51 @@
 #taskfile for building the libraries for admin and clients and creating their packages
 
-version: '3'
+version: '3.45'
 
 tasks:
-    default:
-        desc: 'Builds dependencies and the front-end app'
-        summary: |
-            Developers can use this command to build the front-end app and its dependencies.
-        cmds:
-            - cmd: cd ../lib/admin && task
-            - cmd: npm run build
+  default:
+    desc: 'Builds dependencies and the front-end app'
+    summary: |
+      Developers can use this command to build the front-end app and its dependencies.
+    cmds:
+      - cmd: cd ../lib/admin && task
+      - cmd: npm run build
 
-    package-update:
-        dir: '{{ .USER_WORKING_DIR }}'
-        cmds:
-            - cmd: npm update
+  package-update:
+    dir: '{{ .USER_WORKING_DIR }}'
+    cmds:
+      - cmd: npm update
 
-    build:
-        desc: 'DO NOT USE. For ci vnbuild only'
-        cmds:
-            - cmd: npm version {{ .BUILD_VERSION }}
-              ignore_error: true #error if run when version is not updated
-            - task: ci-build
+  build:
+    desc: 'DO NOT USE. For ci vnbuild only'
+    cmds:
+      - cmd: npm version {{ .BUILD_VERSION }}
+        ignore_error: true #error if run when version is not updated
+      - task: ci-build
 
-    ci-build:
-        desc: 'DO NOT USE. For ci vnbuild only'
-        cmds:
-            - cmd: powershell rm dist/ -Recurse -Force
-              ignore_error: true
-            #build admin first
-            - cmd: cd ../lib/admin && npm install && npm run build
-            #install deps and run main build
-            - cmd: npm install
-            - cmd: npm run build
-
-    #copy artifacts to temp directory
-    postbuild_success:
-        desc: 'DO NOT USE. For ci vnbuild only'
-        cmds:
-            - cmd: mkdir -p bin
-            #tar the dist output and put it in the output dir
-            - cmd: cd dist/ && tar{{ if eq OS "windows" }}.exe{{ end }} -czf '../bin/release.tgz' .
-
-    #clean hook
-    clean:
-        desc: 'Cleans the front-end directories and artifacts'
+  ci-build:
+    desc: 'DO NOT USE. For ci vnbuild only'
+    cmds:
+      - cmd: powershell rm dist/ -Recurse -Force
         ignore_error: true
-        cmds:
-            - for: [node_modules/, dist/, bin/]
-              cmd: rm -rf "{{ .ITEM }}"
+      #build admin first
+      - cmd: cd ../lib/admin && npm install && npm run build
+      #install deps and run main build
+      - cmd: npm install
+      - cmd: npm run build
+
+  #copy artifacts to temp directory
+  postbuild_success:
+    desc: 'DO NOT USE. For ci vnbuild only'
+    cmds:
+      - cmd: mkdir -p bin
+      #tar the dist output and put it in the output dir
+      - cmd: cd dist/ && tar{{ if eq OS "windows" }}.exe{{ end }} -czf '../bin/release.tgz' .
+
+  #clean hook
+  clean:
+    desc: 'Cleans the front-end directories and artifacts'
+    ignore_error: true
+    cmds:
+      - for: [node_modules/, dist/, bin/]
+        cmd: rm -rf "{{ .ITEM }}"

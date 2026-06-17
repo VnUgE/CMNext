@@ -1,6 +1,6 @@
 #taskfile for building the backend library
 
-version: '3'
+version: "3.45"
 
 includes:
   module:
@@ -10,60 +10,58 @@ vars:
   BINARY_DIR: '{{ .BINARY_DIR | default "bin" }}'
   TARGET_FRAMEWORK: '{{ .TARGET_FRAMEWORK | default "net8.0" }}'
   RELEASE_DIR: "./bin/release/{{ .TARGET_FRAMEWORK }}/publish"
-  TARGET_DIR: '{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}'
+  TARGET_DIR: "{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}"
 
 tasks:
-
   #postbuild to package artifacts into the archives for upload
   postbuild_success:
-    desc: 'WARNING: For vnbuild use only. Do not run manually.'
-    dir: '{{ .USER_WORKING_DIR }}'
+    desc: "WARNING: For vnbuild use only. Do not run manually."
+    dir: "{{ .USER_WORKING_DIR }}"
     cmds:
-     #pack up source code
-     - task: packsource
+      #pack up source code
+      - task: packsource
 
-     #run post in debug mode
-     - task: postbuild
-       vars: { BUILD_MODE: debug }
+      #run post in debug mode
+      - task: postbuild
+        vars: { BUILD_MODE: debug }
 
-     #remove uncessary files from the release dir
-     - cmd: powershell -Command "Get-ChildItem -Recurse '{{ .RELEASE_DIR }}/' -Include *.pdb,*.xml | Remove-Item"
+      #remove uncessary files from the release dir
+      - cmd: powershell -Command "Get-ChildItem -Recurse '{{ .RELEASE_DIR }}/' -Include *.pdb,*.xml | Remove-Item"
 
-     #run post in release mode
-     - task: postbuild
-       vars: { BUILD_MODE: release }
+      #run post in release mode
+      - task: postbuild
+        vars: { BUILD_MODE: release }
 
   postbuild_failed:
-    dir: '{{ .USER_WORKING_DIR }}'
+    dir: "{{ .USER_WORKING_DIR }}"
     cmds: []
 
   postbuild:
-    dir: '{{ .USER_WORKING_DIR }}'
+    dir: "{{ .USER_WORKING_DIR }}"
     internal: true
     vars:
       #the build output directory
-      BUILD_OUT: "{{ .BINARY_DIR }}/{{ .BUILD_MODE }}/{{ .TARGET_FRAMEWORK }}/publish" 
+      BUILD_OUT: "{{ .BINARY_DIR }}/{{ .BUILD_MODE }}/{{ .TARGET_FRAMEWORK }}/publish"
 
     cmds:
-     #tar outputs
-     - cmd: cd "{{ .BUILD_OUT }}" && tar{{ if eq OS "windows" }}.exe{{ end }} -czf "{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}/{{ .BUILD_MODE }}.tgz" .
- 
+      #tar outputs
+      - cmd: cd "{{ .BUILD_OUT }}" && tar{{ if eq OS "windows" }}.exe{{ end }} -czf "{{ .USER_WORKING_DIR }}/{{ .BINARY_DIR }}/{{ .BUILD_MODE }}.tgz" .
+
   packsource:
-    dir: '{{ .USER_WORKING_DIR }}'
+    dir: "{{ .USER_WORKING_DIR }}"
     internal: true
     vars:
-      EXCLUDES:
-        --exclude="bin"
+      EXCLUDES: --exclude="bin"
         --exclude="obj"
     cmds:
-    #copy source code to target
-    - cmd: tar{{ if eq OS "windows" }}.exe{{ end }} {{ .EXCLUDES }} -czf '{{ .BINARY_DIR }}/src.tgz' .
-  
+      #copy source code to target
+      - cmd: tar{{ if eq OS "windows" }}.exe{{ end }} {{ .EXCLUDES }} -czf '{{ .BINARY_DIR }}/src.tgz' .
+
   #clean hook
   clean:
-    dir: '{{ .USER_WORKING_DIR }}'
+    dir: "{{ .USER_WORKING_DIR }}"
     ignore_error: true
     cmds:
-    - cmd: dotnet clean -c release
-    - for: [ bin/, obj/ ]
-      cmd: rm -rf '{{ .ITEM }}'
+      - cmd: dotnet clean -c release
+      - for: [bin/, obj/]
+        cmd: rm -rf '{{ .ITEM }}'

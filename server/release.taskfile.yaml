@@ -3,7 +3,7 @@
 #Inlcuded taskfile for object cache server that is used to produce
 #ci builds for standalone caching servers
 
-version: "3"
+version: "3.45"
 
 vars:
   SSL_DIR: "ssl"
