@@ -1,68 +1,70 @@
-version: 40
+version: 46
 jobs:
-- name: Git Mirror Push
-  steps:
-  - !PushRepository
-    name: Github push sync
-    remoteUrl: https://github.com/VnUgE/CMNext.git
-    userName: VnUgE
-    passwordSecret: github-access-token
-    force: false
-    condition: SUCCESSFUL
-    optional: false
-  triggers:
-  - !TagCreateTrigger {}
-  - !BranchUpdateTrigger {}
-  retryCondition: never
-  maxRetries: 3
-  retryDelay: 30
-  timeout: 3600
-
-- name: Windows Tests
-  jobExecutor: windows
-  steps:
-  - !CommandStep
-    name: Clone and test
-    runInContainer: false
-    interpreter: !DefaultInterpreter
-      commands: |
-        git clone @server_url@/@project_path@ --branch @branch@ @project_name@
-        vnbuild test --verbose --task-verbose
-    useTTY: true
-    condition: SUCCESSFUL
-    optional: false
-  retryCondition: never
-  maxRetries: 3
-  retryDelay: 30
-  timeout: 14400
-  
-- name: Staging build
-  jobExecutor: windows
-  steps:
-  - !CommandStep
-    name: Clone and build
-    runInContainer: false
-    interpreter: !DefaultInterpreter
-      commands: |
-        git clone @server_url@/@project_path@ --branch @branch@ @project_name@
-        vnbuild build --no-delay --verbose --task-verbose
-        vnbuild publish --verbose
-    useTTY: true
-    condition: SUCCESSFUL
-    optional: false
-  - !PublishArtifactStep
-    name: publish server artifacts
-    sourcePath: '@project_name@/server/bin'
-    artifacts: '*'
-    condition: SUCCESSFUL
-    optional: false
-  triggers:
-  - !BranchUpdateTrigger
-    branches: develop
-  jobDependencies:
-  - jobName: Windows Tests
-    requireSuccessful: true
-  retryCondition: never
-  maxRetries: 3
-  retryDelay: 30
-  timeout: 3600
+  - name: Git Mirror Push
+    steps:
+      - type: PushRepository
+        name: Github push sync
+        remoteUrl: https://github.com/VnUgE/CMNext.git
+        userName: VnUgE
+        passwordSecret: github-access-token
+        force: true
+        condition: SUCCESSFUL
+        optional: false
+    triggers:
+      - type: TagCreateTrigger
+      - type: BranchUpdateTrigger
+        userMatch: anyone
+    retryCondition: never
+    maxRetries: 3
+    retryDelay: 30
+    timeout: 3600
+  - name: Windows Tests
+    steps:
+      - type: CommandStep
+        name: Clone and test
+        runInContainer: false
+        interpreter:
+          type: DefaultInterpreter
+          commands: |
+            git clone @server_url@/@project_path@ --branch @branch@ @project_name@
+            vnbuild test --verbose --task-verbose
+        useTTY: true
+        condition: SUCCESSFUL
+        optional: false
+    jobExecutor: windows
+    retryCondition: never
+    maxRetries: 3
+    retryDelay: 30
+    timeout: 14400
+  - name: Staging build
+    steps:
+      - type: CommandStep
+        name: Clone and build
+        runInContainer: false
+        interpreter:
+          type: DefaultInterpreter
+          commands: |
+            git clone @server_url@/@project_path@ --branch @branch@ @project_name@
+            vnbuild build --no-delay --verbose --task-verbose
+            vnbuild publish --verbose
+        useTTY: true
+        condition: SUCCESSFUL
+        optional: false
+      - type: PublishArtifactStep
+        name: publish server artifacts
+        sourcePath: "@project_name@/server/bin"
+        artifacts: "*"
+        condition: SUCCESSFUL
+        optional: false
+    jobExecutor: windows
+    triggers:
+      - type: BranchUpdateTrigger
+        branches: develop
+        userMatch: anyone
+    jobDependencies:
+      - jobName: Windows Tests
+        requireSuccessful: true
+    retryCondition: never
+    maxRetries: 3
+    retryDelay: 30
+    timeout: 3600
