@@ -19,51 +19,55 @@ const { push } = useRouter();
 const { invoke: apiCall, waiting } = useApiCall({ toaster });
 const { completeLogin } = useOauthLogin(vnlib);
 
-tryOnMounted(() => defer(async () => {
-
+tryOnMounted(() =>
+  defer(async () => {
     // Wait for account data to load
     await store.account.wait();
 
     //If logged-in redirect to login page
     if (loggedIn.value) {
-        await push('/login');
-        return;
+      await push('/login');
+      return;
     }
 
     //try to complete an oauth login
     apiCall(async () => {
-        try {
-            //Complete the login
-            await completeLogin();
+      try {
+        //Complete the login
+        await completeLogin();
 
-            toaster.success('You have successfully logged in.');
+        toaster.success('You have successfully logged in.');
 
-            await push('/login');
-        }
-        catch (err: any) {
-            toaster.error('Social Login Failed', err?.message || 'An unknown error occurred while attempting to log you in via social login.');
-        }
+        await push('/login');
+      } catch (err: unknown) {
+        toaster.error(
+          'Social Login Failed',
+          err instanceof Error
+            ? err.message
+            : 'An unknown error occurred while attempting to log you in via social login.'
+        );
+      }
     });
-}));
-
+  })
+);
 </script>
 
 <template>
-    <div id="social-login-template" class="app-component-entry">
-        <div class="container flex flex-col m-auto my-16">
-            <div id="social-final-template" class="flex justify-center">
-                <div class="entry-container">
-                    <h3>Finalizing login</h3>
-                    <div class="mt-6 mb-4">
-                        <div class="flex justify-center">
-                            <div class="m-auto">
-                                <span v-if="waiting" class="loading loading-spinner loading-lg" />
-                            </div>
-                        </div>
-                        <p>Please wait while we log you in.</p>
-                    </div>
-                </div>
+  <div id="social-login-template" class="app-component-entry">
+    <div class="container flex flex-col m-auto my-16">
+      <div id="social-final-template" class="flex justify-center">
+        <div class="entry-container">
+          <h3>Finalizing login</h3>
+          <div class="mt-6 mb-4">
+            <div class="flex justify-center">
+              <div class="m-auto">
+                <span v-if="waiting" class="loading loading-spinner loading-lg" />
+              </div>
             </div>
+            <p>Please wait while we log you in.</p>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </template>

@@ -13,78 +13,80 @@ const revealed = computed(() => dialog.isRevealed.value);
 
 // Yup validation schema
 const passwordSchema = yup.object({
-    password: yup
-        .string()
-        .required('Please enter your password')
-        .max(100, 'Password must be less than 100 characters'),
+  password: yup
+    .string()
+    .required('Please enter your password')
+    .max(100, 'Password must be less than 100 characters'),
 });
 
 // When revealed, set the message
-dialog.onReveal(m => message.value = m || { title: '', message: '' });
+dialog.onReveal((m) => (message.value = m || { title: '', message: '' }));
 
 const formSubmitted = async () => {
-    // Validate the password
-    if (!await validate(pwState, passwordSchema)) {
-        return;
-    }
+  // Validate the password
+  if (!(await validate(pwState, passwordSchema))) {
+    return;
+  }
 
-    // Store password copy
-    const password = pwState.password;
+  // Store password copy
+  const password = pwState.password;
 
-    // Clear the password form
-    pwState.password = '';
+  // Clear the password form
+  pwState.password = '';
 
-    // Pass the password to the confirm function
-    dialog.confirm({ password });
+  // Pass the password to the confirm function
+  dialog.confirm({ password });
 };
 
 const close = () => {
-    // Clear the password form
-    pwState.password = '';
+  // Clear the password form
+  pwState.password = '';
 
-    // Close prompt using base cancel
-    dialog.cancel();
+  // Close prompt using base cancel
+  dialog.cancel();
 };
 
 // Compute title and description from message
 const title = computed(() => message.value?.title || 'Enter your password');
-const description = computed(() => message.value?.message || 'To confirm your identity, please enter your password.');
-
+const description = computed(
+  () => message.value?.message || 'To confirm your identity, please enter your password.'
+);
 </script>
 
 <template>
-    <div id="password-prompt" class="z-40">
-        <Dialog :open="revealed" @close="close()">
-            <template #title>
-                {{ title }}
-            </template>
+  <div id="password-prompt" class="z-40">
+    <Dialog :open="revealed" @close="close()">
+      <template #title>
+        {{ title }}
+      </template>
 
-            <template #description>
-                <div class="w-full text-center">
-                    <p class="my-1 text-sm">
-                        {{ description }}
-                    </p>
+      <template #description>
+        <div class="w-full text-center">
+          <p class="my-1 text-sm">
+            {{ description }}
+          </p>
 
-                    <form id="password-form" class="my-2 w-full" @submit.prevent="formSubmitted()">
-                        <fieldset>
-                            <div class="input-container">
-                                <input
-                                    id="password-prompt-input" v-model="pwState.password" tabindex="1" type="password"
-                                    class="input input-primary w-full" placeholder="Password" autofocus
-                                >
-                                <div class="join mt-4 w-fit float-right">
-                                    <button class="btn btn-primary join-item" form="password-form">
-                                        Submit
-                                    </button>
-                                    <button class="btn join-item" @click.prevent="close()">
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </form>
+          <form id="password-form" class="my-2 w-full" @submit.prevent="formSubmitted()">
+            <fieldset>
+              <div class="input-container">
+                <input
+                  id="password-prompt-input"
+                  v-model="pwState.password"
+                  tabindex="1"
+                  type="password"
+                  class="input input-primary w-full"
+                  placeholder="Password"
+                  autofocus
+                />
+                <div class="join mt-4 w-fit float-right">
+                  <button class="btn btn-primary join-item" form="password-form">Submit</button>
+                  <button class="btn join-item" @click.prevent="close()">Close</button>
                 </div>
-            </template>
-        </Dialog>
-    </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </template>
+    </Dialog>
+  </div>
 </template>

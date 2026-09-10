@@ -11,21 +11,21 @@ store.mfa.refresh();
 </script>
 
 <template>
-    <div class="space-y-4">
-        <!-- Section Header -->
-        <div class="pb-2">
-            <p class="text-sm text-base-content/70">
-                Add extra security layers to protect your account with multi-factor authentication.
-            </p>
-        </div>
-
-        <!-- TOTP Authenticator -->
-        <TotpSettings />
-
-        <!-- Security Keys (FIDO/WebAuthn) -->
-        <Fido />
-
-        <!-- OTP Public Keys -->
-        <Pki />
+  <div class="space-y-4">
+    <!-- Section Header -->
+    <div class="pb-2">
+      <p class="text-sm text-base-content/70">
+        Add extra security layers to protect your account with multi-factor authentication.
+      </p>
     </div>
+
+    <!-- TOTP Authenticator -->
+    <TotpSettings />
+
+    <!-- Security Keys (FIDO/WebAuthn) -->
+    <Fido />
+
+    <!-- OTP Public Keys -->
+    <Pki />
+  </div>
 </template>

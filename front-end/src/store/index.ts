@@ -19,119 +19,119 @@ import { defaultsDeep } from 'lodash-es';
 import { shallowRef, watchEffect, type UnwrapNestedRefs } from 'vue';
 
 export const storeExport = <T>(val: DeepMaybeRef<T>): UnwrapNestedRefs<T> =>
-    val as UnwrapNestedRefs<T>;
+  val as UnwrapNestedRefs<T>;
 
 export type ThemeNameDark =
-    | 'dark'
-    | 'forest'
-    | 'black'
-    | 'luxury'
-    | 'dracula'
-    | 'business'
-    | 'night'
-    | 'coffee'
-    | 'dim'
-    | 'sunset'
-    | 'abyss';
+  | 'dark'
+  | 'forest'
+  | 'black'
+  | 'luxury'
+  | 'dracula'
+  | 'business'
+  | 'night'
+  | 'coffee'
+  | 'dim'
+  | 'sunset'
+  | 'abyss';
 
 export type ThemeNameLight =
-    | 'light'
-    | 'cupcake'
-    | 'emerald'
-    | 'corporate'
-    | 'retro'
-    | 'garden'
-    | 'lofi'
-    | 'pastel'
-    | 'fantasy'
-    | 'cmyk'
-    | 'autumn'
-    | 'acid'
-    | 'lemonade'
-    | 'lemonade'
-    | 'winter'
-    | 'nord'
-    | 'caramellatte'
-    | 'silk';
+  | 'light'
+  | 'cupcake'
+  | 'emerald'
+  | 'corporate'
+  | 'retro'
+  | 'garden'
+  | 'lofi'
+  | 'pastel'
+  | 'fantasy'
+  | 'cmyk'
+  | 'autumn'
+  | 'acid'
+  | 'lemonade'
+  | 'lemonade'
+  | 'winter'
+  | 'nord'
+  | 'caramellatte'
+  | 'silk';
 
 export type ThemeNameComplex = 'synthwave' | 'aqua' | 'luxury' | 'coffee';
 
 export type ThemeName = ThemeNameDark | ThemeNameLight | ThemeNameComplex;
 
 type GlobalState = {
-    autoHeartbeat: boolean;
-    theme: string;
-    loggedIn: boolean;
-    userName: string | undefined;
-    isLocalAccount: boolean;
+  autoHeartbeat: boolean;
+  theme: string;
+  loggedIn: boolean;
+  userName: string | undefined;
+  isLocalAccount: boolean;
 };
 const defaultState: GlobalState = {
-    autoHeartbeat: false,
-    theme: '',
-    loggedIn: false,
-    userName: undefined,
-    isLocalAccount: false,
+  autoHeartbeat: false,
+  theme: '',
+  loggedIn: false,
+  userName: undefined,
+  isLocalAccount: false,
 };
 
 export const themeNames: ThemeName[] = [
-    'light',
-    'dark',
-    'forest',
-    'cupcake',
-    'dracula',
-    'winter',
-    'nord',
-    'silk',
-    'emerald',
-    'corporate',
-    'retro',
-    'night',
-    'sunset',
-    'garden',
-    'lofi',
-    'pastel',
-    'fantasy',
-    'cmyk',
-    'autumn',
-    'acid',
-    'lemonade',
-    'caramellatte',
-    'aqua',
-    'black',
-    'luxury',
-    'business',
-    'coffee',
-    'dim',
-    'abyss',
-    'synthwave',
+  'light',
+  'dark',
+  'forest',
+  'cupcake',
+  'dracula',
+  'winter',
+  'nord',
+  'silk',
+  'emerald',
+  'corporate',
+  'retro',
+  'night',
+  'sunset',
+  'garden',
+  'lofi',
+  'pastel',
+  'fantasy',
+  'cmyk',
+  'autumn',
+  'acid',
+  'lemonade',
+  'caramellatte',
+  'aqua',
+  'black',
+  'luxury',
+  'business',
+  'coffee',
+  'dim',
+  'abyss',
+  'synthwave',
 ];
 
 /**
  * Loads the main store for the application
  */
 export const useStore = defineStore('main', () => {
-    //MANAGED STATE
-    const pageTitle = shallowRef('');
-    const htmlRef = shallowRef<HTMLElement>(document.querySelector('html')!);
+  //MANAGED STATE
+  const pageTitle = shallowRef('');
+  const htmlRef = shallowRef<HTMLElement>(document.querySelector('html')!);
 
-    //Get shared global state storage
-    const mainState = useLocalStorage<GlobalState | undefined>('vn-state', defaultState);
-    defaultsDeep(mainState.value, defaultState);
+  //Get shared global state storage
+  const mainState = useLocalStorage<GlobalState | undefined>('vn-state', defaultState);
+  defaultsDeep(mainState.value, defaultState);
 
-    const stateRefs = toRefs<GlobalState>(mainState as any);
+  const stateRefs = toRefs<GlobalState>(mainState as any);
 
-    const setPageTitle = (title: string) => set(pageTitle, title);
+  const setPageTitle = (title: string) => set(pageTitle, title);
 
-    watchEffect(() => {
-        const html = get(htmlRef);
-        if (!html) return;
-        html.setAttribute('data-theme', stateRefs.theme.value);
-    });
+  watchEffect(() => {
+    const html = get(htmlRef);
+    if (!html) return;
+    html.setAttribute('data-theme', stateRefs.theme.value);
+  });
 
-    return {
-        pageTitle,
-        setPageTitle,
-        ...stateRefs,
-        themeNames,
-    };
+  return {
+    pageTitle,
+    setPageTitle,
+    ...stateRefs,
+    themeNames,
+  };
 });

@@ -2,7 +2,7 @@
 import { onClickOutside, useElementSize } from '@vueuse/core';
 import { ref, computed, toRefs } from 'vue';
 
-const emit = defineEmits(['close', 'submit']);
+const emit = defineEmits<{ close: []; submit: [] }>();
 const props = defineProps<{ open: boolean }>();
 const { open } = toRefs(props);
 
@@ -16,28 +16,27 @@ onClickOutside(dialogRef, () => emit('close'));
 const header = useElementSize(null);
 
 const style = computed(() => {
-    return {
-        'height': `calc(100vh - ${header.height.value}px)`,
-        'top': `${header.height.value}px`,
-    };
+  return {
+    height: `calc(100vh - ${header.height.value}px)`,
+    top: `${header.height.value}px`,
+  };
 });
 
 const modalClass = computed(() => ({ 'modal-open': open.value }));
-
 </script>
 
 <template>
-    <dialog :style="style" :class="modalClass" class="modal modal-bottom sm:modal-middle">
-        <div ref="dialogRef" class="modal-box">
-            <slot name="main">
-                <h3 as="div" class="text-lg font-bold">
-                    <slot name="title" />
-                </h3>
+  <dialog :style="style" :class="modalClass" class="modal modal-bottom sm:modal-middle">
+    <div ref="dialogRef" class="modal-box">
+      <slot name="main">
+        <h3 class="text-lg font-bold">
+          <slot name="title" />
+        </h3>
 
-                <div class="modal-action">
-                    <slot name="description" />
-                </div>
-            </slot>
+        <div class="modal-action">
+          <slot name="description" />
         </div>
-    </dialog>
+      </slot>
+    </div>
+  </dialog>
 </template>

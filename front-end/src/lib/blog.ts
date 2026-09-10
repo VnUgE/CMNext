@@ -20,86 +20,93 @@ import { ApiConfig, useAxios } from '@vnuge/vnlib.browser';
 import { useArrayFind, useAsyncState } from '@vueuse/core';
 
 import {
-    usePosts,
-    useContent,
-    useChannels,
-    createBlogContext,
-    type BlogChannel,
-    type ChannelApi,
-    type PostApi,
-    type PostMeta,
-    type ContentApi,
-    type ContentMeta,
+  usePosts,
+  useContent,
+  useChannels,
+  createBlogContext,
+  type BlogChannel,
+  type ChannelApi,
+  type PostApi,
+  type PostMeta,
+  type ContentApi,
+  type ContentMeta,
 } from '@vnuge/cmnext-admin';
 
 export interface ReactiveBlogStore<T> {
-    readonly all: Ref<T[]>;
-    readonly isLoading: Ref<boolean>;
-    readonly isReady: Ref<boolean>;
-    single(id: MaybeRef<string>): Ref<T | undefined>;
-    refresh(): Promise<T[]>;
+  readonly all: Ref<T[]>;
+  readonly isLoading: Ref<boolean>;
+  readonly isReady: Ref<boolean>;
+  single(id: MaybeRef<string>): Ref<T | undefined>;
+  refresh(): Promise<T[]>;
 }
 
 export interface BlogAdminState {
-    readonly uploadProgress: Ref<number>;
-    readonly channels: ReactiveBlogStore<BlogChannel> & ChannelApi;
-    createPostStore(channelId: MaybeRef<string>): ReactiveBlogStore<PostMeta> & PostApi;
-    createContentStore(channelId: MaybeRef<string>): ReactiveBlogStore<ContentMeta> & ContentApi;
+  readonly uploadProgress: Ref<number>;
+  readonly channels: ReactiveBlogStore<BlogChannel> & ChannelApi;
+  createPostStore(channelId: MaybeRef<string>): ReactiveBlogStore<PostMeta> & PostApi;
+  createContentStore(channelId: MaybeRef<string>): ReactiveBlogStore<ContentMeta> & ContentApi;
 }
 
 type BlogEntity = BlogChannel | PostMeta | ContentMeta;
 interface BlogStore<T extends BlogEntity> {
-    getAllItems(): Promise<T[]>;
+  getAllItems(): Promise<T[]>;
 }
 
 export const useCmnextAdmin = (vnlib: ApiConfig, adminBaseUrl: string): BlogAdminState => {
+  const uploadProgress = ref<number>(0);
 
-    const uploadProgress = ref<number>(0);
+  const axios = useAxios(vnlib, {
+    onUploadProgress: (e: AxiosProgressEvent) => {
+      uploadProgress.value = Math.round((e.loaded * 100) / e.total!);
+    },
+    timeout: 120000, //120 second timeout
+  });
 
-    const axios = useAxios(vnlib, {
-        onUploadProgress: (e: AxiosProgressEvent) => {
-            uploadProgress.value = Math.round((e.loaded * 100) / e.total!);
-        },
-        timeout: 120000, //120 second timeout
+  const blogContext = createBlogContext({ axios, baseUrl: adminBaseUrl });
+
+  const createStore = <T extends BlogEntity, TStore extends BlogStore<T>>(
+    store: TStore
+  ): ReactiveBlogStore<T> & TStore => {
+    const {
+      state: all,
+      execute: refresh,
+      isLoading,
+      isReady,
+    } = useAsyncState(async () => (await store.getAllItems()) || [], [], {
+      delay: 100,
+      immediate: true,
+      resetOnExecute: false,
     });
 
-    const blogContext = createBlogContext({ axios, baseUrl: adminBaseUrl });
-
-    const createStore = <T extends BlogEntity, TStore extends BlogStore<T>>(store: TStore)
-    : ReactiveBlogStore<T> & TStore => {
-        const { state: all, execute: refresh, isLoading, isReady } = useAsyncState(
-            async () => (await store.getAllItems()) || [],
-            [],
-            { delay: 100, immediate: true, resetOnExecute: false }
-        );
-
-        const single = (id: MaybeRef<string>): Ref<T | undefined> => {
-            const _id = toRef(id);
-            return useArrayFind(all, c => c.id == _id.value);
-        };
-
-        return { all, isLoading, isReady, refresh, single, ...store };
+    const single = (id: MaybeRef<string>): Ref<T | undefined> => {
+      const _id = toRef(id);
+      return useArrayFind(all, (c) => c.id == _id.value);
     };
 
-    const createChannelsStore = (): ReactiveBlogStore<BlogChannel> & ChannelApi => {
-        const blogChannels = useChannels(blogContext);
-        return createStore(blogChannels);
-    };
+    return { all, isLoading, isReady, refresh, single, ...store };
+  };
 
-    const createPostStore = (channelId: MaybeRef<string>): ReactiveBlogStore<PostMeta> & PostApi => {
-        const postStore = usePosts(blogContext, channelId);
-        return createStore(postStore);
-    };
+  const createChannelsStore = (): ReactiveBlogStore<BlogChannel> & ChannelApi => {
+    const blogChannels = useChannels(blogContext);
+    return createStore(blogChannels);
+  };
 
-    const createContentStore = (channelId: MaybeRef<string>): ReactiveBlogStore<ContentMeta> & ContentApi => {
-        const contentStore = useContent(blogContext, channelId);
-        return createStore(contentStore);
-    };
+  const createPostStore = (channelId: MaybeRef<string>): ReactiveBlogStore<PostMeta> & PostApi => {
+    const postStore = usePosts(blogContext, channelId);
+    return createStore(postStore);
+  };
 
-    return {
-        uploadProgress: uploadProgress,
-        channels: createChannelsStore(),
-        createPostStore,
-        createContentStore,
-    };
-}; 
+  const createContentStore = (
+    channelId: MaybeRef<string>
+  ): ReactiveBlogStore<ContentMeta> & ContentApi => {
+    const contentStore = useContent(blogContext, channelId);
+    return createStore(contentStore);
+  };
+
+  return {
+    uploadProgress: uploadProgress,
+    channels: createChannelsStore(),
+    createPostStore,
+    createContentStore,
+  };
+};
