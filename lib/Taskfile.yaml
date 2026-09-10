@@ -10,22 +10,22 @@ tasks:
     dir: "{{ .USER_WORKING_DIR }}"
     desc: "Runs a basic build of the project"
     cmds:
-      - cmd: npm install
-      - cmd: npm run build
+      - cmd: pnpm install
+      - cmd: pnpm run build
 
   package-update:
     dir: "{{ .USER_WORKING_DIR }}"
     cmds:
-      - npm update
+      - pnpm update
 
   build:
     desc: "WARNING: For vnbuild use only. Do not run manually."
     dir: "{{ .USER_WORKING_DIR }}"
     cmds:
-      - cmd: npm version {{ .BUILD_VERSION }}
+      - cmd: pnpm version {{ .BUILD_VERSION }}
         ignore_error: true #error if run when version is not updated
       #install deps and run build
-      - cmd: npm install
+      - cmd: pnpm install --frozen-lockfile
       - task: default
 
   #copy artifacts to temp directory
@@ -33,9 +33,9 @@ tasks:
     desc: "WARNING: For vnbuild use only. Do not run manually."
     dir: "{{ .USER_WORKING_DIR }}"
     cmds:
-      #use npm pack to create a tarball of the package
+      #use pnpm pack to create a tarball of the package
       - cmd: mkdir -p {{ .BINARY_DIR }}
-      - cmd: npm pack --pack-destination {{ .BINARY_DIR }}
+      - cmd: pnpm pack --pack-destination {{ .BINARY_DIR }}
       - cmd: cd {{ .BINARY_DIR }} && powershell mv -Force "*.tgz" "release.tgz"
 
   #clean hook
@@ -50,7 +50,7 @@ tasks:
     desc: "Initializes the development environment"
     dir: "{{ .USER_WORKING_DIR }}"
     cmds:
-      - cmd: npm install
+      - cmd: pnpm install
 
   dev-init-all:
     cmds:
@@ -70,5 +70,5 @@ tasks:
       - client/src/**/.*
 
     cmds:
-      - cmd: cd admin/src && npm run build
-      - cmd: cd client/src && npm run build
+      - cmd: cd admin && pnpm run build
+      - cmd: cd client && pnpm run build

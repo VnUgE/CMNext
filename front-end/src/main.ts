@@ -33,9 +33,6 @@ import Axios from 'axios';
 //Import all styles
 import './assets/main.css';
 
-//Load the suneditor editor css
-import 'suneditor/dist/css/suneditor.min.css';
-
 //Import font data
 import '@fontsource/source-sans-pro';
 
@@ -43,130 +40,130 @@ import '@fontsource/source-sans-pro';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import {
-    faBars,
-    faLock,
-    faBullhorn,
-    faCertificate,
-    faCheck,
-    faChevronLeft,
-    faChevronRight,
-    faCode,
-    faComment,
-    faCopy,
-    faFile,
-    faFileDownload,
-    faFileZipper,
-    faFolderOpen,
-    faHeadphones,
-    faImage,
-    faKey,
-    faLink,
-    faMinusCircle,
-    faPencil,
-    faPhotoFilm,
-    faPlus,
-    faRotateLeft,
-    faSignInAlt,
-    faSpinner,
-    faSync,
-    faTrash,
-    faUser,
-    faVideo,
-    faTrashCan,
-    faEllipsisH,
-    faBook,
-    faCog,
-    faSignOutAlt,
-    faGlobe,
-    faEye,
-    faClock,
-    faBolt,
-    faEdit,
-    faChartLine,
-    faPaperPlane,
-    faPlusCircle,
-    faUpload,
-    faInfoCircle,
-    faBlog,
-    faMicrophone,
-    faCalendar,
-    faArrowLeft,
-    faRss,
-    faSave,
-    faRefresh,
-    faBolt as faLightningBolt,
-    faFileAlt,
-    faQuestionCircle,
-    faTimes,
-    faThumbTack,
-    faThumbTackSlash,
-    faFolder,
+  faBars,
+  faLock,
+  faBullhorn,
+  faCertificate,
+  faCheck,
+  faChevronLeft,
+  faChevronRight,
+  faCode,
+  faComment,
+  faCopy,
+  faFile,
+  faFileDownload,
+  faFileZipper,
+  faFolderOpen,
+  faHeadphones,
+  faImage,
+  faKey,
+  faLink,
+  faMinusCircle,
+  faPencil,
+  faPhotoFilm,
+  faPlus,
+  faRotateLeft,
+  faSignInAlt,
+  faSpinner,
+  faSync,
+  faTrash,
+  faUser,
+  faVideo,
+  faTrashCan,
+  faEllipsisH,
+  faBook,
+  faCog,
+  faSignOutAlt,
+  faGlobe,
+  faEye,
+  faClock,
+  faBolt,
+  faEdit,
+  faChartLine,
+  faPaperPlane,
+  faPlusCircle,
+  faUpload,
+  faInfoCircle,
+  faBlog,
+  faMicrophone,
+  faCalendar,
+  faArrowLeft,
+  faRss,
+  faSave,
+  faRefresh,
+  faBolt as faLightningBolt,
+  faFileAlt,
+  faQuestionCircle,
+  faTimes,
+  faThumbTack,
+  faThumbTackSlash,
+  faFolder,
 } from '@fortawesome/free-solid-svg-icons';
 import { faGithub, faDiscord, faMarkdown } from '@fortawesome/free-brands-svg-icons';
 
 //Add required icons for the app
 library.add(
-    faTrashCan,
-    faBars,
-    faLock,
-    faSignInAlt,
-    faGithub,
-    faDiscord,
-    faSpinner,
-    faCertificate,
-    faKey,
-    faSync,
-    faPlus,
-    faMinusCircle,
-    faUser,
-    faCheck,
-    faTrash,
-    faCopy,
-    faPencil,
-    faLink,
-    faPhotoFilm,
-    faRotateLeft,
-    faMarkdown,
-    faBullhorn,
-    faFolderOpen,
-    faComment,
-    faChevronLeft,
-    faChevronRight,
-    faFileDownload,
-    faCode,
-    faFile,
-    faVideo,
-    faImage,
-    faHeadphones,
-    faFileZipper,
-    faEllipsisH,
-    faBook,
-    faCog,
-    faSignOutAlt,
-    faGlobe,
-    faEye,
-    faClock,
-    faBolt,
-    faEdit,
-    faChartLine,
-    faPaperPlane,
-    faPlusCircle,
-    faUpload,
-    faInfoCircle,
-    faBlog,
-    faMicrophone,
-    faCalendar,
-    faArrowLeft,
-    faRss,
-    faSave,
-    faRefresh,
-    faLightningBolt,
-    faFileAlt,
-    faQuestionCircle,
-    faTimes,
-    faThumbTack,
-    faThumbTackSlash,
-    faFolder
+  faTrashCan,
+  faBars,
+  faLock,
+  faSignInAlt,
+  faGithub,
+  faDiscord,
+  faSpinner,
+  faCertificate,
+  faKey,
+  faSync,
+  faPlus,
+  faMinusCircle,
+  faUser,
+  faCheck,
+  faTrash,
+  faCopy,
+  faPencil,
+  faLink,
+  faPhotoFilm,
+  faRotateLeft,
+  faMarkdown,
+  faBullhorn,
+  faFolderOpen,
+  faComment,
+  faChevronLeft,
+  faChevronRight,
+  faFileDownload,
+  faCode,
+  faFile,
+  faVideo,
+  faImage,
+  faHeadphones,
+  faFileZipper,
+  faEllipsisH,
+  faBook,
+  faCog,
+  faSignOutAlt,
+  faGlobe,
+  faEye,
+  faClock,
+  faBolt,
+  faEdit,
+  faChartLine,
+  faPaperPlane,
+  faPlusCircle,
+  faUpload,
+  faInfoCircle,
+  faBlog,
+  faMicrophone,
+  faCalendar,
+  faArrowLeft,
+  faRss,
+  faSave,
+  faRefresh,
+  faLightningBolt,
+  faFileAlt,
+  faQuestionCircle,
+  faTimes,
+  faThumbTack,
+  faThumbTackSlash,
+  faFolder
 );
 
 //Add icons to library
@@ -183,21 +180,21 @@ import { userPreferencesPlugin } from './store/preferencesPlugin';
 import { useCmnextAdmin } from './lib/blog';
 
 export const vnlib = createApiConfig({
-    account: {
-        endpointUrl: '/api/account',
-    },
-    axios: Axios.create({
-        withCredentials: true,
-    }),
-    session: {},
-    // storage auto-detected: uses wrapped localStorage in browser/jsdom
+  account: {
+    endpointUrl: '/api/account',
+  },
+  axios: Axios.create({
+    withCredentials: true,
+  }),
+  session: {},
+  // storage auto-detected: uses wrapped localStorage in browser/jsdom
 });
 
 const createToastAdapter = (id: string) => {
-    return createToaster({
-        show: (type, { title, message }) => notify({ type, id, text: message, title }),
-        close: () => notify.close(id),
-    });
+  return createToaster({
+    show: (type, { title, message }) => notify({ type, id, text: message, title }),
+    close: () => notify.close(id),
+  });
 };
 
 // Export toaster for application-wide use
@@ -209,20 +206,21 @@ export const cmnext = useCmnextAdmin(vnlib, '/api/blog');
 const store = createPinia();
 
 store
-    .use(accountStatePlugin(vnlib, 15000))
-    .use(pageGuardPlugin(router))
-    .use(profilePlugin(vnlib))
-    .use(mfaSettingsPlugin(vnlib))
-    .use(userPreferencesPlugin(vnlib, '/api/app-data', 'cmnext-preferences'));
+  .use(accountStatePlugin(vnlib, 15000))
+  .use(pageGuardPlugin(router))
+  .use(profilePlugin(vnlib))
+  .use(mfaSettingsPlugin(vnlib))
+  .use(userPreferencesPlugin(vnlib, '/api/app-data', 'cmnext-preferences'));
 
 const app = createApp(App);
 
-app.use(Notifications)
-    .use(store)
-    .use(router)
-    .component('Dialog', Dialog)
-    //Add the footer nav components
-    .component('fa-icon', FontAwesomeIcon)
+app
+  .use(Notifications)
+  .use(store)
+  .use(router)
+  .component('Dialog', Dialog)
+  //Add the footer nav components
+  .component('fa-icon', FontAwesomeIcon)
 
-    //MOUNT
-    .mount('#app');
+  //MOUNT
+  .mount('#app');

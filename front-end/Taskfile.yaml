@@ -9,17 +9,17 @@ tasks:
       Developers can use this command to build the front-end app and its dependencies.
     cmds:
       - cmd: cd ../lib/admin && task
-      - cmd: npm run build
+      - cmd: pnpm run build
 
   package-update:
     dir: '{{ .USER_WORKING_DIR }}'
     cmds:
-      - cmd: npm update
+      - cmd: pnpm update
 
   build:
     desc: 'DO NOT USE. For ci vnbuild only'
     cmds:
-      - cmd: npm version {{ .BUILD_VERSION }}
+      - cmd: pnpm version {{ .BUILD_VERSION }}
         ignore_error: true #error if run when version is not updated
       - task: ci-build
 
@@ -29,10 +29,10 @@ tasks:
       - cmd: powershell rm dist/ -Recurse -Force
         ignore_error: true
       #build admin first
-      - cmd: cd ../lib/admin && npm install && npm run build
+      - cmd: cd ../lib/admin && pnpm install --frozen-lockfile && pnpm run build
       #install deps and run main build
-      - cmd: npm install
-      - cmd: npm run build
+      - cmd: pnpm install --frozen-lockfile
+      - cmd: pnpm run build
 
   #copy artifacts to temp directory
   postbuild_success:

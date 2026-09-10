@@ -1,0 +1,52 @@
+# CMNext JS monorepo — pnpm workspace + supply-chain hardening
+# Docs: https://pnpm.io/pnpm-workspace_yaml
+# Draft only — no installs have been run against this file yet.
+
+packages:
+  - "front-end"
+  - "lib/admin"
+  - "lib/client"
+  # NOTE: server/package.json is vnbuild metadata only (no JS deps) — intentionally excluded.
+
+  # SECURITY: refuse versions younger than 1 day (1440 min).
+  # Gives registry scanners time to yank hijacked releases before they reach you.
+  # This is pnpm v11's default — kept explicit so the policy is self-documenting.
+  # Raise to 43200 (30 days) for stricter posture once dev-loop impact is measured.
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: false
+
+# SECURITY: block install if a new version's publish trust (provenance /
+# trusted-publisher / signatures) is weaker than a prior version.
+# Catches account-takeover publishes like the axios 1.14.1 incident.
+# Your repo depends on axios directly, so this is high-value here.
+trustPolicy: no-downgrade
+
+# SECURITY: block lifecycle scripts by default; allow-list only.
+# Postinstall is the #1 malware vector (Shai-Hulud, axios/plain-crypto-js).
+# pnpm fails the install if a dep wants a script not listed below —
+# that failure is the signal to audit, not to blindly allow.
+strictDepBuilds: true
+allowBuilds:
+  # esbuild: postinstall verifies the platform binary (node install.js).
+  # Required for vite build/dev. Standard, deterministic, from evanw.
+  esbuild: true
+  # vue-demi: postinstall switches the lib entry between Vue 2/3 builds.
+  # Benign (errors swallowed), required by json-editor-vue's Vue shim.
+  vue-demi: true
+  # NOTE: json-editor-vue is deliberately NOT allowed — its postinstall runs
+  # simple-git-hooks in the developer's environment, big no no for me
+  json-editor-vue: false
+
+  # SECURITY: transitive deps must come from the registry.
+  # Blocks git+ssh / tarball-URL / file:// payloads smuggled in via transitive deps.
+  # Your DIRECT exotic deps are still allowed (see below) but cannot pull exotic subdeps.
+blockExoticSubdeps: true
+
+# Ensure node_modules matches lockfile before running project scripts.
+verifyDepsBeforeRun: install
+
+# NOTE — direct exotic deps currently in use (allowed, but flagged for follow-up):
+# - "@vnuge/vnlib.browser": "https://.../release.tgz" (front-end + lib/admin)
+#   No integrity hash in package.json; registry substitution / silent retar is possible.
+#   Follow-up: vendor the tarball with integrity, or publish to an internal registry.
+# - "@vnuge/cmnext-admin": "workspace:*" (front-end) — workspace-linked, single lockfile.

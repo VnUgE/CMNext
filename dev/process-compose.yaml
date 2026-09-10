@@ -72,7 +72,7 @@ processes:
 
   # Vite dev server — proxies /api to backend via VITE_BACKEND_URL
   frontend:
-    command: npm run dev
+    command: pnpm run dev
     working_dir: ${CMNEXT_FRONTEND_DIR}
     environment:
       - "VITE_BACKEND_URL=http://127.0.0.1:8089"

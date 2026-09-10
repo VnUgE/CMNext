@@ -55,7 +55,7 @@ export default defineConfig(() => {
             // Group vendor libraries together
             vendor: ['vue', 'vue-router', 'pinia', '@vueuse/core', '@vueuse/router', 'axios'],
             // Keep large editors separate for optional lazy loading
-            editors: ['json-editor-vue', 'suneditor'],
+            editors: ['json-editor-vue'],
           },
         },
       },

@@ -1,5 +1,5 @@
 import { computed, ref, type MaybeRef, type Ref, type ComputedRef, shallowRef } from 'vue';
-import { useToggle, toRef, get, computedAsync, until, watchIgnorable } from '@vueuse/core';
+import { useToggle, toRef, get, computedAsync } from '@vueuse/core';
 import { isString, split, defer, isEmpty } from 'lodash-es';
 import { useRouter } from 'vue-router';
 import { BlogChannel, PostMeta } from '@vnuge/cmnext-admin';
@@ -9,7 +9,6 @@ import { useEditBuffer, type EditBuffer } from './editBuffer';
 import { toaster } from '../main';
 import { confirm } from './confirm';
 import type { BlogAdminState } from './blog';
-import SunEditor from 'suneditor/src/lib/core';
 
 export type ExtendedPostMeta = PostMeta & {
     content?: string;
@@ -68,7 +67,8 @@ export interface PostEditorState {
     };
     readonly imageLoadError: Ref<boolean>;
 
-    readonly sunEditor: Ref<SunEditor | undefined>;
+    // TODO: retype when the rich text editor replacement lands (suneditor removed).
+    readonly sunEditor: Ref<unknown>;
 
     // Derived State
     readonly isNew: ComputedRef<boolean>;
@@ -110,7 +110,7 @@ export const usePostEditor = (
     const [mdVisible, toggleMdVisible] = useToggle(false);
     const [podcastMode, togglePodcastMode] = useToggle(false);
     const imageLoadError = ref(false);
-    const sunEditor = shallowRef<SunEditor>();
+    const sunEditor = shallowRef<unknown>();
 
     // Find single post from loaded posts based on postId
     //const _post = shallowRef<ExtendedPostMeta>({} as ExtendedPostMeta);
@@ -250,23 +250,8 @@ export const usePostEditor = (
         await postApi.refresh();
     };
 
-    // Wait for editor to load and setup content syncing
-    until(sunEditor)
-        .not.toBeUndefined()
-        .then((editor) => {
-            // Setup two way binding with post content
-            const { ignoreUpdates } = watchIgnorable(
-                () => postBuffer.buffer.content,
-                (data: string | undefined) => editor.setContents(data || ''),
-                { immediate: true }
-            );
-
-            // Sync editor content with post content, it's debounced internally
-            editor.onChange = (changed: string) => {
-                // Update post content when editor content changes
-                ignoreUpdates(() => (postBuffer.buffer.content = changed));
-            };
-        });
+    // Rich text editor content sync removed with suneditor (see TextEditor.vue placeholder).
+    // TODO: rewire two-way content sync when the replacement editor lands.
 
     /**
      * Catch browser/tab close to navigate back properly

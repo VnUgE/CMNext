@@ -80,9 +80,7 @@ tasks:
       This task sets up the development environment by installing necessary
       dependencies and preparing the project for development.
     cmds:
-      - cmd: cd lib/admin/src && npm install
-      - cmd: cd lib/client/src && npm install
-      - cmd: cd front-end/src && npm install
+      - cmd: pnpm install
       - cmd: dotnet restore back-end/src
 
   dev-backend:
@@ -107,7 +105,7 @@ tasks:
       - front-end/src/**
       - front-end/src/**/.*
     cmds:
-      - cmd: cd front-end/src && npm run build
+      - cmd: pnpm --filter @vnuge/cmnext-front-end run build
 
   dev-libs:
     desc: "Builds the front-end libraries during development"
@@ -121,5 +119,5 @@ tasks:
       - lib/client/src/**/.*
 
     cmds:
-      - cmd: cd lib/admin/src && npm run build
-      - cmd: cd lib/client/src && npm run build
+      - cmd: pnpm --filter @vnuge/cmnext-admin run build
+      - cmd: pnpm --filter @vnuge/cmnext-client run build

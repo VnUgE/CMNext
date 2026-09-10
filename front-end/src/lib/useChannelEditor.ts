@@ -14,55 +14,54 @@ import { BlogAdminState } from './blog';
  * Only validates user-editable fields
  */
 export const channelSchema = yup.object({
-    name: yup
+  name: yup
+    .string()
+    .required('Channel name is required')
+    .max(64, 'Channel name must be less than 64 characters')
+    .matches(/^[a-zA-Z0-9&|.,? ]*$/, 'Channel name must be alphanumeric'),
+  path: yup
+    .string()
+    .required('Channel path is required')
+    .max(64, 'Channel path must be less than 64 characters'),
+  index: yup
+    .string()
+    .required('Channel index is required')
+    .max(64, 'Channel index must be less than 64 characters'),
+  content: yup
+    .string()
+    .required('Channel content directory is required')
+    .max(64, 'Channel content directory must be less than 64 characters'),
+  feed: yup
+    .object({
+      url: yup
         .string()
-        .required('Channel name is required')
-        .max(64, 'Channel name must be less than 64 characters')
-        .matches(/^[a-zA-Z0-9&|.,? ]*$/, 'Channel name must be alphanumeric'),
-    path: yup
-        .string()
-        .required('Channel path is required')
-        .max(64, 'Channel path must be less than 64 characters'),
-    index: yup
-        .string()
-        .required('Channel index is required')
-        .max(64, 'Channel index must be less than 64 characters'),
-    content: yup
-        .string()
-        .required('Channel content directory is required')
-        .max(64, 'Channel content directory must be less than 64 characters'),
-    feed: yup.object({
-        url: yup
-            .string()
-            .max(100, 'Channel feed url must be less than 100 characters')
-            .matches(/^(http|https):\/\/[^ "]+$/, 'Channel feed url must be a valid url')
-            .required(),
-        path: yup
-            .string()
-            .max(64, 'Channel feed path must be less than 64 characters')
-            .required(),
-    }).optional(),
+        .max(100, 'Channel feed url must be less than 100 characters')
+        .matches(/^(http|https):\/\/[^ "]+$/, 'Channel feed url must be a valid url')
+        .required(),
+      path: yup.string().max(64, 'Channel feed path must be less than 64 characters').required(),
+    })
+    .optional(),
 });
 
 /**
  * Interface defining the channel editor state and actions
  */
 export interface ChannelEditorState {
-    // Core State
-    readonly channelId: Ref<string>;
-    readonly channel: ReturnType<typeof useEditBuffer<BlogChannel>>;
+  // Core State
+  readonly channelId: Ref<string>;
+  readonly channel: ReturnType<typeof useEditBuffer<BlogChannel>>;
 
-    // Derived State
-    readonly isNew: Ref<boolean>;
-    readonly isLoading: Ref<boolean>;
+  // Derived State
+  readonly isNew: Ref<boolean>;
+  readonly isLoading: Ref<boolean>;
 
-    // Actions
-    saveChannel: () => Promise<void>;
-    deleteChannel: () => Promise<void>;
-    cancelEdit: () => Promise<void>;
+  // Actions
+  saveChannel: () => Promise<void>;
+  deleteChannel: () => Promise<void>;
+  cancelEdit: () => Promise<void>;
 
-    // API State
-    readonly waiting: Ref<boolean>;
+  // API State
+  readonly waiting: Ref<boolean>;
 }
 
 /**
@@ -70,106 +69,104 @@ export interface ChannelEditorState {
  * Manages channel editing, feed configuration, validation, and API interactions
  */
 export const useChannelEditor = (
-    blog: BlogAdminState,
-    channelId: MaybeRef<string>
+  blog: BlogAdminState,
+  channelId: MaybeRef<string>
 ): ChannelEditorState => {
-    
-    const router = useRouter();
+  const router = useRouter();
 
-    const channelIdRef = toRef(channelId);
+  const channelIdRef = toRef(channelId);
 
-    // API call state
-    const { invoke: apiCall, waiting } = useApiCall({ toaster });
+  // API call state
+  const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
-    const channel = useEditBuffer(blog.channels.single(channelIdRef), channelSchema as any);
-    const isNew = computed(() => !channel.raw.value?.id);
-    const isLoading = computed(() => blog.channels.isLoading.value);
+  const channel = useEditBuffer(blog.channels.single(channelIdRef), channelSchema as any);
+  const isNew = computed(() => !channel.raw.value?.id);
+  const isLoading = computed(() => blog.channels.isLoading.value);
 
-    const saveChannel = async () => {
-        // Validate channel fields
-        if (!await channel.validate()) {
-            return;
-        }
-   
-        await apiCall(async () => {
-            if (isNew.value) {
-                await blog.channels.add(channel.buffer);
-                toaster.success('Channel created successfully');
-            } else {
-                await blog.channels.update(channel.buffer);
-                toaster.success('Channel updated successfully');
-            }
+  const saveChannel = async () => {
+    // Validate channel fields
+    if (!(await channel.validate())) {
+      console.error('Form failed validation');
+      return;
+    }
 
-            // Navigate back to blog dashboard
-            await router.push('/blog');
-        });
-    };
+    await apiCall(async () => {
+      if (isNew.value) {
+        await blog.channels.add(channel.buffer);
+        toaster.success('Channel created successfully');
+      } else {
+        await blog.channels.update(channel.buffer);
+        toaster.success('Channel updated successfully');
+      }
 
-    const deleteChannel = async () => {
-        if (isNew.value) return;
-        if (!channel.raw.value) return;
+      // Navigate back to blog dashboard
+      await router.push('/blog');
+    });
+  };
 
-        // Confirm deletion
-        const { isCanceled } = await confirm({
-            title: 'Delete Channel?',
-            message: 'Are you sure you want to delete this channel? This action cannot be undone.',
-        });
+  const deleteChannel = async () => {
+    if (isNew.value) return;
+    if (!channel.raw.value) return;
 
-        if (isCanceled) return;
-
-        await apiCall(async () => {
-            await blog.channels.delete(channel.raw.value!);
-            toaster.success('Channel deleted successfully');
-            await router.push('/blog');
-        });
-    };
-
-    const cancelEdit = async () => {
-
-        if (channel.modified.value) {
-            const { isCanceled } = await confirm({
-                title: 'Unsaved Changes',
-                message: 'You have unsaved changes. Are you sure you want to close without saving?',
-            });
-
-            // Dont change page if user canceled
-            if (isCanceled) 
-                return;
-        }
-
-        // Revert any changes before navigating away
-        channel.revert();
-
-        if(isNew.value) {
-            router.push('/channels');
-        } else {
-            router.push(`/channels/${channel.raw.value.id}`);
-            toaster.info('Changes Reverted', 'All changes have been discarded.');
-        }
-    };
-
-    window.addEventListener('beforeunload', (event) => {
-        if (channel.modified.value) {
-            event.preventDefault();
-            cancelEdit();
-        }
+    // Confirm deletion
+    const { isCanceled } = await confirm({
+      title: 'Delete Channel?',
+      message: 'Are you sure you want to delete this channel? This action cannot be undone.',
     });
 
-    return {
-        // Core State
-        channelId: channelIdRef,
-        channel,
+    if (isCanceled) return;
 
-        // Derived State
-        isNew,
-        isLoading,
+    await apiCall(async () => {
+      await blog.channels.delete(channel.raw.value!);
+      toaster.success('Channel deleted successfully');
+      await router.push('/blog');
+    });
+  };
 
-        // Actions
-        saveChannel,
-        deleteChannel,
-        cancelEdit,
+  const cancelEdit = async () => {
+    if (channel.modified.value) {
+      const { isCanceled } = await confirm({
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Are you sure you want to close without saving?',
+      });
 
-        // API State
-        waiting: toRef(() => waiting.value),
-    };
+      // Dont change page if user canceled
+      if (isCanceled) return;
+    }
+
+    // Revert any changes before navigating away
+    channel.revert();
+
+    if (isNew.value) {
+      router.push('/channels');
+    } else {
+      router.push(`/channels/${channel.raw.value.id}`);
+      toaster.info('Changes Reverted', 'All changes have been discarded.');
+    }
+  };
+
+  window.addEventListener('beforeunload', (event) => {
+    if (channel.modified.value) {
+      event.preventDefault();
+      cancelEdit();
+    }
+  });
+
+  return {
+    // Core State
+    channelId: channelIdRef,
+    channel,
+
+    // Derived State
+    isNew,
+    isLoading,
+
+    // Actions
+    saveChannel,
+    deleteChannel,
+    cancelEdit,
+
+    // API State
+    waiting: toRef(() => waiting.value),
+  };
 };
