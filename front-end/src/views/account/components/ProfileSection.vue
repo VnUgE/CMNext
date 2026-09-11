@@ -46,7 +46,7 @@ const onSubmit = async () => {
     return;
   }
 
-  if (!(await validate(profileBuffer, profileSchema as any))) {
+  if (!(await validate(profileBuffer, profileSchema))) {
     return;
   }
 
