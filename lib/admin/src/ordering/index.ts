@@ -19,43 +19,46 @@ import { filter, includes, isEmpty, orderBy, slice, toLower } from 'lodash-es';
 import type { CanPaginate, NamedBlogEntity, SortedFilteredPaged } from '../types';
 
 /**
- * Allows filtering, sorting, and paginating a collection of blog items 
+ * Allows filtering, sorting, and paginating a collection of blog items
  * @param pageable The collection of items to paginate and filter
  * @returns The filtered and sorted items, and the pagination state
  */
-export const useFilteredPages = <T extends NamedBlogEntity>(pageable: CanPaginate<T>, pageSize: MaybeRefOrGetter<number>): SortedFilteredPaged<T> => {
+export const useFilteredPages = <T extends NamedBlogEntity>(
+  pageable: CanPaginate<T>,
+  pageSize: MaybeRefOrGetter<number>
+): SortedFilteredPaged<T> => {
+  //Get filterable items, and the query state to filter by
+  const { sort, search } = pageable;
 
-    //Get filterable items, and the query state to filter by
-    const { sort, search } = pageable;
+  const filtered = computed<T[]>(() => {
+    //Sort the posts by the sort order and decending
+    const sorted = orderBy(pageable.items.value, sort.value, ['desc']);
 
-    const filtered = computed<T[]>(() => {
+    if (isEmpty(search.value)) {
+      return sorted;
+    } else {
+      //Search query as lower-case
+      const lower = toLower(search.value);
+      return filter(
+        sorted,
+        (c) => includes(toLower(c.title || c.name), lower) || includes(toLower(c.id), lower)
+      );
+    }
+  });
 
-        //Sort the posts by the sort order and decending
-        const sorted = orderBy(pageable.items.value, sort.value, ['desc'])
+  //Get total after sort and filter
+  const total = computed(() => filtered.value.length);
 
-        if (isEmpty(search.value)) {
-            return sorted
-        }
-        else {
-            //Search query as lower-case
-            const lower = toLower(search.value);
-            return filter(sorted, c => includes(toLower(c.title || c.name), lower) || includes(toLower(c.id), lower))
-        }
-    })
+  //Setup pagination based on sort/filter
+  const pagination = useOffsetPagination({ total, pageSize });
 
-    //Get total after sort and filter
-    const total = computed(() => filtered.value.length);
+  const final = computed<T[]>(() => {
+    const currentPageSize = pagination.currentPageSize.value;
+    //get the current page of items to display
+    const offset = currentPageSize * (pagination.currentPage.value - 1);
+    const limit = currentPageSize * pagination.currentPage.value;
+    return slice(filtered.value, offset, limit);
+  });
 
-    //Setup pagination based on sort/filter
-    const pagination = useOffsetPagination({ total, pageSize });
-
-    const final = computed<T[]>(() => {
-        const currentPageSize = pagination.currentPageSize.value;
-        //get the current page of items to display
-        const offset = currentPageSize * (pagination.currentPage.value - 1);
-        const limit = currentPageSize * pagination.currentPage.value;
-        return slice(filtered.value, offset, limit);
-    })
-
-    return { items: final, pagination }
-}
+  return { items: final, pagination };
+};

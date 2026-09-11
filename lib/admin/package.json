@@ -17,14 +17,15 @@
   "license": "agpl3",
   "devDependencies": {
     "@types/lodash-es": "^4.14.194",
+    "prettier": "^3.9.6",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/@vnuge-vnlib.browser/release.tgz",
     "@vueuse/core": "^14.x",
-    "lodash-es": "^4.x",
-    "vue": "^3.x",
     "axios": "^1.x",
     "jose": "^6.0.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/@vnuge-vnlib.browser/release.tgz"
+    "lodash-es": "^4.x",
+    "vue": "^3.x"
   }
 }

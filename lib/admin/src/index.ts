@@ -15,23 +15,23 @@
 
 //Export apis and types
 
-export * from './ordering'
-export * from './feedProperties'
-export { usePosts } from './posts'
-export { useContent } from './content'
-export { useChannels } from './channels'
+export * from './ordering';
+export * from './feedProperties';
+export { usePosts } from './posts';
+export { useContent } from './content';
+export { useChannels } from './channels';
 
 export type * from './types';
 
-import { get } from '@vueuse/core'
-import type { MaybeRef } from "vue";
-import type { BlogAdminContext } from "./types";
+import { get } from '@vueuse/core';
+import type { MaybeRef } from 'vue';
+import type { BlogAdminContext } from './types';
 import type { Axios } from 'axios';
 
 export interface BlogAdminConfig {
-    readonly axios: Axios;
-    readonly baseUrl: MaybeRef<string>;
-    readonly defaultPageSize?: number;
+  readonly axios: Axios;
+  readonly baseUrl: MaybeRef<string>;
+  readonly defaultPageSize?: number;
 }
 
 /**
@@ -40,9 +40,8 @@ export interface BlogAdminConfig {
  * @returns A blog context object to pass to the blog admin components
  */
 export const createBlogContext = ({ baseUrl, axios }: BlogAdminConfig): BlogAdminContext => {
-
-    return{
-        getAxios: () => axios,
-        baseUrl: () => get(baseUrl),
-    }
-}
+  return {
+    getAxios: () => axios,
+    baseUrl: () => get(baseUrl),
+  };
+};

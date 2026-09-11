@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -14,13 +14,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { defaultTo, find, isEqual } from 'lodash-es';
-import { CMNextApi, CMNextIndex, ChannelMeta } from './types'
+import { CMNextApi, CMNextIndex, ChannelMeta } from './types';
 
 export interface ChannelApi extends CMNextApi<ChannelMeta> {
-    /**
-     * Gets the endpoint url for the channel
-     */
-    readonly channelFile: string;
+  /**
+   * Gets the endpoint url for the channel
+   */
+  readonly channelFile: string;
 }
 
 /**
@@ -28,79 +28,81 @@ export interface ChannelApi extends CMNextApi<ChannelMeta> {
  * @param endpoint The url of the channel json file
  */
 export const createChannelApi = (channelFile: string): ChannelApi => {
+  const getIndex = async (): Promise<CMNextIndex<ChannelMeta>> => {
+    const res = await fetch(channelFile);
+    return await res.json();
+  };
 
-    const getIndex = async () : Promise<CMNextIndex<ChannelMeta>> => {
-        const res = await fetch(channelFile)
-        return await res.json()
-    }
-
-    return { channelFile, getIndex }
-}
+  return { channelFile, getIndex };
+};
 
 export interface ScopedChannelApi extends ChannelApi {
-    /**
-     * Gets the post index path for the currently selected channel
-     */
-    getPostIndexPath(): Promise<string | undefined>;
-    /**
-     * Gets the content index path for the currently selected channel
-     */
-    getContentIndexPath(): Promise<string | undefined>;
-    /**
-     * Gets the base dir for the currently selected channel
-     */
-    getBaseDir(): Promise<string | undefined>;
-    /**
-     * Gets the content dir for the currently selected channel
-     */
-    getContentDir(): Promise<string | undefined>;
+  /**
+   * Gets the post index path for the currently selected channel
+   */
+  getPostIndexPath(): Promise<string | undefined>;
+  /**
+   * Gets the content index path for the currently selected channel
+   */
+  getContentIndexPath(): Promise<string | undefined>;
+  /**
+   * Gets the base dir for the currently selected channel
+   */
+  getBaseDir(): Promise<string | undefined>;
+  /**
+   * Gets the content dir for the currently selected channel
+   */
+  getContentDir(): Promise<string | undefined>;
 }
 
-export const createScopedChannelApi = (channelFile: string, channelId: string, urlPrefix? :string): ScopedChannelApi => {
+export const createScopedChannelApi = (
+  channelFile: string,
+  channelId: string,
+  urlPrefix?: string
+): ScopedChannelApi => {
+  const channelApi = createChannelApi(channelFile);
 
-    const channelApi = createChannelApi(channelFile);
-    
-    urlPrefix = defaultTo(urlPrefix, '');
+  const prefix = defaultTo(urlPrefix, '');
 
-    const getSelectedChannel = async (): Promise<ChannelMeta | undefined> => {
-        const index = await channelApi.getIndex()
-        //Get the selected channel from the channels
-        return find(index.records, i => isEqual(i.id, channelId))
-    }
+  const getSelectedChannel = async (): Promise<ChannelMeta | undefined> => {
+    const index = await channelApi.getIndex();
+    //Get the selected channel from the channels
+    return find(index.records, (i) => isEqual(i.id, channelId));
+  };
 
-    //begin getting the selected channel
-    const index = getSelectedChannel();
+  //begin getting the selected channel
+  const index = getSelectedChannel();
 
-    const getPostIndexPath = async (): Promise<string | undefined> => {
-        //Await the selected channel index
-        const channel = await index
-        return channel ? `${urlPrefix}${channel.path}/${channel.index}` : undefined;
-    }
+  const getPostIndexPath = async (): Promise<string | undefined> => {
+    //Await the selected channel index
+    const channel = await index;
+    return channel ? `${prefix}${channel.path}/${channel.index}` : undefined;
+  };
 
-    const getContentDir = async (): Promise<string | undefined> => {
-        //Await the selected channel index
-        const channel = await index
-        return channel ? channel.content : undefined;
-    }
+  const getContentDir = async (): Promise<string | undefined> => {
+    //Await the selected channel index
+    const channel = await index;
+    return channel ? channel.content : undefined;
+  };
 
-    const getBaseDir = async (): Promise<string | undefined> => {
-        //Await the selected channel index
-        const channel = await index
-        return channel ? channel.path : undefined;
-    }
+  const getBaseDir = async (): Promise<string | undefined> => {
+    //Await the selected channel index
+    const channel = await index;
+    return channel ? channel.path : undefined;
+  };
 
-    const getContentIndexPath = async (): Promise<string | undefined> => {
-        //Await the selected channel index
-        const channel = await index
-        //Get the post index from the channel
-        return channel ? `${urlPrefix}${channel.path}/content.json` : undefined;
-    }
+  const getContentIndexPath = async (): Promise<string | undefined> => {
+    //Await the selected channel index
+    const channel = await index;
+    //Get the post index from the channel
+    return channel ? `${prefix}${channel.path}/content.json` : undefined;
+  };
 
-    return{
-        ...channelApi,
-        getBaseDir,
-        getContentDir,
-        getPostIndexPath,
-        getContentIndexPath,
-    }
-}
+  return {
+    ...channelApi,
+    getBaseDir,
+    getContentDir,
+    getPostIndexPath,
+    getContentIndexPath,
+  };
+};

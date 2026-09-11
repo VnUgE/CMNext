@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -17,29 +17,32 @@ import { Ref, WatchSource, ref } from 'vue';
 import { throttle } from 'lodash-es';
 import { watchArray } from '@vueuse/core';
 
-
 /**
- * Watches a collection of items and runs the callback function if any of the 
+ * Watches a collection of items and runs the callback function if any of the
  * items change.
  * @param watchValue A collection of watchable items to watch
  * @param cb The async callback method to run when any of the items change
  * @param initial The initial value to set the watched value to
  * @returns A ref that is updated when any of the items change
  */
-export const watchAndCompute = <T>(watchValue: WatchSource[], cb: () => Promise<T>, initial: T): Ref<T> => {
+export const watchAndCompute = <T>(
+  watchValue: WatchSource[],
+  cb: () => Promise<T>,
+  initial: T
+): Ref<T> => {
+  const watched = ref<T>();
+  watched.value = initial;
 
-    const watched = ref<T>();
-    watched.value = initial;
+  //Function to execute the callback and set the watched value
+  const exec = async () => {
+    watched.value = await cb();
+  };
 
-    //Function to execute the callback and set the watched value
-    const exec = async () => {
-        watched.value = await cb();
-    }
+  //Initial call
+  exec();
 
-    //Initial call
-    exec();
+  watchArray(watchValue, throttle(exec, 100));
 
-    watchArray(watchValue, throttle(exec, 100))
-
-    return watched as Ref<T>;
-}
+  //Cast is load-bearing: vue's ref() overloads don't narrow to Ref<T> here.
+  return watched as Ref<T>;
+};

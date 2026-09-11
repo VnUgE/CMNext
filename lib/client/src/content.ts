@@ -14,110 +14,115 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { defaultTo, startsWith } from 'lodash-es';
-import { CMNextApi, CMNextAutoConfig, CMNextEntity, CMNextIndex, ContentMeta } from "./types";
-import { createScopedChannelApi } from "./channels";
+import { CMNextApi, CMNextAutoConfig, CMNextEntity, CMNextIndex, ContentMeta } from './types';
+import { createScopedChannelApi } from './channels';
 
 export interface ContentApi extends CMNextApi<ContentMeta> {
+  /**
+   * Gets the public url for the content item to load
+   * in the page
+   * @param item
+   */
+  getContentUrl(item: ContentMeta | CMNextEntity): Promise<string>;
 
-    /**
-     * Gets the public url for the content item to load 
-     * in the page
-     * @param item 
-     */
-    getContentUrl(item: ContentMeta | CMNextEntity): Promise<string>;
-
-    /**
-     * Fetches the raw string content for the given item and returns a string
-     * of the content
-     * @param item The content item to fetch the content for
-     */
-    getStringContent(item: ContentMeta | CMNextEntity): Promise<string>;
+  /**
+   * Fetches the raw string content for the given item and returns a string
+   * of the content
+   * @param item The content item to fetch the content for
+   */
+  getStringContent(item: ContentMeta | CMNextEntity): Promise<string>;
 }
 
 export interface ContentApiManualConfig {
-    /**
-    * The root directory path of the desired channel
-    */
-    readonly channelRootDir: string;
-    /**
-     * The relative path to the channel's content directory
-     */
-    readonly contentDir: string;
-    /**
-     * The relative path to the channel's content index file
-     */
-    readonly contentIndexPath: string;
+  /**
+   * The root directory path of the desired channel
+   */
+  readonly channelRootDir: string;
+  /**
+   * The relative path to the channel's content directory
+   */
+  readonly contentDir: string;
+  /**
+   * The relative path to the channel's content index file
+   */
+  readonly contentIndexPath: string;
 }
 
 /**
  * Creates a manual content api for the given manual content config, that
- * uses the known endpoint constants to avoid extra netowrk requests when 
- * getting content. 
+ * uses the known endpoint constants to avoid extra network requests when
+ * getting content.
  * @param param0 The CMNext configuration for the manual content api
  * @returns The manual content api
  */
-export const createManualContentApi = ({ channelRootDir, contentIndexPath, contentDir }: ContentApiManualConfig): ContentApi => {
-    
-    //Make sure the content dir begins with a slash
-    contentDir = startsWith(contentDir, '/') ? contentDir : `/${contentDir}`
+export const createManualContentApi = ({
+  channelRootDir,
+  contentIndexPath,
+  contentDir,
+}: ContentApiManualConfig): ContentApi => {
+  //Make sure the content dir begins with a slash
+  const fixedContentDir = startsWith(contentDir, '/') ? contentDir : `/${contentDir}`;
 
-    const getIndex = async () : Promise<CMNextIndex<ContentMeta>> => {
-        const res = await fetch(`${channelRootDir}/${contentIndexPath}`)
-        return await res.json()
-    }
-    
-    const getContentUrl = async (item: ContentMeta): Promise<string> => {
-        //Content resides in the content dir within the channel dir
-        return `${channelRootDir}${contentDir}/${item.path}`
-    }
+  const getIndex = async (): Promise<CMNextIndex<ContentMeta>> => {
+    const res = await fetch(`${channelRootDir}/${contentIndexPath}`);
+    return await res.json();
+  };
 
-    const getStringContent = async (item: ContentMeta): Promise<string> => {
-        const url = await getContentUrl(item);
-        const res = await fetch(url)
-        return await res.text()
-    }
+  const getContentUrl = async (item: ContentMeta): Promise<string> => {
+    //Content resides in the content dir within the channel dir
+    return `${channelRootDir}${fixedContentDir}/${item.path}`;
+  };
 
-    return { getIndex, getContentUrl, getStringContent }
-}
+  const getStringContent = async (item: ContentMeta): Promise<string> => {
+    const url = await getContentUrl(item);
+    const res = await fetch(url);
+    return await res.text();
+  };
+
+  return { getIndex, getContentUrl, getStringContent };
+};
 
 /**
- * Creates an automatic content api for the given auto content config, that 
+ * Creates an automatic content api for the given auto content config, that
  * uses the known global CMS catalog and the id of a channel to get content for
- * then discovers the required config from the channel. This api will cause multple
+ * then discovers the required config from the channel. This api will cause multiple
  * network requests to the CMS to discover the CMS configuration automatically.
  * @param param0 The CMNext configuration for the auto content api
  * @returns The automatic discovery content api
  */
-export const createAutoContentApi = ({ cmsChannelIndexPath, channelId, urlPrefix }: CMNextAutoConfig): ContentApi => {
+export const createAutoContentApi = ({
+  cmsChannelIndexPath,
+  channelId,
+  urlPrefix,
+}: CMNextAutoConfig): ContentApi => {
+  const prefix = defaultTo(urlPrefix, '');
 
-    urlPrefix = defaultTo(urlPrefix, '');
+  const channelApi = createScopedChannelApi(cmsChannelIndexPath, channelId, prefix);
 
-    const channelApi = createScopedChannelApi(cmsChannelIndexPath, channelId, urlPrefix);
-
-    const getIndex = async () : Promise<CMNextIndex<ContentMeta>> => {
-        //Get the content index path from the channel api
-        const contentIndexPath = await channelApi.getContentIndexPath()
-        if(!contentIndexPath){
-            return { version : '0.0.0', records: [], date: 0 } 
-        }
-        //Fetch the content index
-        const res = await fetch(contentIndexPath)
-        return await res.json()
+  const getIndex = async (): Promise<CMNextIndex<ContentMeta>> => {
+    //Get the content index path from the channel api
+    const contentIndexPath = await channelApi.getContentIndexPath();
+    if (!contentIndexPath) {
+      return { version: '0.0.0', records: [], date: 0 };
     }
+    //Fetch the content index
+    const res = await fetch(contentIndexPath);
+    return await res.json();
+  };
 
-    const getContentUrl = async (item: ContentMeta): Promise<string> => {
-        //Content resides in the content dir within the channel dir
-        const contentDir = await channelApi.getContentDir();
-        const baseDir = await channelApi.getBaseDir();
-        return contentDir ? `${urlPrefix}${baseDir}/${contentDir}/${item.path}` : ''
-    }
+  const getContentUrl = async (item: ContentMeta): Promise<string> => {
+    //Content resides in the content dir within the channel dir
+    const contentDir = await channelApi.getContentDir();
+    const baseDir = await channelApi.getBaseDir();
+    return contentDir ? `${prefix}${baseDir}/${contentDir}/${item.path}` : '';
+  };
 
-    const getStringContent = async (item: ContentMeta): Promise<string> => {
-        //Get the url of the item then fetch it
-        const url = await getContentUrl(item);
-        const res = await fetch(url)
-        return await res.text()
-    }
+  const getStringContent = async (item: ContentMeta): Promise<string> => {
+    //Get the url of the item then fetch it
+    const url = await getContentUrl(item);
+    const res = await fetch(url);
+    return await res.text();
+  };
 
-    return { getIndex, getContentUrl, getStringContent }
-}
+  return { getIndex, getContentUrl, getStringContent };
+};

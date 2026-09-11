@@ -14,62 +14,63 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { isArray, isEqual, toSafeInteger } from 'lodash-es';
-import { BlogChannel, ChannelApi, BlogAdminContext } from '../types.js'
+import { type WebMessage } from '@vnuge/vnlib.browser';
+import { BlogChannel, ChannelApi, BlogAdminContext } from '../types.js';
 
 /**
  * Gets the channel helper api to manage content channels
  */
 export const useChannels = ({ getAxios, baseUrl }: BlogAdminContext): ChannelApi => {
+  const getUrl = (): string => `${baseUrl()}/channels`;
 
-    const getUrl = (): string => `${baseUrl()}/channels`;
-
-    const sanitizeNumbers = (channel: BlogChannel): BlogChannel => {
-        if (channel.feed) {
-            channel.feed.maxItems = isEqual(channel.feed.maxItems, '') 
-                ? undefined 
-                : toSafeInteger(channel.feed.maxItems);
-        }
-        return channel;
+  const sanitizeNumbers = (channel: BlogChannel): BlogChannel => {
+    if (channel.feed) {
+      channel.feed.maxItems = isEqual(channel.feed.maxItems, '')
+        ? undefined
+        : toSafeInteger(channel.feed.maxItems);
     }
-   
-    const deleteChannel = async (channel: BlogChannel) => {
-        const axios = getAxios();
+    return channel;
+  };
+
+  const deleteChannel = async (channel: BlogChannel) => {
+    const axios = getAxios();
+    //Call delete with the channel id query
+    await axios.delete(`${getUrl()}?channel=${channel.id}`);
+  };
+
+  return {
+    async getAllItems() {
+      const axios = getAxios();
+      return axios.get<BlogChannel[]>(getUrl()).then((s) => s.data);
+    },
+
+    async add(item: BlogChannel) {
+      const axios = getAxios();
+      //Clone the item to avoid modifying the original
+      const add = sanitizeNumbers({ ...item });
+      //Call post with the channel data, unwrap the web-message envelope
+      const { data } = await axios.post<WebMessage<BlogChannel>>(getUrl(), add);
+      return data.getResultOrThrow();
+    },
+
+    async update(item: BlogChannel) {
+      const axios = getAxios();
+      //Manually assign the feed or null, and clone the item to avoid modifying the original
+      const update = sanitizeNumbers({ ...item });
+      //Call patch with the channel data, unwrap the web-message envelope
+      const { data } = await axios.patch<WebMessage<BlogChannel>>(getUrl(), update);
+      return data.getResultOrThrow();
+    },
+
+    async delete(item: BlogChannel | BlogChannel[]) {
+      const axios = getAxios();
+      //invoke delete for each item
+      if (isArray(item)) {
+        await Promise.all(item.map(deleteChannel));
+      } else {
         //Call delete with the channel id query
-        await axios.delete(`${getUrl()}?channel=${channel.id}`);
-    }
-  
-    return { 
-        async getAllItems() {
-            const axios = getAxios();
-            return axios.get<BlogChannel[]>(getUrl()).then(s => s.data);
-        },
-        
-        async add(item: BlogChannel) {
-            const axios = getAxios();
-            //Clone the item to avoid modifying the original
-            const add = sanitizeNumbers({ ...item });
-            //Call post with the channel data
-            return axios.post(getUrl(), add);
-        },
-
-        async update(item: BlogChannel) {
-            const axios = getAxios();
-            //Manually assign the feed or null, and clone the item to avoid modifying the original
-            const update = sanitizeNumbers({ ...item });
-            //Call put with the channel data
-            return axios.patch(getUrl(), update);
-        },
-        
-        async delete(item: BlogChannel | BlogChannel[]){
-            const axios = getAxios();
-            //invoke delete for each item
-            if(isArray(item)){
-                await Promise.all(item.map(deleteChannel));
-            }
-            else{
-                //Call delete with the channel id query
-                await deleteChannel(item)
-            }
-        }
-     };
-}
+        await deleteChannel(item);
+      }
+    },
+  };
+};

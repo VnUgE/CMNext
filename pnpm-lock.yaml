@@ -154,6 +154,9 @@ importers:
       '@types/lodash-es':
         specifier: ^4.14.194
         version: 4.17.12
+      prettier:
+        specifier: ^3.9.6
+        version: 3.9.6
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
@@ -167,6 +170,9 @@ importers:
       '@types/lodash-es':
         specifier: ^4.14.194
         version: 4.17.12
+      prettier:
+        specifier: ^3.9.6
+        version: 3.9.6
       typescript:
         specifier: ^5.9.2
         version: 5.9.3

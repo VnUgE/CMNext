@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -21,215 +21,239 @@ import type { Ref } from 'vue';
 /**
  * A base blog entity that has a globally unique id and a date
  */
-export interface BlogEntity{
-    /**
-     * The globally unique id of the entity
-     */
-    readonly id: string;
-    /**
-     * The date the entity was last modified
-     */
-    readonly date: number;
+export interface BlogEntity {
+  /**
+   * The globally unique id of the entity
+   */
+  readonly id: string;
+  /**
+   * The date the entity was last modified
+   */
+  readonly date: number;
 }
 
 /**
  * A blog entity that has a name and/or a title
  */
 export interface NamedBlogEntity extends BlogEntity {
-    /**
-     * The name of the entity
-     */
-    readonly name?: string;
-    /**
-     * The title of the entity or item
-     */
-    readonly title?: string;
+  /**
+   * The name of the entity
+   */
+  readonly name?: string;
+  /**
+   * The title of the entity or item
+   */
+  readonly title?: string;
 }
 
-
 export interface FeedProperty {
-    name: string;
-    value?: string;
-    namespace?: string;
-    attributes?: Dictionary<string>;
-    properties?: FeedProperty[];
+  name: string;
+  value?: string;
+  namespace?: string;
+  attributes?: Dictionary<string>;
+  properties?: FeedProperty[];
 }
 
 export interface XmlPropertyContainer {
-    properties?: FeedProperty[];
+  properties?: FeedProperty[];
 }
 
 export interface ChannelFeed extends XmlPropertyContainer {
-    url: string;
-    path: string;
-    image: string;
-    copyright?: string;
-    maxItems?: number;
-    description?: string;
-    contact?: string;
+  url: string;
+  path: string;
+  image: string;
+  maxItems?: number;
+  description?: string;
+  author?: string;
+  contact?: string;
 }
 
 export interface BlogChannel extends BlogEntity {
-    name: string;
-    path: string;
-    index: string;
-    feed?: ChannelFeed;
-    content?: string;
+  name: string;
+  path: string;
+  index: string;
+  feed?: ChannelFeed;
+  content?: string;
 }
 
 export interface ContentMeta extends NamedBlogEntity {
-    readonly content_type: string;
-    readonly length: number;
-    readonly path: string;
+  readonly content_type: string;
+  readonly length: number;
+  readonly path: string;
 }
 
 /**
  * Represents a blog post's meta data in the catalog
  */
 export interface PostMeta extends NamedBlogEntity, XmlPropertyContainer {
-    readonly created ?: number;
-    summary?: string;
-    author?: string;
-    tags?: string[];
-    image?: string;
-    html_description?: string;
+  readonly created?: number;
+  summary?: string;
+  author?: string;
+  tags?: string[];
+  image?: string;
+  html_description?: string;
 }
 
 export interface BlogApi<T extends BlogEntity> {
-    /**
-     * Gets all blog entities from the server
-     * @returns An array of entities
-     */
-    getAllItems(): Promise<T[]>;
+  /**
+   * Gets all blog entities from the server
+   * @returns An array of entities
+   */
+  getAllItems(): Promise<T[]>;
 
-    /**
-     * Deletes an entity from the server
-     * @param item The entity to delete
-     */
-    delete(item: T): Promise<void>;
+  /**
+   * Deletes an entity from the server
+   * @param item The entity to delete
+   */
+  delete(item: T): Promise<void>;
 
-    /**
-     * Deletes an array of entities from the server
-     * @param item The entities to delete
-     */
-    delete(item: T[]): Promise<void>;
+  /**
+   * Deletes an array of entities from the server
+   * @param item The entities to delete
+   */
+  delete(item: T[]): Promise<void>;
 
-    /**
-     * Adds an entity to the server
-     * @param item The entity to add
-     */
-    add(item: T): Promise<T>;
+  /**
+   * Adds an entity to the server
+   * @param item The entity to add
+   */
+  add(item: T): Promise<T>;
 
-    /**
-     * Updates an entity on the server
-     * @param item The entity to update
-     */
-    update(item: T): Promise<T>;
+  /**
+   * Updates an entity on the server
+   * @param item The entity to update
+   */
+  update(item: T): Promise<T>;
 }
 
 /**
  * Represents the channel api and its operations
  */
-export interface ChannelApi extends BlogApi<BlogChannel> {
-}
+export interface ChannelApi extends BlogApi<BlogChannel> {}
 
 export interface PostApi extends BlogApi<PostMeta> {
-    /**
-     * Gets the post meta data for a single post by its id
-     * @param postId The id of the post to get
-     * @returns The post meta data
-     */
-    getSinglePost: (postId: string) => Promise<PostMeta>;
+  /**
+   * Gets the post meta data for a single post by its id
+   * @param postId The id of the post to get
+   * @returns The post meta data
+   */
+  getSinglePost: (postId: string) => Promise<PostMeta>;
 }
 
 export interface ContentApi extends BlogApi<ContentMeta> {
-    /**
-    * Gets all blog entities from the server
-    * @returns An array of entities
-    */
-    getAllItems(): Promise<ContentMeta[]>;
-    /**
-    * Deletes an entity from the server
-    * @param item The entity to delete
-    */
-    delete(item: ContentMeta): Promise<void>;
-    /**
-     * Deletes an array of entities from the server
-     * @param item The entities to delete
-     */
-    delete(item: ContentMeta[]): Promise<void>;
-    /**
-     * Gets the content for a post as text
-     * @param post The post to get the content for
-     * @returns A promise that resolves to the content string
-     */
-    getPostContent(post: BlogEntity): Promise<string>;
-    /**
-     * Gets a single content meta object by its id
-     * @param id The id of the content meta object to get
-     * @returns A promise that resolves to the content meta object
-     */
-    getContent(id: string): Promise<ContentMeta | undefined>;
-    /**
-     * Uploads a content file to the server in the current channel
-     * @param content The content file to upload
-     * @param name The name of the content file
-     * @returns A promise that resolves to the content meta object for the uploaded content
-     */
-    uploadContent(data: File, name: string, config?: AxiosRequestConfig): Promise<ContentMeta>;
-    /**
-     * Updates the content for a post in the current channel
-     * @param post The post to update the content for
-     * @param content The post content to update
-     * @returns A promise that resolves to the content meta object for the updated content
-     */
-    updatePostContent(post: PostMeta, content: string): Promise<ContentMeta>;
-    /**
-    * Updates the name of a content meta object in the current channel
-    * @param content The content meta object to update
-    * @param name The new name for the content
-    * @returns A promise that resolves when the content has been updated
-    */
-    updateContentName(content: ContentMeta, name: string): Promise<ContentMeta>;
-    /**
-     * Gets the relative public url of the content meta object
-     * @param content The content meta object to get the public url for
-     * @returns The public url for the content
-     */
-    getPublicUrl(content: ContentMeta): Promise<string>;
-    /**
-     * Allows you to overwrite the content for a content meta object
-     * @param content The content meta object to update
-     * @param data The new content data file
-     */
-    updateContent(content: ContentMeta, data: File, config?:AxiosRequestConfig): Promise<ContentMeta>;
-    /**
-     * Downloads the content data file for the given content meta object
-     * @param content The content meta object to download
-     */
-    downloadContent(content: ContentMeta): Promise<Blob>;
+  /**
+   * Gets all blog entities from the server
+   * @returns An array of entities
+   */
+  getAllItems(): Promise<ContentMeta[]>;
+  /**
+   * Deletes an entity from the server
+   * @param item The entity to delete
+   */
+  delete(item: ContentMeta): Promise<void>;
+  /**
+   * Deletes an array of entities from the server
+   * @param item The entities to delete
+   */
+  delete(item: ContentMeta[]): Promise<void>;
+  /**
+   * Gets the content for a post as text
+   * @param post The post to get the content for
+   * @returns A promise that resolves to the content string
+   */
+  getPostContent(post: BlogEntity): Promise<string>;
+  /**
+   * Gets a single content meta object by its id
+   * @param id The id of the content meta object to get
+   * @returns A promise that resolves to the content meta object
+   */
+  getContent(id: string): Promise<ContentMeta | undefined>;
+  /**
+   * Uploads a content file to the server in the current channel
+   * @param content The content file to upload
+   * @param name The name of the content file
+   * @returns A promise that resolves to the content meta object for the uploaded content
+   */
+  uploadContent(data: File, name: string, config?: AxiosRequestConfig): Promise<ContentMeta>;
+  /**
+   * Updates the content for a post in the current channel
+   * @param post The post to update the content for
+   * @param content The post content to update
+   * @returns A promise that resolves to the content meta object for the updated content
+   */
+  updatePostContent(post: PostMeta, content: string): Promise<ContentMeta>;
+  /**
+   * Updates the name of a content meta object in the current channel
+   * @param content The content meta object to update
+   * @param name The new name for the content
+   * @returns A promise that resolves when the content has been updated
+   */
+  updateContentName(content: ContentMeta, name: string): Promise<ContentMeta>;
+  /**
+   * Gets the relative public url of the content meta object
+   * @param content The content meta object to get the public url for
+   * @returns The public url for the content
+   */
+  getPublicUrl(content: ContentMeta): Promise<string>;
+  /**
+   * Allows you to overwrite the content for a content meta object
+   * @param content The content meta object to update
+   * @param data The new content data file
+   */
+  updateContent(
+    content: ContentMeta,
+    data: File,
+    config?: AxiosRequestConfig
+  ): Promise<ContentMeta>;
+  /**
+   * Downloads the content data file for the given content meta object
+   * @param content The content meta object to download
+   */
+  downloadContent(content: ContentMeta): Promise<Blob>;
 }
 
 /**
  * Represents a collection of items that can be paginated, such as posts or content
  */
 export interface CanPaginate<T> {
-    /**
-     * A reactive collection of items within the store
-     */
-    readonly items: Readonly<Ref<T[]>>;
+  /**
+   * A reactive collection of items within the store
+   */
+  readonly items: Readonly<Ref<T[]>>;
 
-    readonly sort: Readonly<Ref<string>>;
+  readonly sort: Readonly<Ref<string>>;
 
-    readonly search: Readonly<Ref<string>>;
+  readonly search: Readonly<Ref<string>>;
 }
 
-export interface SortedFilteredPaged<T>{
-    readonly items : Readonly<Ref<T[]>>;
-    readonly pagination: UseOffsetPaginationReturn;
+export interface SortedFilteredPaged<T> {
+  readonly items: Readonly<Ref<T[]>>;
+  readonly pagination: UseOffsetPaginationReturn;
 }
 
 export interface BlogAdminContext {
-    baseUrl(): string;
-    getAxios(): Axios;
+  baseUrl(): string;
+  getAxios(): Axios;
 }
+
+/**
+ * CONTRACT PIN — BlogChannel / ChannelFeed wire shape.
+ *
+ * These key sets must mirror the JSON property names emitted by
+ * back-end/src/Model/BlogChannel.cs and FeedMeta.cs. If either side gains,
+ * renames, or drops a field, update BOTH sides and these assertions.
+ * tsc fails the build on drift.
+ */
+type _Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+type _Expect<T extends true> = T;
+
+export type AssertChannelContract = _Expect<
+  _Equal<keyof BlogChannel, 'id' | 'name' | 'path' | 'index' | 'feed' | 'content' | 'date'>
+>;
+export type AssertChannelFeedContract = _Expect<
+  _Equal<
+    keyof ChannelFeed,
+    'url' | 'path' | 'image' | 'maxItems' | 'description' | 'author' | 'contact' | 'properties'
+  >
+>;

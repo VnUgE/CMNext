@@ -14,23 +14,23 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { filter, forEach, isEmpty, join, map } from 'lodash-es';
-import { FeedProperty, } from '../types';
+import { FeedProperty } from '../types';
 
 /**
  * An interface for working with xml properties from an xml feed
  */
 export interface UseXmlProperties {
-    /**
-     * Gets the current properties as xml
-     */
-    toXmlString(properties: FeedProperty[]): string | undefined;
+  /**
+   * Gets the current properties as xml
+   */
+  toXmlString(properties: FeedProperty[] | undefined): string;
 
-    /**
-     * Saves properties values from a json string
-     * @param json The property json to parse
-     * @returns True if the json was parsed and saved, false otherwise
-     */
-    fromJsonString(json: string | undefined): FeedProperty[] 
+  /**
+   * Saves properties values from a json string
+   * @param json The property json to parse
+   * @returns The parsed properties, or an empty array when there is nothing to parse
+   */
+  fromJsonString(json: string | undefined): FeedProperty[];
 }
 
 /**
@@ -39,55 +39,59 @@ export interface UseXmlProperties {
  * @returns An api for working with xml properties
  */
 export const useXmlProperties = (): UseXmlProperties => {
+  const getPropertyXml = (properties: FeedProperty[]): string => {
+    let output = '';
+    forEach(properties, (prop) => {
+      //Open tag (with namespace if present)
+      output += !isEmpty(prop.namespace) ? `<${prop.namespace}:${prop.name}` : `<${prop.name}`;
 
+      if (!isEmpty(prop.attributes)) {
+        forEach(prop.attributes, (value, key) => (output += ` ${key}="${value}"`));
+      }
 
-    const getPropertyXml = (properties: FeedProperty[]): string => {
-        let output = '';
-        forEach(properties, prop => {
-            //Open tag (with namespace if present)
-            output += !isEmpty(prop.namespace) ? `<${prop.namespace}:${prop.name}` : `<${prop.name}`
+      //Recursive call for nested property, or add its value
+      output += !isEmpty(prop.properties)
+        ? `>${getPropertyXml(prop.properties ?? [])}`
+        : `>${prop.value || ''}`;
 
-            if (!isEmpty(prop.attributes)) {
-                forEach(prop.attributes, (value, key) => output += ` ${key}="${value}"`)
-            }
+      //Close tag
+      output += !isEmpty(prop.namespace) ? `</${prop.namespace}:${prop.name}>` : `</${prop.name}>`;
+      return output;
+    });
+    return output;
+  };
 
-            //Recursive call for nested property, or add its value
-            output += !isEmpty(prop.properties) ? `>${getPropertyXml(prop.properties!)}` : `>${prop.value || ''}`
+  const toXmlString = (properties: FeedProperty[] | undefined): string => {
+    if (properties === undefined) {
+      return '';
+    }
+    return join(
+      map(properties, (p) => getPropertyXml([p])),
+      '\n'
+    );
+  };
 
-            //Close tag
-            output += !isEmpty(prop.namespace) ? `</${prop.namespace}:${prop.name}>` : `</${prop.name}>`
-            return output;
-        })
-        return output;
+  const fromJsonString = (json: string | undefined): FeedProperty[] => {
+    if (isEmpty(json)) {
+      //Clear all properties if json is undefined
+      return [];
     }
 
-    const toXmlString = (properties: FeedProperty[]): string => {
-        if (properties === undefined) {
-            return '';
-        }
-        return join(map(properties, p => getPropertyXml([p])), '\n');
-    }
+    //Guarded by the isEmpty check above: json is a non-empty string here.
+    //Note: malformed JSON still throws, matching previous behavior.
+    const parsed = JSON.parse(json ?? '');
 
-    const fromJsonString = (json: string | undefined): FeedProperty[] => {
+    const props = map(parsed, (prop) => ({
+      name: prop.name,
+      value: prop.value,
+      namespace: prop.namespace,
+      attributes: prop.attributes,
+      properties: prop.properties,
+    }));
 
-        if (isEmpty(json)) {
-            //Clear all properties if json is undefined
-            return [];
-        }
+    //Remove any empty properties
+    return filter(props, (p) => !isEmpty(p.name));
+  };
 
-       const parsed = JSON.parse(json!);
-
-        const props = map(parsed, (prop) => ({
-            name: prop.name,
-            value: prop.value,
-            namespace: prop.namespace,
-            attributes: prop.attributes,
-            properties: prop.properties
-        }))
-
-        //Remove any empty properties
-        return filter(props, p => !isEmpty(p.name));
-    }
-
-    return { toXmlString, fromJsonString }
-}
+  return { toXmlString, fromJsonString };
+};
