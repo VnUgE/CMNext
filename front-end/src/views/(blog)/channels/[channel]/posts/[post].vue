@@ -125,7 +125,7 @@ const mdEditorVisible = computed({
                   title="Convert Markdown"
                   @click="editor.md.toggle(true)"
                 >
-                  <fa-icon icon="markdown" class="w-4 h-4" />
+                  <fa-icon :icon="['fab', 'markdown']" class="w-4 h-4" />
                   Markdown
                 </button>
 

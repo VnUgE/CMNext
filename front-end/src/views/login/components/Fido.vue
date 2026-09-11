@@ -1,29 +1,30 @@
 <script setup lang="ts">
-import { toRefs } from 'vue';
 import { fidoMfaAuthenticate, type MfaFlow, useFidoApi } from '@vnuge/vnlib.browser';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { toaster } from '../../../main';
 
-const emit = defineEmits(['clear', 'back']);
-const props = defineProps<{ upgrade: MfaFlow<'fido'> }>();
+const emit = defineEmits<{ clear: []; back: [] }>();
+const props = defineProps<{ upgrade: MfaFlow<'fido'> | undefined }>();
 
-const { upgrade } = toRefs(props);
 const { invoke: apiCall, waiting } = useApiCall({ toaster });
 const { isSupported } = useFidoApi();
 
 const authenticateFido = () => {
-  //If a request is still pending, do nothing
+  //If a request is still pending, or no upgrade is selected, do nothing
   if (waiting.value) return;
 
+  const upgrade = props.upgrade;
+  if (!upgrade) return;
+
   apiCall(async () => {
-    //Submit totp code
-    const res = await fidoMfaAuthenticate(upgrade.value, { useAutoFill: false });
+    //Authenticate with the security key
+    const res = await fidoMfaAuthenticate(upgrade, { useAutoFill: false });
     res.getResultOrThrow();
 
     emit('clear');
 
     // Push a new toast message
-    toaster.success('You have been logged in');
+    toaster.success('Success', 'You have been logged in');
   });
 };
 </script>

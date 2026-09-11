@@ -15,10 +15,11 @@ store.setPageTitle('Home');
 
 // Refresh channels whenever the user logs in
 whenever(loggedIn, () => cmnext.channels.refresh());
+// Surfaces load errors
 whenever(
   () => store.account.error,
   (err) => {
-    toaster.error('Load error', err);
+    toaster.error('Load error', err instanceof Error ? err.message : 'Unknown error');
   }
 );
 </script>

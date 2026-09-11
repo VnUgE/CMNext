@@ -48,7 +48,6 @@ export type ThemeNameLight =
   | 'autumn'
   | 'acid'
   | 'lemonade'
-  | 'lemonade'
   | 'winter'
   | 'nord'
   | 'caramellatte'

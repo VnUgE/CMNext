@@ -1,13 +1,15 @@
-import { computed, type MaybeRef, type Ref } from 'vue';
-import { toRef } from '@vueuse/core';
+import { computed, onUnmounted, type MaybeRef, type Ref } from 'vue';
+import { get, toRef } from '@vueuse/core';
+import { defaultTo } from 'lodash-es';
 import { useRouter } from 'vue-router';
-import { type BlogChannel } from '@vnuge/cmnext-admin';
+import { type BlogChannel, type ChannelFeed } from '@vnuge/cmnext-admin';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import * as yup from 'yup';
 import { confirm } from './confirm';
 import { toaster } from '../main';
-import { useEditBuffer } from './editBuffer';
+import { useEditBuffer, type EditBuffer } from './editBuffer';
 import { BlogAdminState } from './blog';
+import { type Equal, type Expect } from './contract';
 
 /**
  * Validation schema for channel fields
@@ -35,13 +37,71 @@ export const channelSchema = yup.object({
     .object({
       url: yup
         .string()
-        .max(100, 'Channel feed url must be less than 100 characters')
+        .max(200, 'Channel feed url must be less than 200 characters')
         .matches(/^(http|https):\/\/[^ "]+$/, 'Channel feed url must be a valid url')
         .required(),
-      path: yup.string().max(64, 'Channel feed path must be less than 64 characters').required(),
+      path: yup
+        .string()
+        .max(200, 'Channel feed path must be less than 200 characters')
+        .test(
+          'no-leading-slash',
+          'The feed file path must not contain a leading slash',
+          (value) => !value || (!value.startsWith('/') && !value.startsWith('\\'))
+        )
+        .matches(/^[a-zA-Z0-9_.-]+$/, 'The feed file name is not valid')
+        .required(),
     })
     .optional(),
 });
+
+/**
+ * The channel form model: exactly what the schema validates. Composed from
+ * the wire types (no duplicated field declarations) and narrowed to what
+ * the user can edit — no id/date passthrough. The assertion below pins it
+ * to the schema so the two cannot drift.
+ */
+export type ChannelFeedFormData = Pick<ChannelFeed, 'url' | 'path'>;
+
+export interface ChannelFormData extends Pick<BlogChannel, 'name' | 'path' | 'index'> {
+  content: string;
+  feed?: ChannelFeedFormData;
+}
+
+export type AssertChannelForm = Expect<Equal<ChannelFormData, yup.InferType<typeof channelSchema>>>;
+
+/**
+ * Maps a wire channel to editable form data. Server-assigned fields
+ * (id/date) stay out of the form; display fallbacks guard missing values.
+ */
+const toChannelForm = (channel: BlogChannel): ChannelFormData => ({
+  name: defaultTo(channel.name, ''),
+  path: defaultTo(channel.path, ''),
+  index: defaultTo(channel.index, ''),
+  content: defaultTo(channel.content, ''),
+  feed: channel.feed
+    ? { url: defaultTo(channel.feed.url, ''), path: defaultTo(channel.feed.path, '') }
+    : undefined,
+});
+
+/**
+ * Maps validated form data back to the wire shape, preserving
+ * server-assigned fields (id/date) and untouched feed fields from the
+ * source entity. For new channels there is no source, so id/date stay
+ * absent and the server assigns them — matching previous behavior.
+ */
+const fromChannelForm = (form: ChannelFormData, source?: BlogChannel): BlogChannel => {
+  const buf = { ...source, ...form };
+
+  if (form.feed) {
+    buf.feed = {
+      ...source?.feed,
+      url: form.feed.url,
+      path: form.feed.path,
+    };
+  }
+
+  return buf as BlogChannel;
+};
 
 /**
  * Interface defining the channel editor state and actions
@@ -49,7 +109,7 @@ export const channelSchema = yup.object({
 export interface ChannelEditorState {
   // Core State
   readonly channelId: Ref<string>;
-  readonly channel: ReturnType<typeof useEditBuffer<BlogChannel>>;
+  readonly channel: EditBuffer<ChannelFormData>;
 
   // Derived State
   readonly isNew: Ref<boolean>;
@@ -79,8 +139,13 @@ export const useChannelEditor = (
   // API call state
   const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
-  const channel = useEditBuffer(blog.channels.single(channelIdRef), channelSchema as any);
-  const isNew = computed(() => !channel.raw.value?.id);
+  // Wire entity (identity for isNew/save/delete) and typed form buffer
+  const source = blog.channels.single(channelIdRef);
+  const initial = computed<ChannelFormData | undefined>(() =>
+    source.value ? toChannelForm(source.value) : undefined
+  );
+  const channel = useEditBuffer(initial, channelSchema);
+  const isNew = computed(() => !source.value?.id);
   const isLoading = computed(() => blog.channels.isLoading.value);
 
   const saveChannel = async () => {
@@ -92,21 +157,23 @@ export const useChannelEditor = (
 
     await apiCall(async () => {
       if (isNew.value) {
-        await blog.channels.add(channel.buffer);
+        await blog.channels.add(fromChannelForm(channel.buffer));
         toaster.success('Channel created successfully');
       } else {
-        await blog.channels.update(channel.buffer);
+        await blog.channels.update(fromChannelForm(channel.buffer, source.value));
         toaster.success('Channel updated successfully');
       }
 
       // Navigate back to blog dashboard
-      await router.push('/blog');
+      await router.push('/channels');
     });
   };
 
   const deleteChannel = async () => {
     if (isNew.value) return;
-    if (!channel.raw.value) return;
+
+    const sourceChannel = get(source);
+    if (!sourceChannel) return;
 
     // Confirm deletion
     const { isCanceled } = await confirm({
@@ -117,9 +184,9 @@ export const useChannelEditor = (
     if (isCanceled) return;
 
     await apiCall(async () => {
-      await blog.channels.delete(channel.raw.value!);
+      await blog.channels.delete(sourceChannel);
       toaster.success('Channel deleted successfully');
-      await router.push('/blog');
+      await router.push('/channels');
     });
   };
 
@@ -140,17 +207,20 @@ export const useChannelEditor = (
     if (isNew.value) {
       router.push('/channels');
     } else {
-      router.push(`/channels/${channel.raw.value.id}`);
+      router.push(`/channels/${channelIdRef.value}`);
       toaster.info('Changes Reverted', 'All changes have been discarded.');
     }
   };
 
-  window.addEventListener('beforeunload', (event) => {
+  // Prompt on tab close/reload while edits are unsaved. Prompt-only: no
+  // navigation here, the in-app cancelEdit flow handles route changes.
+  const onBeforeUnload = (event: BeforeUnloadEvent) => {
     if (channel.modified.value) {
       event.preventDefault();
-      cancelEdit();
     }
-  });
+  };
+  window.addEventListener('beforeunload', onBeforeUnload);
+  onUnmounted(() => window.removeEventListener('beforeunload', onBeforeUnload));
 
   return {
     // Core State

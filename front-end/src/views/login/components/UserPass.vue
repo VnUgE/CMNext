@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref, shallowRef, reactive, computed } from 'vue';
 import { useTimeoutFn, set } from '@vueuse/core';
-import { isEmpty, isArray } from 'lodash-es';
+import { defaultTo, filter, isEmpty } from 'lodash-es';
 import {
   useMfaLogin,
   totpMfaProcessor,
   fidoMfaProcessor,
-  type WebMessage,
   type MfaFlow,
-  type MfaContinuation,
   type MfaMethod,
 } from '@vnuge/vnlib.browser';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
@@ -34,12 +32,20 @@ const loginData = account.getPropertyData<LoginAccountPropertyData>('login', {
 
 const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
-const { login } = useMfaLogin(vnlib, {
+/**
+ * MFA methods this form can continue: only methods with a registered
+ * handler (totp/fido processors above). PKI (pkotp) is mounted in the
+ * MFA system as a control interface only and cannot continue a login
+ * flow — it is a primary method, not a real MFA method
+ */
+type SelectableUpgrade = MfaFlow<'totp'> | MfaFlow<'fido'>;
+
+const { login, isMfaResponse } = useMfaLogin(vnlib, {
   handlers: [totpMfaProcessor(), fidoMfaProcessor()],
 });
 
-const mfaUpgrades = shallowRef<MfaFlow<MfaMethod>[]>();
-const selectedUpgrade = shallowRef<MfaFlow<MfaMethod>>();
+const mfaUpgrades = shallowRef<SelectableUpgrade[]>();
+const selectedUpgrade = shallowRef<SelectableUpgrade>();
 
 const clearUpgrade = () => {
   set(mfaUpgrades, []);
@@ -99,16 +105,8 @@ const SubmitLogin = async () => {
       password: vState.password,
     });
 
-    //See if the response is a web message
-    if ((response as WebMessage).getResultOrThrow) {
-      (response as WebMessage).getResultOrThrow();
-    }
-
-    //Try to get response as a flow continuation
-    const { methods, expires } = response as MfaContinuation;
-
-    // Response is an mfa upgrade
-    if (isArray(methods) && methods.length > 0) {
+    //MFA upgrade required, setup the upgrade selection flow
+    if (isMfaResponse(response)) {
       /**
        * If mfa has a type assicated, then we should have a handler matched
        * with it to continue the flow
@@ -116,15 +114,25 @@ const SubmitLogin = async () => {
        * All mfa upgrades will have a token expiration, and an assoicated
        * type string name (string)
        */
+      if (isEmpty(response.methods)) {
+        return;
+      }
 
-      set(mfaUpgrades, methods);
+      set(
+        mfaUpgrades,
+        filter(
+          response.methods,
+          (method): method is SelectableUpgrade => method.type === 'totp' || method.type === 'fido'
+        )
+      );
 
-      set(mfaTimeout, expires! * 1000);
+      set(mfaTimeout, defaultTo(response.expires, 600) * 1000);
 
       mfaTimer.start();
-    }
-    //If login without mfa was successful
-    else if ((response as WebMessage).success) {
+    } else {
+      //If login without mfa was successful
+      response.getResultOrThrow();
+
       // Push a new toast message
       toaster.success('Success', 'You have been logged in');
     }
@@ -139,9 +147,7 @@ const mfaClear = () => {
 
 const goBackToSelect = () => set(selectedUpgrade, undefined);
 
-const isMethodSelected = (upgrade: MfaFlow<MfaMethod> | undefined, type: MfaMethod) =>
-  upgrade?.type === type;
-const isSelectectionReady = computed(() => !selectedUpgrade.value && !isEmpty(mfaUpgrades.value));
+const isSelectionReady = computed(() => !selectedUpgrade.value && !isEmpty(mfaUpgrades.value));
 
 const getIconUrl = (method: MfaMethod) => {
   switch (method) {
@@ -168,15 +174,15 @@ const getMfaName = (method: MfaMethod) => {
 
 <template>
   <div class="">
-    <div v-if="isMethodSelected(selectedUpgrade, 'totp')">
+    <div v-if="selectedUpgrade?.type === 'totp'">
       <Totp :upgrade="selectedUpgrade" @clear="mfaClear()" @back="goBackToSelect" />
     </div>
 
-    <div v-else-if="isMethodSelected(selectedUpgrade, 'fido')">
+    <div v-else-if="selectedUpgrade?.type === 'fido'">
       <Fido :upgrade="selectedUpgrade" @clear="mfaClear()" @back="goBackToSelect" />
     </div>
 
-    <div v-else-if="isSelectectionReady">
+    <div v-else-if="isSelectionReady">
       <div class="flex flex-col gap-3 py-6">
         <h4 class="text-base font-semibold md:text-lg text-center">Two factor</h4>
         <div class="flex flex-col gap-2">
@@ -263,9 +269,6 @@ const getMfaName = (method: MfaMethod) => {
           </label>
           <div class="label text-sm w-full flex flex-row justify-between mt-1">
             <span class="label-text-alt link link-hover" />
-            <span class="label-text-alt link link-hover">
-              <router-link to="/pwreset"> Forgot password </router-link>
-            </span>
           </div>
         </div>
       </fieldset>

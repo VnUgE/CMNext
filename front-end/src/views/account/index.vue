@@ -26,7 +26,7 @@ const tabs: Tab[] = [
 const validTabs: readonly TabId[] = ['profile', 'security', 'authentication'];
 
 const activeTab = useRouteQuery<TabId>('tab', 'profile', {
-  transform: (value) => (validTabs.includes(value as TabId) ? (value as TabId) : 'profile'),
+  transform: (value) => validTabs.find((tab) => tab === value) ?? 'profile',
 });
 
 const currentTabComponent = computed(() => {

@@ -5,24 +5,27 @@ import { toSafeInteger } from 'lodash-es';
 import { toaster } from '../../../main';
 import VOtpInput from 'vue3-otp-input';
 
-const emit = defineEmits(['clear', 'back']);
-const props = defineProps<{ upgrade: MfaFlow<'totp'> }>();
+const emit = defineEmits<{ clear: []; back: [] }>();
+const props = defineProps<{ upgrade: MfaFlow<'totp'> | undefined }>();
 
 const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
-const SubimitTotp = (code: string) => {
-  //If a request is still pending, do nothing
+const SubmitTotp = (code: string) => {
+  //If a request is still pending, or no upgrade is selected, do nothing
   if (waiting.value) return;
+
+  const upgrade = props.upgrade;
+  if (!upgrade) return;
 
   apiCall(async () => {
     //Submit totp code
-    const res = await totpSubmitCode(props.upgrade, { code: toSafeInteger(code) });
+    const res = await totpSubmitCode(upgrade, { code: toSafeInteger(code) });
     res.getResultOrThrow();
 
     emit('clear');
 
     // Push a new toast message
-    toaster.success('You have been logged in');
+    toaster.success('Success', 'You have been logged in');
   });
 };
 </script>
@@ -43,7 +46,7 @@ const SubimitTotp = (code: string) => {
           input-classes="input input-bordered"
           :num-inputs="6"
           value=""
-          @on-complete="SubimitTotp"
+          @on-complete="SubmitTotp"
         />
       </div>
     </div>

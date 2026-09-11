@@ -29,8 +29,8 @@ const submitLogin = (method: SocialOAuthMethod) =>
 <template>
   <hr v-show="methods.length > 0" class="my-6 border-base-content" />
 
-  <ul v-for="method in enabledMethods" :key="method.method_id" class="">
-    <li class="my-2">
+  <ul class="">
+    <li v-for="method in enabledMethods" :key="method.method_id" class="my-2">
       <button
         type="submit"
         class="btn flex flex-row w-full"

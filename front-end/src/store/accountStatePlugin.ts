@@ -2,7 +2,6 @@ import 'pinia';
 import { computed, type Ref } from 'vue';
 import {
   type AccountRpcGetResult,
-  type AccountRpcMethod,
   type ApiConfig,
   useAccount,
   useAccountRpc,
@@ -16,7 +15,7 @@ import { storeExport } from './index';
 export interface AccountStateStore {
   readonly account: {
     readonly data: AccountRpcGetResult;
-    readonly error: ReturnType<typeof useAsyncState>['error'] | undefined;
+    readonly error: unknown;
     readonly refresh: () => void;
     readonly isMethodSupported: (type: string) => Ref<boolean>;
     readonly getPropertyData: <T>(name: string, defaultValue: T) => Ref<T>;
@@ -38,7 +37,7 @@ export const accountStatePlugin = (config: ApiConfig, interval: number): PiniaPl
   return ({ store }: PiniaPluginContext): AccountStateStore => {
     const { loggedIn, isLocalAccount } = storeToRefs(store);
 
-    const accountRpcState = useAsyncState(
+    const accountRpcState = useAsyncState<AccountRpcGetResult>(
       accRpc.getData,
       {
         http_methods: [],
@@ -68,7 +67,7 @@ export const accountStatePlugin = (config: ApiConfig, interval: number): PiniaPl
     const isMethodSupported = (type: string): Ref<boolean> => {
       return computed(() => {
         const { rpc_methods } = accountRpcState.state.value;
-        return filter(rpc_methods as AccountRpcMethod[], { method: type }).length > 0;
+        return filter(rpc_methods, { method: type }).length > 0;
       });
     };
 

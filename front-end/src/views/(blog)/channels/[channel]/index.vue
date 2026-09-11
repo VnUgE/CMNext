@@ -70,7 +70,7 @@ const getTimeSinceUpdate = (dateTime: MaybeRef<string | number | Date>) => {
           <div class="divider divider-horizontal mx-0" />
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-              <fa-icon :icon="['blog']" class="text-primary text-xl" />
+              <fa-icon icon="blog" class="text-primary text-xl" />
             </div>
             <div>
               <h1 class="text-3xl font-bold text-base-content">{{ channel.name }}</h1>

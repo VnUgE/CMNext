@@ -198,7 +198,7 @@ const isChannelSelected = computed(() => !isEmpty(channelIdQ.value));
 
     <!-- Channel info -->
     <div v-if="!isChannelSelected" class="alert alert-warning max-w-md mx-auto">
-      <fa-icon icon="exclamation-triangle" />
+      <fa-icon icon="triangle-exclamation" />
       <span>Please select a channel to upload or edit content</span>
     </div>
 

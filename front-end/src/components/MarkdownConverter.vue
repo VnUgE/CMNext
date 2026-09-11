@@ -40,7 +40,7 @@ whenever(
 <template>
   <Dialog :open="visible" @close="closeDialog">
     <template #title>
-      <fa-icon icon="markdown" class="w-5 h-5 mr-2" />
+      <fa-icon :icon="['fab', 'markdown']" class="w-5 h-5 mr-2" />
       Markdown Converter
     </template>
 

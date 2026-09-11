@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { filter, includes, get as _get } from 'lodash-es';
+import { filter, includes, get as lodashGet } from 'lodash-es';
 import { useStore, themeNames } from '../store';
 import { storeToRefs } from 'pinia';
 import { get } from '@vueuse/core';
@@ -22,8 +22,8 @@ const userEmail = computed(
 
 const userDisplayName = computed(() => {
   const profile = userProfileData.value;
-  const firstName = _get(profile, 'first_name', '') as string;
-  const lastName = _get(profile, 'last_name', '') as string;
+  const firstName = lodashGet(profile, 'first_name', '');
+  const lastName = lodashGet(profile, 'last_name', '');
 
   if (firstName && lastName) {
     return `${firstName} ${lastName}`;
@@ -35,7 +35,7 @@ const { pinnedChannels } = store.preferences;
 
 const pinned = computed<BlogChannel[]>(() => {
   const pinnedIds = get(pinnedChannels.current);
-  return filter(get(channels), (channel: BlogChannel) => includes(pinnedIds, channel.id)) ?? [];
+  return filter(get(channels), (channel: BlogChannel) => includes(pinnedIds, channel.id));
 });
 
 const logout = () => {

@@ -15,10 +15,13 @@ const totpEnabled = store.mfa.isEnabled('totp');
 
 const { resetPassword } = useAccount(vnlib);
 const { validate } = useFormValidation({ toaster });
-const apiCall = useApiCall({ toaster });
-const waiting = computed(() => apiCall.waiting.value);
+const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
 const [pwResetShow, showForm] = useToggle(false);
+
+interface IResetPasswordArgs {
+  totp_code?: number;
+}
 
 const vState = reactive({
   newPassword: '',
@@ -67,10 +70,6 @@ const validationSchema = computed(() => {
 const onSubmit = async () => {
   if (!(await validate(vState, validationSchema.value))) {
     return;
-  }
-
-  interface IResetPasswordArgs {
-    totp_code?: number;
   }
 
   await apiCall(async () => {

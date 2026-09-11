@@ -16,7 +16,7 @@
 import 'pinia';
 import { type MaybeRef, type Ref, ref, toRef } from 'vue';
 import { type AxiosProgressEvent } from 'axios';
-import { ApiConfig, useAxios } from '@vnuge/vnlib.browser';
+import { ApiConfig, createAxios } from '@vnuge/vnlib.browser';
 import { useArrayFind, useAsyncState } from '@vueuse/core';
 
 import {
@@ -37,7 +37,7 @@ export interface ReactiveBlogStore<T> {
   readonly isLoading: Ref<boolean>;
   readonly isReady: Ref<boolean>;
   single(id: MaybeRef<string>): Ref<T | undefined>;
-  refresh(): Promise<T[]>;
+  refresh(): Promise<T[] | undefined>;
 }
 
 export interface BlogAdminState {
@@ -55,7 +55,9 @@ interface BlogStore<T extends BlogEntity> {
 export const useCmnextAdmin = (vnlib: ApiConfig, adminBaseUrl: string): BlogAdminState => {
   const uploadProgress = ref<number>(0);
 
-  const axios = useAxios(vnlib, {
+  //Per-request options (timeout, upload progress) need a dedicated instance;
+  //createAxios documents that the caller caches it, which this closure does.
+  const axios = createAxios(vnlib, {
     onUploadProgress: (e: AxiosProgressEvent) => {
       uploadProgress.value = Math.round((e.loaded * 100) / e.total!);
     },

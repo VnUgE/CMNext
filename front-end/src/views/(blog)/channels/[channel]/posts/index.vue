@@ -173,7 +173,7 @@ const onDeletePost = async (post: PostMeta) => {
 
     <!-- No channel selected -->
     <div v-else-if="!hasChannel" class="text-center py-12">
-      <fa-icon icon="exclamation-triangle" class="text-6xl text-warning mb-4" />
+      <fa-icon icon="triangle-exclamation" class="text-6xl text-warning mb-4" />
       <h3 class="text-2xl font-bold mb-2">No Channel Selected</h3>
       <p class="text-lg opacity-75 mb-4">Please select a channel to view its posts.</p>
       <router-link to="/channels" class="btn btn-primary"> Go to Blog Dashboard </router-link>

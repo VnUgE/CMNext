@@ -18,7 +18,7 @@ import SettingsCard from './SettingsCard.vue';
 
 const store = useStore();
 const { isLocalAccount } = storeToRefs(store);
-const apiCall = useApiCall({ toaster });
+const { invoke: apiCall } = useApiCall({ toaster });
 
 const isSupported = store.mfa.isSupported('fido');
 const fido = useFidoApi(store.mfa);
@@ -68,7 +68,7 @@ const onRemoveDevice = async (single: IFidoDevice) => {
 
   await apiCall(async () => {
     const result = await fido.disableDevice(single, { password });
-    toaster.success(result.result);
+    toaster.success('Success', result.result);
     store.mfa.refresh();
   });
 };
@@ -90,7 +90,7 @@ const onDisable = async () => {
 
   await apiCall(async () => {
     const result = await fido.disableAllDevices({ password });
-    toaster.success(result.result);
+    toaster.success('Success', result.result);
     store.mfa.refresh();
   });
 };
@@ -115,7 +115,7 @@ const onRegisterDevice = async () => {
 
   const result = await apiCall(async () => {
     const response = await fido.registerDefaultDevice(vState.deviceName, { password });
-    toaster.success(response.result);
+    toaster.success('Success', response.result);
     return true;
   });
 

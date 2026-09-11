@@ -4,8 +4,8 @@ import { isLoggedIn } from '@vnuge/vnlib.browser';
 import { get } from '@vueuse/core';
 import { useStore } from '../../store';
 import { storeToRefs } from 'pinia';
-import { RouteLocation, useRouter } from 'vue-router';
-import { defer, isEmpty } from 'lodash-es';
+import { useRouter } from 'vue-router';
+import { defer, isEmpty, isString } from 'lodash-es';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { toaster } from '../../main';
 import UserPass from './components/UserPass.vue';
@@ -32,8 +32,8 @@ defer(async () => {
   const data = await store.account.wait();
   const redirect = get(currentRoute).query['redirect'];
 
-  if (isLoggedIn(data) && !isEmpty(redirect)) {
-    push({ path: redirect } as RouteLocation);
+  if (isLoggedIn(data) && isString(redirect) && !isEmpty(redirect)) {
+    push({ path: redirect });
   }
 });
 </script>

@@ -17,7 +17,7 @@ const store = useStore();
 const { isLocalAccount } = storeToRefs(store);
 
 const session = useSession(vnlib);
-const apiCall = useApiCall({ toaster });
+const { invoke: apiCall } = useApiCall({ toaster });
 const totpApi = useTotpApi(store.mfa);
 const totpSupported = store.mfa.isSupported('totp');
 const totpEnabled = store.mfa.isEnabled('totp');
@@ -33,21 +33,21 @@ const secretSegments = computed<string[]>(() => {
 });
 
 const qrCode = computed(() => {
-  if (isNil(totpMessage.value?.secret)) {
+  const message = get(totpMessage);
+  if (!message || isNil(message.secret)) {
     return '';
   }
 
-  const m = get(totpMessage)!;
   const params = new URLSearchParams();
-  params.append('secret', m.secret);
-  params.append('issuer', m.issuer);
-  params.append('algorithm', m.algorithm);
-  params.append('digits', defaultTo(m.digits, 6).toString());
-  params.append('period', defaultTo(m.period, 30).toString());
-  return `otpauth://totp/${m.issuer}:${store.userName}?${params.toString()}`;
+  params.append('secret', message.secret);
+  params.append('issuer', message.issuer);
+  params.append('algorithm', message.algorithm);
+  params.append('digits', defaultTo(message.digits, 6).toString());
+  params.append('period', defaultTo(message.period, 30).toString());
+  return `otpauth://totp/${message.issuer}:${store.userName}?${params.toString()}`;
 });
 
-const ProcessAddOrUpdate = async () => {
+const processAddOrUpdate = async () => {
   const password = await promptForPassword();
   if (!password) {
     return;
@@ -56,13 +56,11 @@ const ProcessAddOrUpdate = async () => {
   await apiCall(async () => {
     const totp = await totpApi.enable({ password });
 
-    // Decrypt the totp secret
-    const secretBuf = await session.decryptPayload(totp.secret);
-
-    // Encode the secret to base32
-    (totp as any).secret = base32Encode(secretBuf, 'RFC3548', { padding: false });
-
-    totpMessage.value = totp;
+    // Decrypt the secret, then store a copy with the readable base32 value
+    const secret = base32Encode(await session.decryptPayload(totp.secret), 'RFC3548', {
+      padding: false,
+    });
+    totpMessage.value = { ...totp, secret };
   });
 };
 
@@ -73,7 +71,7 @@ const configTotp = async () => {
   });
 
   if (!isCanceled) {
-    ProcessAddOrUpdate();
+    processAddOrUpdate();
   }
 };
 
@@ -89,7 +87,7 @@ const regenTotp = async () => {
   });
 
   if (!isCanceled) {
-    ProcessAddOrUpdate();
+    processAddOrUpdate();
   }
 };
 
@@ -111,26 +109,26 @@ const disable = async () => {
 
   await apiCall(async () => {
     const result = await totpApi.disable({ password });
-    toaster.success(result.result);
+    toaster.success('Success', result.result);
     store.mfa.refresh();
   });
 };
 
-const VerifyTotp = (code: string) => {
+const verifyTotp = (code: string) => {
   apiCall(async () => {
     try {
       await totpApi.verify(toSafeInteger(code));
 
       toggleSubmitButton(true);
 
-      toaster.success('Your TOTP code is valid and is now enabled');
+      toaster.success('Success', 'Your TOTP code is valid and is now enabled');
     } catch {
       toaster.error('Your TOTP code is not valid.');
     }
   });
 };
 
-const CloseQrWindow = () => {
+const closeQrWindow = () => {
   toggleSubmitButton(false);
   totpMessage.value = undefined;
 
@@ -201,13 +199,13 @@ const CloseQrWindow = () => {
             :is-disabled="showSubmitButton"
             input-classes="input input-bordered w-10 h-10 text-center mx-0.5"
             :num-inputs="6"
-            @on-complete="VerifyTotp"
+            @on-complete="verifyTotp"
           />
         </div>
       </div>
 
       <div v-if="showSubmitButton" class="pt-2">
-        <button class="btn btn-primary btn-sm" @click.prevent="CloseQrWindow">
+        <button class="btn btn-primary btn-sm" @click.prevent="closeQrWindow">
           Complete Setup
         </button>
       </div>

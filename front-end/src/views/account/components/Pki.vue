@@ -8,11 +8,10 @@ import { useStore } from '../../../store';
 import { toaster } from '../../../main';
 import { confirm, promptForPassword } from '../../../lib/confirm';
 import * as yup from 'yup';
-import type { ValidationError } from 'yup';
 import SettingsCard from './SettingsCard.vue';
 
 const store = useStore();
-const apiCall = useApiCall({ toaster });
+const { invoke: apiCall } = useApiCall({ toaster });
 
 const isSupported = store.mfa.isSupported('pkotp');
 const pkiConfig = useOtpApi(store.mfa);
@@ -33,7 +32,6 @@ const {
 
 const [isOpen, toggleOpen] = useToggle();
 const keyData = ref('');
-const explicitCurve = ref('');
 
 const jwkSchema = yup.object({
   kty: yup.string().required('Key type (kty) is required'),
@@ -63,7 +61,7 @@ const onRemoveKey = async (single: OtpPublicKey) => {
   await apiCall(async () => {
     const { result, code } = await pkiConfig.removeKey(single, { password });
 
-    if (code == 401) {
+    if (code === 401) {
       toaster.error('Error', 'Invalid password provided.');
       return;
     }
@@ -121,8 +119,11 @@ const onSubmitKeys = async () => {
   try {
     await jwkSchema.validate(jwk, { abortEarly: false });
   } catch (ve: unknown) {
-    const validationError = ve as ValidationError;
-    toaster.error('Invalid Key', validationError.errors.join(', '));
+    //validate() only throws ValidationError; anything else is unexpected
+    if (!(ve instanceof yup.ValidationError)) {
+      throw ve;
+    }
+    toaster.error('Invalid Key', ve.errors.join(', '));
     return;
   }
 
@@ -141,7 +142,6 @@ const onSubmitKeys = async () => {
     toaster.success('Success', result);
 
     set(keyData, '');
-    set(explicitCurve, '');
 
     store.mfa.refresh();
 
@@ -231,7 +231,7 @@ const onSubmitKeys = async () => {
 
   <!-- Not supported -->
   <SettingsCard
-    v-else-if="false"
+    v-else
     title="OTP Public Keys"
     description="OTP authentication is not enabled on this server"
   />
