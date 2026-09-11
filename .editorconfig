@@ -1,0 +1,24 @@
+# CMNext editor defaults. The Prettier config (.prettierrc) owns formatting;
+# this file covers what Prettier does not: line endings, charset, final
+# newlines, and trailing whitespace. VSCode needs the EditorConfig extension
+# (see .vscode/extensions.json) to honor this file.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Must match prettier tabWidth so manual indentation agrees with formatting.
+[*.{ts,tsx,vue,js,json,jsonc,yaml,yml,css}]
+indent_style = space
+indent_size = 2
+
+[*.cs]
+indent_style = space
+indent_size = 4
+
+[*.{csproj,sln}]
+indent_style = space
+indent_size = 2

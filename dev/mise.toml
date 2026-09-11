@@ -8,7 +8,7 @@
 min_version = "2024.9.5"
 
 [tools]
-process-compose = "1.110"
+process-compose = "1.122"
 
 [tools."http:minio"]
 version = "RELEASE.2025-09-07T16-13-09Z"

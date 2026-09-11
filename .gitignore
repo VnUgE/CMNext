@@ -397,6 +397,8 @@ dev-contianer-bdd.md
 # Development data and generated configs (keep dev.env)
 dev/data/
 dev/storage/
+dev/server/
+dev/minio/
 dev/config/*.json
 dev/config/routes.xml
 DEV-README.md
