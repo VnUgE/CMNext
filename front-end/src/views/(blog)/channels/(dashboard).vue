@@ -3,7 +3,7 @@ import { useStore } from '../../../store';
 import { useRouteQuery } from '@vueuse/router';
 import { get, useArrayFilter } from '@vueuse/core';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
-import { toLower } from 'lodash-es';
+import { defaultTo, toLower } from 'lodash-es';
 import type { BlogChannel } from '@vnuge/cmnext-admin';
 import { cmnext, toaster } from '../../../main';
 import { confirm } from '../../../lib/confirm';
@@ -22,14 +22,13 @@ const searchTerm = useRouteQuery<string>('search', '');
 
 const searchFilter = useArrayFilter(cmnext.channels.all, (channel) => {
   const search = toLower(get(searchTerm));
-  const name = toLower(channel.name || '');
-  const path = toLower(channel.path || '');
+  const name = toLower(defaultTo(channel.name, ''));
+  const path = toLower(defaultTo(channel.path, ''));
   return !search || name.includes(search) || path.includes(search);
 });
 
 const isLoading = computed(() => cmnext.channels.isLoading.value);
 
-const feedEnabled = (channel: BlogChannel) => channel.feed && channel.feed.path;
 const isPinned = (channelId: string) => pinnedChannels.isPinned(channelId);
 
 const deleteChannel = async (channel: BlogChannel) => {
@@ -58,6 +57,15 @@ const togglePin = (channelId: string) => {
     pinnedChannels.add(channelId);
   }
 };
+
+const copyChannelId = async (channel: BlogChannel) => {
+  try {
+    await navigator.clipboard.writeText(channel.id);
+    toaster.success('Copied', 'Channel ID copied to clipboard.');
+  } catch {
+    toaster.error('Copy failed', 'Could not copy the channel ID.');
+  }
+};
 </script>
 <template>
   <div class="p-6 space-y-6 max-w-7xl mx-auto">
@@ -79,21 +87,19 @@ const togglePin = (channelId: string) => {
       </div>
     </div>
 
-    <!-- Search and Filters -->
-    <div class="card bg-base-100 shadow">
-      <div class="card-body py-4">
-        <div class="flex flex-col md:flex-row gap-4">
-          <div class="flex-1">
-            <input
-              v-model="searchTerm"
-              type="text"
-              placeholder="Search channels..."
-              class="input input-bordered w-full"
-              aria-label="Search channels"
-            />
-          </div>
-        </div>
-      </div>
+    <!-- Search -->
+    <div class="flex flex-col gap-2">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="Search channels..."
+        class="input input-bordered w-full"
+        aria-label="Search channels"
+      />
+    </div>
+
+    <div class="divider text-sm text-base-content/60">
+      {{ searchFilter.length }} {{ searchFilter.length === 1 ? 'channel' : 'channels' }}
     </div>
 
     <!-- Channels Grid -->
@@ -119,16 +125,38 @@ const togglePin = (channelId: string) => {
         class="card bg-base-100 shadow hover:shadow-lg transition-shadow"
       >
         <div class="card-body">
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-                <fa-icon icon="blog" class="text-primary text-xl" />
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="avatar placeholder">
+                <div
+                  class="bg-primary/20 text-primary rounded-lg w-12 flex items-center justify-center"
+                >
+                  <span class="text-xl font-bold">
+                    {{ channel.name.charAt(0).toUpperCase() }}
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 class="card-title text-lg">{{ channel.name }}</h3>
+              <div class="min-w-0">
+                <h3 class="card-title text-lg leading-tight">
+                  <router-link
+                    :to="`/channels/${channel.id}`"
+                    class="link link-hover truncate block"
+                  >
+                    {{ channel.name }}
+                  </router-link>
+                  <fa-icon
+                    v-if="isPinned(channel.id)"
+                    icon="thumbtack"
+                    class="text-primary text-xs shrink-0"
+                    title="Pinned channel"
+                  />
+                </h3>
+                <p v-if="channel.path" class="text-sm text-base-content/60 font-mono truncate">
+                  {{ channel.path }}
+                </p>
               </div>
             </div>
-            <div class="dropdown dropdown-left ml-auto">
+            <div class="dropdown dropdown-left shrink-0">
               <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
                 <fa-icon icon="ellipsis-h" />
               </div>
@@ -137,9 +165,9 @@ const togglePin = (channelId: string) => {
                 class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow"
               >
                 <li>
-                  <router-link :to="`/channels/${channel.id}`">
-                    <fa-icon icon="eye" class="mr-2" />
-                    View Channel
+                  <router-link :to="`/channels/${channel.id}/posts`">
+                    <fa-icon icon="comment" class="mr-2" />
+                    Manage Posts
                   </router-link>
                 </li>
                 <li>
@@ -147,6 +175,12 @@ const togglePin = (channelId: string) => {
                     <fa-icon icon="edit" class="mr-2" />
                     Edit Settings
                   </router-link>
+                </li>
+                <li>
+                  <button @click="copyChannelId(channel)">
+                    <fa-icon icon="copy" class="mr-2" />
+                    Copy Channel ID
+                  </button>
                 </li>
                 <li>
                   <button class="text-primary" @click="togglePin(channel.id)">
@@ -166,28 +200,17 @@ const togglePin = (channelId: string) => {
                 </li>
               </ul>
             </div>
-            <div class="ml-1" />
           </div>
 
-          <p v-if="channel.path" class="text-sm text-base-content/70 mb-4 line-clamp-2">
-            {{ channel.path }}
-          </p>
-
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <div class="text-base-content/50">RSS Feed</div>
-              <div class="font-semibold">
-                {{ feedEnabled(channel) ? 'Configured' : 'Not Configured' }}
-              </div>
+          <div class="flex items-center gap-2 text-sm">
+            <div class="badge badge-sm" :class="channel.feed ? 'badge-success' : 'badge-ghost'">
+              {{ channel.feed ? 'RSS Enabled' : 'RSS Disabled' }}
             </div>
           </div>
 
-          <div class="card-actions justify-end mt-4">
-            <router-link :to="`/channels/${channel.id}/posts`" class="btn btn-sm btn-outline">
-              Manage Posts
-            </router-link>
-            <router-link :to="`/channels/${channel.id}`" class="btn btn-sm btn-primary">
-              View Channel
+          <div class="card-actions mt-4">
+            <router-link :to="`/channels/${channel.id}`" class="btn btn-primary btn-block">
+              Manage
             </router-link>
           </div>
         </div>
@@ -195,12 +218,3 @@ const togglePin = (channelId: string) => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>

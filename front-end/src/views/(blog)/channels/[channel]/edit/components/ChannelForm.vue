@@ -17,7 +17,12 @@ const feedStatus = computed({
   get: () => !!buffer.feed,
   set: (val: boolean) =>
     val
-      ? (buffer.feed = defaultTo(raw.value.feed, { url: '', path: '' }))
+      ? (buffer.feed = defaultTo(raw.value.feed, {
+          url: '',
+          path: '',
+          description: '',
+          maxItems: 20,
+        }))
       : (buffer.feed = undefined),
 });
 
@@ -42,15 +47,27 @@ const feedPath = computed({
   },
 });
 
+const feedDescription = computed({
+  get: () => defaultTo(buffer.feed?.description, ''),
+  set: (val: string) => {
+    if (buffer.feed) buffer.feed.description = val;
+  },
+});
+
+const feedMaxItems = computed({
+  get: () => defaultTo(buffer.feed?.maxItems, 20),
+  set: (val: number) => {
+    if (buffer.feed) buffer.feed.maxItems = val;
+  },
+});
+
 // Nested schema errors are stored under dotted keys (feed.url); the proxy
 // already returns a safe default for unknown keys
-const fieldError = (path: 'feed.url' | 'feed.path'): ErrorObject =>
-  get(errors.value, [path]) ?? { isError: false, message: undefined };
+const fieldError = (
+  path: 'feed.url' | 'feed.path' | 'feed.description' | 'feed.maxItems'
+): ErrorObject => get(errors.value, [path]) ?? { isError: false, message: undefined };
 
-const examplePath = computed(() => {
-  if (!buffer.path || !buffer.index) return '';
-  return `${buffer.path.replace(/\/+$/, '')}/${buffer.index}`;
-});
+const storageRoot = computed(() => buffer.path?.replace(/\/+$/, '') || 'channel-dir');
 </script>
 
 <template>
@@ -59,6 +76,12 @@ const examplePath = computed(() => {
       <!-- Channel Fields -->
       <div class="space-y-4">
         <h5 class="text-lg font-semibold">Channel Settings</h5>
+
+        <div v-if="isNew" class="alert alert-info">
+          <span>
+            Storage paths form the channel identity and cannot be changed after creation.
+          </span>
+        </div>
 
         <div class="form-control">
           <label class="label" for="channel-name">
@@ -73,13 +96,13 @@ const examplePath = computed(() => {
             type="text"
             class="input input-bordered w-full"
             :class="{ 'input-error': errors.name.isError }"
-            placeholder="Enter channel name"
+            placeholder="My Awesome Blog"
           />
         </div>
 
-        <div class="form-control">
+        <div v-if="isNew" class="form-control">
           <label class="label" for="channel-path">
-            <span class="label-text">Base Directory <span class="text-error">*</span></span>
+            <span class="label-text">Channel Directory <span class="text-error">*</span></span>
             <span v-if="errors.path.isError" class="label-text-alt text-error">
               {{ errors.path.message }}
             </span>
@@ -90,18 +113,14 @@ const examplePath = computed(() => {
             type="text"
             class="input input-bordered w-full"
             :class="{ 'input-error': errors.path.isError }"
-            placeholder="Enter base directory path"
-            :disabled="!isNew"
+            placeholder="my-channel"
           />
           <div class="label">
-            <span v-if="isNew" class="label-text-alt">
-              The base directory where this channel content will be stored
-            </span>
-            <span v-else class="label-text-alt"> Cannot be changed after creation </span>
+            <span class="label-text-alt">The parent directory for the entire channel</span>
           </div>
         </div>
 
-        <div class="form-control">
+        <div v-if="isNew" class="form-control">
           <label class="label" for="channel-index">
             <span class="label-text">Index File <span class="text-error">*</span></span>
             <span v-if="errors.index.isError" class="label-text-alt text-error">
@@ -115,17 +134,13 @@ const examplePath = computed(() => {
             class="input input-bordered w-full"
             :class="{ 'input-error': errors.index.isError }"
             placeholder="index.json"
-            :disabled="!isNew"
           />
           <div class="label">
-            <span v-if="isNew" class="label-text-alt">
-              The filename for the channel index file
-            </span>
-            <span v-else class="label-text-alt"> Cannot be changed after creation </span>
+            <span class="label-text-alt"> File name for the channel catalog </span>
           </div>
         </div>
 
-        <div class="form-control">
+        <div v-if="isNew" class="form-control">
           <label class="label" for="channel-content">
             <span class="label-text">Content Directory <span class="text-error">*</span></span>
             <span v-if="errors.content.isError" class="label-text-alt text-error">
@@ -139,24 +154,32 @@ const examplePath = computed(() => {
             class="input input-bordered w-full"
             :class="{ 'input-error': errors.content.isError }"
             placeholder="content"
-            :disabled="!isNew"
           />
           <div class="label">
-            <span v-if="isNew" class="label-text-alt">
-              The directory name for storing content files
+            <span class="label-text-alt">
+              Folder, under parent, that stores all channel content
             </span>
-            <span v-else class="label-text-alt"> Cannot be changed after creation </span>
           </div>
         </div>
 
-        <div v-if="examplePath" class="form-control">
-          <label class="label">
-            <span class="label-text">Index Path Preview</span>
-          </label>
-          <input type="text" class="input input-bordered w-full" :value="examplePath" disabled />
-          <div class="label">
+        <div class="form-control">
+          <span class="label">
+            <span class="label-text">Storage Layout</span>
+            <span
+              v-if="errors.index.isError || errors.content.isError"
+              class="label-text-alt text-error"
+            >
+              {{ errors.index.message || errors.content.message }}
+            </span>
+          </span>
+          <div class="rounded-lg bg-base-200 px-4 py-3 font-mono text-sm space-y-1 min-w-0">
+            <div class="truncate" :title="storageRoot">{{ storageRoot }}/</div>
+            <div class="pl-4 truncate" :title="buffer.index">├── {{ buffer.index }}</div>
+            <div class="pl-4 truncate" :title="buffer.content">└── {{ buffer.content }}/</div>
+          </div>
+          <div v-if="isNew" class="label">
             <span class="label-text-alt">
-              Location within your bucket where the index file will be stored
+              Everything the channel stores, derived from the fields above
             </span>
           </div>
         </div>
@@ -192,6 +215,9 @@ const examplePath = computed(() => {
               :class="{ 'input-error': fieldError('feed.url').isError }"
               placeholder="https://example.com/feed.xml"
             />
+            <div class="label">
+              <span class="label-text-alt">Public address where readers fetch this feed</span>
+            </div>
           </div>
 
           <div class="form-control">
@@ -211,6 +237,47 @@ const examplePath = computed(() => {
             />
             <div class="label">
               <span class="label-text-alt">The file name for the generated feed</span>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label" for="feed-description">
+              <span class="label-text">Feed Description <span class="text-error">*</span></span>
+              <span v-if="fieldError('feed.description').isError" class="label-text-alt text-error">
+                {{ fieldError('feed.description').message }}
+              </span>
+            </label>
+            <input
+              id="feed-description"
+              v-model="feedDescription"
+              type="text"
+              class="input input-bordered w-full"
+              :class="{ 'input-error': fieldError('feed.description').isError }"
+              placeholder="A short description of this feed"
+            />
+            <div class="label">
+              <span class="label-text-alt">Shown to readers alongside the feed title</span>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label" for="feed-max-items">
+              <span class="label-text">Max Feed Items <span class="text-error">*</span></span>
+              <span v-if="fieldError('feed.maxItems').isError" class="label-text-alt text-error">
+                {{ fieldError('feed.maxItems').message }}
+              </span>
+            </label>
+            <input
+              id="feed-max-items"
+              v-model.number="feedMaxItems"
+              type="number"
+              min="1"
+              max="100"
+              class="input input-bordered w-full"
+              :class="{ 'input-error': fieldError('feed.maxItems').isError }"
+            />
+            <div class="label">
+              <span class="label-text-alt">How many posts the feed includes (1-100)</span>
             </div>
           </div>
 

@@ -2,7 +2,7 @@ import { computed, onUnmounted, type MaybeRef, type Ref } from 'vue';
 import { get, toRef } from '@vueuse/core';
 import { defaultTo } from 'lodash-es';
 import { useRouter } from 'vue-router';
-import { type BlogChannel, type ChannelFeed } from '@vnuge/cmnext-admin';
+import { type BlogChannel, type ChannelFeed, type FeedProperty } from '@vnuge/cmnext-admin';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import * as yup from 'yup';
 import { confirm } from './confirm';
@@ -96,7 +96,10 @@ export const channelSchema = yup.object({
  * the user can edit — no id/date passthrough. The assertion below pins it
  * to the schema so the two cannot drift.
  */
-export type ChannelFeedFormData = Pick<ChannelFeed, 'url' | 'path'>;
+export interface ChannelFeedFormData
+  extends
+    Pick<ChannelFeed, 'url' | 'path' | 'properties'>,
+    Required<Pick<ChannelFeed, 'description' | 'maxItems'>> {}
 
 export interface ChannelFormData extends Pick<BlogChannel, 'name' | 'path' | 'index'> {
   content: string;
@@ -112,10 +115,18 @@ export type AssertChannelForm = Expect<Equal<ChannelFormData, yup.InferType<type
 const toChannelForm = (channel: BlogChannel): ChannelFormData => ({
   name: defaultTo(channel.name, ''),
   path: defaultTo(channel.path, ''),
-  index: defaultTo(channel.index, ''),
-  content: defaultTo(channel.content, ''),
+  // Storage layout is conventional (root/index.json, root/content/); new
+  // channels take the convention, existing channels keep stored values
+  index: defaultTo(channel.index, 'index.json'),
+  content: defaultTo(channel.content, 'content'),
   feed: channel.feed
-    ? { url: defaultTo(channel.feed.url, ''), path: defaultTo(channel.feed.path, '') }
+    ? {
+        url: defaultTo(channel.feed.url, ''),
+        path: defaultTo(channel.feed.path, ''),
+        properties: channel.feed.properties,
+        description: defaultTo(channel.feed.description, ''),
+        maxItems: defaultTo(channel.feed.maxItems, 20),
+      }
     : undefined,
 });
 
@@ -133,6 +144,9 @@ const fromChannelForm = (form: ChannelFormData, source?: BlogChannel): BlogChann
       ...source?.feed,
       url: form.feed.url,
       path: form.feed.path,
+      properties: form.feed.properties,
+      description: form.feed.description,
+      maxItems: form.feed.maxItems,
     };
   }
 
@@ -150,6 +164,7 @@ export interface ChannelEditorState {
   // Derived State
   readonly isNew: Ref<boolean>;
   readonly isLoading: Ref<boolean>;
+  readonly hasSource: Ref<boolean>;
 
   // Actions
   saveChannel: () => Promise<void>;
@@ -181,13 +196,22 @@ export const useChannelEditor = (
     source.value ? toChannelForm(source.value) : undefined
   );
   const channel = useEditBuffer(initial, channelSchema);
-  const isNew = computed(() => !source.value?.id);
+  // Intent comes from the route, not the list data: deriving this from
+  // source flashes create-mode on every fresh edit-page load while the
+  // channels fetch resolves
+  const isNew = computed(() => channelIdRef.value === 'new');
   const isLoading = computed(() => blog.channels.isLoading.value);
+  const hasSource = computed(() => !!source.value);
 
   const saveChannel = async () => {
-    // Validate channel fields
+    // Validate channel fields, surfacing the first failure: only some
+    // fields render inline errors, so without this the form fails silently
     if (!(await channel.validate())) {
-      console.error('Form failed validation');
+      const failed = Object.values(get(channel.errors)).find((state) => !!state && state.isError);
+      toaster.error(
+        'Please verify your form',
+        defaultTo(failed?.message, 'Some fields contain invalid values')
+      );
       return;
     }
 
@@ -199,6 +223,10 @@ export const useChannelEditor = (
         await blog.channels.update(fromChannelForm(channel.buffer, source.value));
         toaster.success('Channel updated successfully');
       }
+
+      // The channels store is app-wide; refresh so the dashboard reflects
+      // the change instead of serving the stale list
+      await blog.channels.refresh();
 
       // Navigate back to blog dashboard
       await router.push('/channels');
@@ -222,6 +250,7 @@ export const useChannelEditor = (
     await apiCall(async () => {
       await blog.channels.delete(sourceChannel);
       toaster.success('Channel deleted successfully');
+      await blog.channels.refresh();
       await router.push('/channels');
     });
   };
@@ -255,6 +284,7 @@ export const useChannelEditor = (
       event.preventDefault();
     }
   };
+
   window.addEventListener('beforeunload', onBeforeUnload);
   onUnmounted(() => window.removeEventListener('beforeunload', onBeforeUnload));
 
@@ -266,6 +296,7 @@ export const useChannelEditor = (
     // Derived State
     isNew,
     isLoading,
+    hasSource,
 
     // Actions
     saveChannel,
