@@ -92,12 +92,8 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
-            if (webm.AssertError(channel.Feed != null, "No feed object was received"))
-            {
-                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
-            }
-
-            if (!FeedValidator.Validate(channel.Feed, webm))
+            //Feed is optional; a channel without a feed simply has no rss feed generated
+            if (channel.Feed is not null && !FeedValidator.Validate(channel.Feed, webm))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
@@ -110,7 +106,11 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VirtualClose(entity, webm, HttpStatusCode.Conflict);
             }
 
-            return VirtualClose(entity, HttpStatusCode.Created);
+            //Return the created channel to the client
+            webm.Result = channel;
+            webm.Success = true;
+
+            return VirtualClose(entity, webm, HttpStatusCode.Created);
         }
 
         [HttpStaticRoute("{{ path }}/channels", HttpMethod.PATCH)]
@@ -137,12 +137,8 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
 
-            if (webm.AssertError(channel.Feed != null, "No feed object was received"))
-            {
-                return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
-            }
-
-            if (!FeedValidator.Validate(channel.Feed, webm))
+            //Feed is optional; a channel without a feed simply has no rss feed generated
+            if (channel.Feed is not null && !FeedValidator.Validate(channel.Feed, webm))
             {
                 return VirtualClose(entity, webm, HttpStatusCode.UnprocessableEntity);
             }
@@ -165,7 +161,11 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Update post feeds since the channel was updated
             await PostManager.UpdateFeedForChannelAsync(channel, entity.EventCancellation);
 
-            return VirtualClose(entity, HttpStatusCode.Created);
+            //Return the updated channel to the client
+            webm.Result = channel;
+            webm.Success = true;
+
+            return VirtualClose(entity, webm, HttpStatusCode.Created);
         }
 
         [HttpStaticRoute("{{ path }}/channels", HttpMethod.DELETE)]
