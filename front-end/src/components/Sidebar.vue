@@ -5,13 +5,14 @@ import { filter, includes, get as lodashGet } from 'lodash-es';
 import { useStore, themeNames } from '../store';
 import { storeToRefs } from 'pinia';
 import { get } from '@vueuse/core';
-import { BlogChannel } from '@vnuge/cmnext-admin';
+import { type BlogChannel } from '@vnuge/cmnext-admin';
 import { cmnext } from '../main';
 
 const route = useRoute();
 const store = useStore();
 const { userName, theme, loggedIn } = storeToRefs(store);
 const { all: channels } = cmnext.channels;
+const { pinnedChannels } = store.preferences;
 
 // Get user profile data from store
 const userProfileData = computed(() => store.user.profile || {});
@@ -30,8 +31,6 @@ const userDisplayName = computed(() => {
   }
   return firstName || lastName || userEmail.value.split('@')[0];
 });
-
-const { pinnedChannels } = store.preferences;
 
 const pinned = computed<BlogChannel[]>(() => {
   const pinnedIds = get(pinnedChannels.current);
@@ -73,9 +72,9 @@ const logout = () => {
             </summary>
             <ul class="max-h-60 overflow-y-auto">
               <li v-for="av in themeNames" :key="av">
-                <a :class="{ active: theme === av }" @click="theme = av">
+                <button :class="{ active: theme === av }" @click="theme = av">
                   {{ av }}
-                </a>
+                </button>
               </li>
             </ul>
           </details>
@@ -92,7 +91,7 @@ const logout = () => {
             <fa-icon icon="folder" class="mr-2" />
             Channels
           </router-link>
-          <router-link to="/login" :class="{ active: route.path === '/login' }">
+          <router-link v-if="!loggedIn" to="/login" :class="{ active: route.path === '/login' }">
             <fa-icon icon="sign-in-alt" class="mr-2" />
             Login
           </router-link>
@@ -100,19 +99,23 @@ const logout = () => {
         <li class="menu-title mt-4">
           <span>Pinned Channels</span>
         </li>
-        <li v-for="channel in pinned" :key="channel.id">
-          <router-link :to="`/channels/${channel.id}`">
+        <li
+          v-for="channel in pinned"
+          :key="channel.id"
+          class="flex flex-row flex-nowrap items-center gap-1"
+        >
+          <router-link :to="`/channels/${channel.id}`" class="grow min-w-0 truncate">
             <fa-icon icon="bullhorn" class="mr-2" />
             {{ channel.name }}
-            <span>
-              <button
-                class="btn btn-xs btn-ghost text-error/30 hover:text-error ml-2"
-                @click.prevent="pinnedChannels.remove(channel.id)"
-              >
-                <fa-icon icon="thumbtack-slash" />
-              </button>
-            </span>
           </router-link>
+          <button
+            class="btn btn-xs btn-ghost shrink-0 text-error/30 hover:text-error"
+            title="Unpin channel"
+            :aria-label="`Unpin ${channel.name}`"
+            @click="pinnedChannels.remove(channel.id)"
+          >
+            <fa-icon icon="thumbtack-slash" />
+          </button>
         </li>
         <li class="mt-2">
           <router-link to="/channels" class="text-sm opacity-70 hover:opacity-100">
@@ -154,22 +157,22 @@ const logout = () => {
             <!-- Account Section -->
             <li class="menu-title"><span>Account</span></li>
             <li>
-              <router-link :to="{ path: '/account', hash: '#profile' }">
+              <router-link to="/account?tab=profile">
                 <fa-icon icon="user" class="mr-2" />
                 Profile
               </router-link>
             </li>
             <li>
-              <router-link :to="{ path: '/account', hash: '#security' }">
+              <router-link to="/account?tab=security">
                 <fa-icon icon="lock" class="mr-2" />
                 Security
               </router-link>
             </li>
             <li>
-              <a class="text-error" @click="logout()">
+              <button class="text-error" @click="logout()">
                 <fa-icon icon="sign-out-alt" class="mr-2" />
                 Logout
-              </a>
+              </button>
             </li>
 
             <li class="divider-sm" />
