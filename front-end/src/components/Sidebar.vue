@@ -5,6 +5,7 @@ import { filter, includes, get as lodashGet } from 'lodash-es';
 import { useStore, themeNames } from '../store';
 import { storeToRefs } from 'pinia';
 import { get } from '@vueuse/core';
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { type BlogChannel } from '@vnuge/cmnext-admin';
 import { cmnext } from '../main';
 
@@ -62,22 +63,41 @@ const logout = () => {
           <span>Appearance</span>
         </li>
         <li>
-          <details>
-            <summary>
-              <fa-icon icon="palette" class="mr-2" />
-              Theme
+          <!-- Overlay listbox: floats above content instead of shifting it.
+            The contents wrapper lets daisyUI style the button as the menu
+            item directly (no double padding), and the panel anchors to the
+            relatively-positioned li at full menu width. -->
+          <Listbox v-model="theme" as="div" class="contents">
+            <!-- btn opts out of the menu-item grid so flex owns alignment -->
+            <ListboxButton class="btn btn-ghost w-full justify-start font-normal">
+              <fa-icon icon="palette" />
+              <span>Theme</span>
               <span class="badge badge-sm badge-ghost ml-auto">
                 {{ theme }}
               </span>
-            </summary>
-            <ul class="max-h-60 overflow-y-auto">
-              <li v-for="av in themeNames" :key="av">
-                <button :class="{ active: theme === av }" @click="theme = av">
+              <fa-icon icon="chevron-down" class="ml-2 opacity-60" />
+            </ListboxButton>
+            <ListboxOptions
+              class="absolute inset-x-0 z-30 mt-1 max-h-60 overflow-auto rounded-box bg-base-100 p-2 shadow-lg"
+            >
+              <ListboxOption
+                v-for="av in themeNames"
+                v-slot="{ active, selected }"
+                :key="av"
+                :value="av"
+                as="template"
+              >
+                <li
+                  :class="[
+                    'flex cursor-pointer items-center rounded px-2 py-1',
+                    { 'bg-base-200': active, 'font-semibold': selected },
+                  ]"
+                >
                   {{ av }}
-                </button>
-              </li>
-            </ul>
-          </details>
+                </li>
+              </ListboxOption>
+            </ListboxOptions>
+          </Listbox>
         </li>
         <li class="menu-title">
           <span>Navigation</span>
