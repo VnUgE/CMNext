@@ -233,6 +233,8 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                     .NotEmpty()
                     .Must(static p => !p.StartsWith('/') && !p.StartsWith('\\'))
                     .WithMessage("Channel content directory must not start with a forward slash")
+                    .Matches(DirectoryPathRegex)
+                    .WithMessage("Channel content directory must be a valid directory path")
                     .MaximumLength(100);
 
                 return validationRules;

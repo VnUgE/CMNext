@@ -24,15 +24,33 @@ export const channelSchema = yup.object({
   path: yup
     .string()
     .required('Channel path is required')
-    .max(64, 'Channel path must be less than 64 characters'),
+    .max(64, 'Channel path must be less than 64 characters')
+    .test(
+      'no-leading-slash',
+      'The channel directory must not start with a forward slash',
+      (value) => !value || (!value.startsWith('/') && !value.startsWith('\\'))
+    )
+    .matches(/^[a-zA-Z0-9_\-/]+$/, 'The channel directory is not valid'),
   index: yup
     .string()
     .required('Channel index is required')
-    .max(64, 'Channel index must be less than 64 characters'),
+    .max(64, 'Channel index must be less than 64 characters')
+    .test(
+      'no-leading-slash',
+      'The index file path must not contain a leading slash',
+      (value) => !value || (!value.startsWith('/') && !value.startsWith('\\'))
+    )
+    .matches(/^[a-zA-Z0-9_.-]+$/, 'The index file name is not valid'),
   content: yup
     .string()
     .required('Channel content directory is required')
-    .max(64, 'Channel content directory must be less than 64 characters'),
+    .max(64, 'Channel content directory must be less than 64 characters')
+    .test(
+      'no-leading-slash',
+      'The content directory must not start with a forward slash',
+      (value) => !value || (!value.startsWith('/') && !value.startsWith('\\'))
+    )
+    .matches(/^[a-zA-Z0-9_\-/]+$/, 'The content directory is not valid'),
   feed: yup
     .object({
       url: yup
@@ -50,8 +68,26 @@ export const channelSchema = yup.object({
         )
         .matches(/^[a-zA-Z0-9_.-]+$/, 'The feed file name is not valid')
         .required(),
+      description: yup
+        .string()
+        .max(200, 'Channel feed description must be less than 200 characters')
+        .required('Channel feed description is required'),
+      maxItems: yup
+        .number()
+        .integer('Max feed items must be a whole number')
+        .min(1, 'Max feed items must be at least 1')
+        .max(100, 'Max feed items must be at most 100')
+        .required('Max feed items is required')
+        .default(20),
+      // Custom feed properties are edited as opaque XML data in FeedFields,
+      // so they pass through unvalidated like the post schema does.
+      properties: yup.mixed<FeedProperty[]>().optional().default(undefined),
     })
-    .optional(),
+    // The explicit default is load-bearing: yup still descends into an
+    // absent/undefined nested object and fails its required children, so
+    // without it a disabled feed can never validate
+    .optional()
+    .default(undefined),
 });
 
 /**
