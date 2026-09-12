@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { get, set } from 'lodash-es';
+import { defaultTo, get, set } from 'lodash-es';
 import { computed } from 'vue';
-import type { ChannelEditorState } from '../../../../../lib/useChannelEditor';
-import FeedFields from '../../../../../components/FeedFields.vue';
+import type { ChannelEditorState } from '../../../../../../lib/useChannelEditor';
+import type { ErrorObject } from '../../../../../../lib/editBuffer';
+import FeedFields from '../../../../../../components/FeedFields.vue';
 
 const props = defineProps<{
   editor: ChannelEditorState;
@@ -14,13 +15,37 @@ const { raw, buffer, errors } = props.editor.channel;
 // Use the editable value for feed status
 const feedStatus = computed({
   get: () => !!buffer.feed,
-  set: (val: boolean) => (val ? (buffer.feed = raw.value.feed) : (buffer.feed = undefined)),
+  set: (val: boolean) =>
+    val
+      ? (buffer.feed = defaultTo(raw.value.feed, { url: '', path: '' }))
+      : (buffer.feed = undefined),
 });
 
 const feedProps = computed({
   get: () => get(buffer, 'feed.properties') ?? [],
   set: (val) => set(buffer, 'feed.properties', val),
 });
+
+// The toggle guarantees feed exists while these inputs render, but the type
+// stays optional so the disabled state validates cleanly
+const feedUrl = computed({
+  get: () => defaultTo(buffer.feed?.url, ''),
+  set: (val: string) => {
+    if (buffer.feed) buffer.feed.url = val;
+  },
+});
+
+const feedPath = computed({
+  get: () => defaultTo(buffer.feed?.path, ''),
+  set: (val: string) => {
+    if (buffer.feed) buffer.feed.path = val;
+  },
+});
+
+// Nested schema errors are stored under dotted keys (feed.url); the proxy
+// already returns a safe default for unknown keys
+const fieldError = (path: 'feed.url' | 'feed.path'): ErrorObject =>
+  get(errors.value, [path]) ?? { isError: false, message: undefined };
 
 const examplePath = computed(() => {
   if (!buffer.path || !buffer.index) return '';
@@ -36,28 +61,35 @@ const examplePath = computed(() => {
         <h5 class="text-lg font-semibold">Channel Settings</h5>
 
         <div class="form-control">
-          <label class="label">
-            <span class="label-text">Channel Name</span>
+          <label class="label" for="channel-name">
+            <span class="label-text">Channel Name <span class="text-error">*</span></span>
             <span v-if="errors.name.isError" class="label-text-alt text-error">
               {{ errors.name.message }}
             </span>
           </label>
           <input
+            id="channel-name"
             v-model="buffer.name"
             type="text"
             class="input input-bordered w-full"
+            :class="{ 'input-error': errors.name.isError }"
             placeholder="Enter channel name"
           />
         </div>
 
         <div class="form-control">
-          <label class="label">
-            <span class="label-text">Base Directory</span>
+          <label class="label" for="channel-path">
+            <span class="label-text">Base Directory <span class="text-error">*</span></span>
+            <span v-if="errors.path.isError" class="label-text-alt text-error">
+              {{ errors.path.message }}
+            </span>
           </label>
           <input
+            id="channel-path"
             v-model="buffer.path"
             type="text"
             class="input input-bordered w-full"
+            :class="{ 'input-error': errors.path.isError }"
             placeholder="Enter base directory path"
             :disabled="!isNew"
           />
@@ -70,14 +102,19 @@ const examplePath = computed(() => {
         </div>
 
         <div class="form-control">
-          <label class="label">
-            <span class="label-text">Index File</span>
+          <label class="label" for="channel-index">
+            <span class="label-text">Index File <span class="text-error">*</span></span>
+            <span v-if="errors.index.isError" class="label-text-alt text-error">
+              {{ errors.index.message }}
+            </span>
           </label>
           <input
+            id="channel-index"
             v-model="buffer.index"
             type="text"
             class="input input-bordered w-full"
-            placeholder="posts.json"
+            :class="{ 'input-error': errors.index.isError }"
+            placeholder="index.json"
             :disabled="!isNew"
           />
           <div class="label">
@@ -89,13 +126,18 @@ const examplePath = computed(() => {
         </div>
 
         <div class="form-control">
-          <label class="label">
-            <span class="label-text">Content Directory</span>
+          <label class="label" for="channel-content">
+            <span class="label-text">Content Directory <span class="text-error">*</span></span>
+            <span v-if="errors.content.isError" class="label-text-alt text-error">
+              {{ errors.content.message }}
+            </span>
           </label>
           <input
+            id="channel-content"
             v-model="buffer.content"
             type="text"
             class="input input-bordered w-full"
+            :class="{ 'input-error': errors.content.isError }"
             placeholder="content"
             :disabled="!isNew"
           />
@@ -135,7 +177,44 @@ const examplePath = computed(() => {
         </div>
 
         <div v-if="feedStatus" class="space-y-4">
-          <FeedFields :properties="feedProps" />
+          <div class="form-control">
+            <label class="label" for="feed-url">
+              <span class="label-text">Feed URL <span class="text-error">*</span></span>
+              <span v-if="fieldError('feed.url').isError" class="label-text-alt text-error">
+                {{ fieldError('feed.url').message }}
+              </span>
+            </label>
+            <input
+              id="feed-url"
+              v-model="feedUrl"
+              type="url"
+              class="input input-bordered w-full"
+              :class="{ 'input-error': fieldError('feed.url').isError }"
+              placeholder="https://example.com/feed.xml"
+            />
+          </div>
+
+          <div class="form-control">
+            <label class="label" for="feed-path">
+              <span class="label-text">Feed File Name <span class="text-error">*</span></span>
+              <span v-if="fieldError('feed.path').isError" class="label-text-alt text-error">
+                {{ fieldError('feed.path').message }}
+              </span>
+            </label>
+            <input
+              id="feed-path"
+              v-model="feedPath"
+              type="text"
+              class="input input-bordered w-full"
+              :class="{ 'input-error': fieldError('feed.path').isError }"
+              placeholder="feed.xml"
+            />
+            <div class="label">
+              <span class="label-text-alt">The file name for the generated feed</span>
+            </div>
+          </div>
+
+          <FeedFields v-model:properties="feedProps" />
         </div>
 
         <div v-else class="alert alert-info">
