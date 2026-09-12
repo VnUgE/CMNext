@@ -24,10 +24,11 @@ const postCreatedDate = computed(() => formatDate(raw.value.created));
     <div class="card-body p-4 space-y-4">
       <!-- Channel Selection -->
       <div class="form-control">
-        <label class="label">
+        <label class="label" for="post-channel">
           <span class="label-text font-medium">Channel</span>
         </label>
         <select
+          id="post-channel"
           v-model="channelId"
           class="select select-bordered select-sm w-full"
           :disabled="!isNew"
@@ -54,13 +55,14 @@ const postCreatedDate = computed(() => formatDate(raw.value.created));
 
       <!-- Author -->
       <div class="form-control">
-        <label class="label">
+        <label class="label" for="post-author">
           <span class="label-text font-medium">Author</span>
           <span v-if="errors.author?.isError" class="label-text-alt text-error">
             {{ errors.author?.message }}
           </span>
         </label>
         <input
+          id="post-author"
           v-model="buffer.author"
           type="text"
           placeholder="Author name..."
@@ -70,14 +72,16 @@ const postCreatedDate = computed(() => formatDate(raw.value.created));
 
       <!-- Image URL -->
       <div class="form-control">
-        <label class="label">
+        <label class="label" for="post-image">
           <span class="label-text font-medium">Featured Image</span>
         </label>
         <input
+          id="post-image"
           v-model="buffer.image"
           type="url"
           placeholder="https://example.com/image.jpg"
           class="input input-bordered input-sm w-full"
+          @input="imageLoadError = false"
         />
         <div v-if="buffer.image" class="mt-2">
           <img

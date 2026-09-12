@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useRouteParams } from '@vueuse/router';
 import { useChannelEditor } from '../../../../../lib/useChannelEditor';
 import { cmnext } from '../../../../../main';
-import ChannelForm from './ChannelForm.vue';
+import ChannelForm from './components/ChannelForm.vue';
 
 // Get channel ID from query params (e.g., /channels/:channel/edit)
 const channelId = useRouteParams<string>('channel', '');
@@ -33,13 +33,15 @@ const waiting = computed(() => editor.waiting.value);
         <button
           :disabled="waiting || !editor.channel.modified.value"
           class="btn btn-primary"
+          type="submit"
           form="channel-edit-form"
-          @click.prevent="editor.saveChannel"
         >
           <span v-if="waiting" class="loading loading-spinner loading-sm" />
           <span v-else>{{ editor.isNew ? 'Create' : 'Save' }}</span>
         </button>
-        <button class="btn btn-outline" @click.prevent="editor.cancelEdit">Cancel</button>
+        <button type="button" class="btn btn-outline" @click.prevent="editor.cancelEdit">
+          Cancel
+        </button>
       </div>
     </div>
 

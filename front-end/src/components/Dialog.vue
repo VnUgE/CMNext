@@ -1,33 +1,48 @@
 <script setup lang="ts">
-import { onClickOutside, useElementSize } from '@vueuse/core';
-import { ref, computed, toRefs } from 'vue';
+import { onClickOutside } from '@vueuse/core';
+import { ref, computed, toRefs, watchEffect } from 'vue';
 
 const emit = defineEmits<{ close: []; submit: [] }>();
 const props = defineProps<{ open: boolean }>();
 const { open } = toRefs(props);
 
-const dialogRef = ref(null);
-
-onClickOutside(dialogRef, () => emit('close'));
-
-// TODO: useElementSize(null) always returns {width: 0, height: 0}.
-// Need to track an actual header element ref or use a different approach
-// to calculate dialog positioning relative to app header.
-const header = useElementSize(null);
-
-const style = computed(() => {
-  return {
-    height: `calc(100vh - ${header.height.value}px)`,
-    top: `${header.height.value}px`,
-  };
-});
+const dialog = ref<HTMLDialogElement | null>(null);
+const dialogBox = ref<HTMLElement | null>(null);
 
 const modalClass = computed(() => ({ 'modal-open': open.value }));
+
+// Esc must route through the parent: closing natively would desync the
+// parent's open state (e.g. useConfirmDialog would stay revealed forever).
+const onCancel = (event: Event) => {
+  event.preventDefault();
+  emit('close');
+};
+
+// Backdrop clicks only count while the dialog is actually open
+onClickOutside(dialogBox, () => {
+  if (open.value) emit('close');
+});
+
+// Sync the native dialog with the open prop. The effect tracks both the
+// element ref and open, so the mount assignment re-triggers it by itself —
+// no separate onMounted needed. The modal-open class stays for daisyUI
+// styling. There is no app header to offset from, so no position math needed.
+watchEffect(() => {
+  const el = dialog.value;
+  if (!el) return;
+  if (open.value && !el.open) el.showModal();
+  else if (!open.value && el.open) el.close();
+});
 </script>
 
 <template>
-  <dialog :style="style" :class="modalClass" class="modal modal-bottom sm:modal-middle">
-    <div ref="dialogRef" class="modal-box">
+  <dialog
+    ref="dialog"
+    :class="modalClass"
+    class="modal modal-bottom sm:modal-middle"
+    @cancel="onCancel"
+  >
+    <div ref="dialogBox" class="modal-box">
       <slot name="main">
         <h3 class="text-lg font-bold">
           <slot name="title" />

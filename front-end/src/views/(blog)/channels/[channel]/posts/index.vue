@@ -2,8 +2,8 @@
 import { computed } from 'vue';
 import { useRouteParams, useRouteQuery } from '@vueuse/router';
 import { get } from '@vueuse/core';
-import { isNil, filter, toLower, includes } from 'lodash-es';
-import { PostMeta } from '@vnuge/cmnext-admin';
+import { defaultTo, isNil, filter, toLower, includes, orderBy } from 'lodash-es';
+import type { PostMeta } from '@vnuge/cmnext-admin';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { useStore } from '../../../../../store';
 import { cmnext, toaster } from '../../../../../main';
@@ -13,7 +13,7 @@ import { formatDate, truncateText } from '../../../../../lib/helpers';
 type SortType = 'created' | 'title' | 'author' | 'lastUpdated';
 
 const store = useStore();
-const apiCall = useApiCall({ toaster });
+const { invoke: apiCall } = useApiCall({ toaster });
 
 // Set page title
 store.setPageTitle('Channel Posts');
@@ -38,30 +38,31 @@ const postCount = computed(() => posts.all.value.length);
 const sortedPosts = computed(() => {
   if (!hasPosts.value) return [];
 
-  let sorted = get(posts.all) as PostMeta[];
+  // orderBy returns a new array (never mutates shared store state) and its
+  // iteratees are null-friendly, so missing titles/authors sort safely
+  const all = get(posts.all) as PostMeta[];
 
+  let sorted: PostMeta[];
   switch (sortMode.value) {
     case 'created':
-      sorted = sorted.sort((a, b) => b.date - a.date);
+      sorted = orderBy(all, ['date'], ['desc']);
       break;
     case 'title':
-      sorted = sorted.sort((a, b) => a.title!.localeCompare(b.title!));
+      sorted = orderBy(all, [(post) => toLower(post.title)], ['asc']);
       break;
     case 'author':
-      sorted = sorted.sort((a, b) => a.author?.localeCompare(b.author!));
+      sorted = orderBy(all, [(post) => toLower(post.author)], ['asc']);
       break;
     case 'lastUpdated':
-      sorted = sorted.sort((a, b) => (b.lastUpdated || b.date) - (a.lastUpdated || a.date));
+      sorted = orderBy(all, [(post) => defaultTo(post.created, post.date)], ['desc']);
       break;
   }
 
-  // Filter by search term
+  // Filter by search term (toLower coerces missing values to '')
   if (search.value) {
+    const term = toLower(search.value);
     sorted = filter(sorted, (post) => {
-      return (
-        includes(toLower(post.title), toLower(search.value)) ||
-        includes(toLower(post.summary), toLower(search.value))
-      );
+      return includes(toLower(post.title), term) || includes(toLower(post.summary), term);
     });
   }
 
@@ -83,7 +84,7 @@ const onDeletePost = async (post: PostMeta) => {
     toaster.success('Post Deleted', `Post "${post.title}" has been deleted successfully.`);
   });
 
-  posts.refresh();
+  await posts.refresh();
 };
 </script>
 
@@ -150,10 +151,11 @@ const onDeletePost = async (post: PostMeta) => {
                 type="text"
                 class="input input-bordered w-full"
                 placeholder="Search posts..."
+                aria-label="Search posts"
               />
             </div>
             <div class="form-control">
-              <select v-model="sortMode" class="select select-bordered">
+              <select v-model="sortMode" class="select select-bordered" aria-label="Sort posts">
                 <option value="created">Sort by Date</option>
                 <option value="title">Sort by Title</option>
                 <option value="author">Sort by Author</option>
@@ -223,13 +225,6 @@ const onDeletePost = async (post: PostMeta) => {
                 title="Edit Post"
               >
                 <fa-icon icon="edit" />
-              </router-link>
-              <router-link
-                class="btn btn-sm btn-secondary join-item"
-                :to="`/channels/${channelId}/content`"
-                title="Copy Link"
-              >
-                <fa-icon icon="link" />
               </router-link>
               <button
                 class="btn btn-sm btn-error join-item"

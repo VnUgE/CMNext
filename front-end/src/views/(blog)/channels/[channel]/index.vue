@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, MaybeRef } from 'vue';
+import { computed } from 'vue';
 import { useStore } from '../../../../store';
 import { useRouteParams } from '@vueuse/router';
 import { reduce, take } from 'lodash-es';
-import { useTimeAgo } from '@vueuse/core';
-import { formatBytes, formatNumber, formatDate } from '../../../../lib/helpers';
+import { formatBytes, formatDate } from '../../../../lib/helpers';
 import { cmnext } from '../../../../main';
 
 const store = useStore();
@@ -31,12 +30,7 @@ const contentSize = computed(() => {
   return formatBytes(totalSize);
 });
 
-const getChannelFeedUrl = () =>
-  channel.value?.feed?.url || `https://example.com/feed/${channelId.value}`;
-
-const getTimeSinceUpdate = (dateTime: MaybeRef<string | number | Date>) => {
-  return useTimeAgo(dateTime);
-};
+const getChannelFeedUrl = (): string | undefined => channel.value?.feed?.url || undefined;
 </script>
 <template>
   <div class="p-6 space-y-6 max-w-7xl mx-auto">
@@ -89,32 +83,13 @@ const getTimeSinceUpdate = (dateTime: MaybeRef<string | number | Date>) => {
       </div>
 
       <!-- Channel Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
         <div class="stat bg-base-100 rounded-lg shadow">
           <div class="stat-figure text-primary">
             <fa-icon icon="comment" size="2x" />
           </div>
           <div class="stat-title">Total Posts</div>
           <div class="stat-value text-primary">{{ postCount }}</div>
-          <div class="stat-desc">{{ postCount }} published</div>
-        </div>
-
-        <div class="stat bg-base-100 rounded-lg shadow">
-          <div class="stat-figure text-secondary">
-            <fa-icon icon="eye" size="2x" />
-          </div>
-          <div class="stat-title">Total Views</div>
-          <div class="stat-value text-secondary">{{ formatNumber(0) }}</div>
-          <div class="stat-desc">{{ formatNumber(0) }} this month</div>
-        </div>
-
-        <div class="stat bg-base-100 rounded-lg shadow">
-          <div class="stat-figure text-accent">
-            <fa-icon icon="calendar" size="2x" />
-          </div>
-          <div class="stat-title">Last Updated</div>
-          <div class="stat-value text-accent text-lg">{{ formatDate(channel.date) }}</div>
-          <div class="stat-desc">{{ getTimeSinceUpdate(channel.date) }}</div>
         </div>
 
         <div class="stat bg-base-100 rounded-lg shadow">
@@ -159,12 +134,6 @@ const getTimeSinceUpdate = (dateTime: MaybeRef<string | number | Date>) => {
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <div
-                    class="badge badge-sm"
-                    :class="post.isPublished || true ? 'badge-success' : 'badge-warning'"
-                  >
-                    {{ post.isPublished || true ? 'Published' : 'Draft' }}
-                  </div>
                   <router-link
                     :to="`/channels/${channelId}/posts/${post.id}`"
                     class="btn btn-xs btn-ghost"
@@ -212,6 +181,7 @@ const getTimeSinceUpdate = (dateTime: MaybeRef<string | number | Date>) => {
                 Channel Settings
               </router-link>
               <a
+                v-if="getChannelFeedUrl()"
                 :href="getChannelFeedUrl()"
                 target="_blank"
                 class="btn btn-outline btn-lg justify-start gap-3"
@@ -242,21 +212,11 @@ const getTimeSinceUpdate = (dateTime: MaybeRef<string | number | Date>) => {
                   <label class="text-sm font-medium text-base-content/70">Storage Path</label>
                   <div class="text-base">{{ channel.path || 'Not found' }}</div>
                 </div>
-                <div>
-                  <label class="text-sm font-medium text-base-content/70">Created</label>
-                  <div class="text-base">{{ formatDate(channel.date) }}</div>
-                </div>
               </div>
             </div>
             <div>
               <div class="space-y-4">
-                <div>
-                  <label class="text-sm font-medium text-base-content/70">Status</label>
-                  <div class="badge ml-2" :class="true ? 'badge-success' : 'badge-ghost'">
-                    {{ true ? 'Active' : 'Inactive' }}
-                  </div>
-                </div>
-                <div>
+                <div v-if="getChannelFeedUrl()">
                   <label class="text-sm font-medium text-base-content/70">Feed URL</label>
                   <div class="text-sm font-mono break-all">
                     {{ getChannelFeedUrl() }}

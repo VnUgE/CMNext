@@ -1,9 +1,5 @@
 <script setup lang="ts">
-/**
- * FIDO/WebAuthn security key settings component.
- * Allows users to manage hardware security keys for 2FA.
- */
-import { isEmpty } from 'lodash-es';
+import { defaultTo, isEmpty } from 'lodash-es';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { type FidoDevice as IFidoDevice, useFidoApi } from '@vnuge/vnlib.browser';
 import { reactive } from 'vue';
@@ -15,6 +11,12 @@ import { useToggle, whenever, refDefault, toRefs } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import * as yup from 'yup';
 import SettingsCard from './SettingsCard.vue';
+
+const algNames: Partial<Record<number, string>> = {
+  [-7]: 'ES256',
+  [-35]: 'ES384',
+  [-36]: 'ES512',
+};
 
 const store = useStore();
 const { isLocalAccount } = storeToRefs(store);
@@ -128,18 +130,7 @@ const onRegisterDevice = async () => {
   store.mfa.refresh();
 };
 
-const getAlgNameFromCode = (code: number) => {
-  switch (code) {
-    case -7:
-      return 'ES256';
-    case -35:
-      return 'ES384';
-    case -36:
-      return 'ES512';
-    default:
-      return 'Unknown';
-  }
-};
+const getAlgNameFromCode = (code: number): string => defaultTo(algNames[code], 'Unknown');
 
 whenever(isOpen, () => {
   vState.deviceName = '';
