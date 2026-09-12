@@ -24,14 +24,6 @@ interface LoginAccountPropertyData {
   readonly username_max_chars: number;
 }
 
-//Stores dynamic account data from the server
-const loginData = account.getPropertyData<LoginAccountPropertyData>('login', {
-  enforce_email: false,
-  username_max_chars: 50,
-});
-
-const { invoke: apiCall, waiting } = useApiCall({ toaster });
-
 /**
  * MFA methods this form can continue: only methods with a registered
  * handler (totp/fido processors above). PKI (pkotp) is mounted in the
@@ -39,6 +31,27 @@ const { invoke: apiCall, waiting } = useApiCall({ toaster });
  * flow — it is a primary method, not a real MFA method
  */
 type SelectableUpgrade = MfaFlow<'totp'> | MfaFlow<'fido'>;
+
+const mfaIcons: Partial<Record<MfaMethod, string>> = {
+  fido: `M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0
+         15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25
+         2.25Zm.75-12h9v9h-9v-9Z`,
+  totp: `M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0
+         0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3`,
+};
+
+const mfaNames: Partial<Record<MfaMethod, string>> = {
+  fido: 'Security Key',
+  totp: 'Authenticator App',
+};
+
+//Stores dynamic account data from the server
+const loginData = account.getPropertyData<LoginAccountPropertyData>('login', {
+  enforce_email: false,
+  username_max_chars: 50,
+});
+
+const { invoke: apiCall, waiting } = useApiCall({ toaster });
 
 const { login, isMfaResponse } = useMfaLogin(vnlib, {
   handlers: [totpMfaProcessor(), fidoMfaProcessor()],
@@ -135,6 +148,8 @@ const SubmitLogin = async () => {
 
       // Push a new toast message
       toaster.success('Success', 'You have been logged in');
+
+      account.refresh();
     }
   });
 };
@@ -149,27 +164,9 @@ const goBackToSelect = () => set(selectedUpgrade, undefined);
 
 const isSelectionReady = computed(() => !selectedUpgrade.value && !isEmpty(mfaUpgrades.value));
 
-const getIconUrl = (method: MfaMethod) => {
-  switch (method) {
-    case 'fido':
-      return `M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 
-             15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25
-             2.25Zm.75-12h9v9h-9v-9Z`;
+const getIconUrl = (method: MfaMethod): string => defaultTo(mfaIcons[method], '');
 
-    case 'totp':
-      return `M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0
-             0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3`;
-  }
-};
-
-const getMfaName = (method: MfaMethod) => {
-  switch (method) {
-    case 'fido':
-      return 'Security Key';
-    case 'totp':
-      return 'Authenticator App';
-  }
-};
+const getMfaName = (method: MfaMethod): string => defaultTo(mfaNames[method], '');
 </script>
 
 <template>
