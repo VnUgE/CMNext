@@ -1,7 +1,7 @@
 import 'pinia';
 import { computed } from 'vue';
 import { type UserProfile, type ApiConfig, useProfile, isLoggedIn } from '@vnuge/vnlib.browser';
-import { syncRef, useAsyncState } from '@vueuse/core';
+import { syncRef, useAsyncState, whenever } from '@vueuse/core';
 import { PiniaPlugin, PiniaPluginContext, storeToRefs } from 'pinia';
 import { storeExport } from './index';
 
@@ -72,6 +72,14 @@ export const profilePlugin = (config: ApiConfig): PiniaPlugin => {
       userName,
       computed(() => serverProfile.state.value.email),
       { direction: 'rtl' }
+    );
+
+    // Fetch the profile whenever the account state flips to authenticated.
+    // Cold boot with a valid session, fresh logins, and polled session
+    // restores all flow through here, so no view needs to trigger the load.
+    whenever(
+      () => isLoggedIn(store.account.data),
+      () => serverProfile.execute()
     );
 
     return storeExport<UserProfileStore>({
