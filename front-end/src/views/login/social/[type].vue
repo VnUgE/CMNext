@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defer } from 'lodash-es';
+import { ref } from 'vue';
 import { tryOnMounted } from '@vueuse/core';
 import { useOauthLogin } from '@vnuge/vnlib.browser';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
@@ -18,6 +19,8 @@ const { push } = useRouter();
 //Override the message handler to capture the error message and display it
 const { invoke: apiCall, waiting } = useApiCall({ toaster });
 const { completeLogin } = useOauthLogin(vnlib);
+
+const loginError = ref('');
 
 tryOnMounted(() =>
   defer(async () => {
@@ -40,12 +43,10 @@ tryOnMounted(() =>
 
         await push('/login');
       } catch (err: unknown) {
-        toaster.error(
-          'Social Login Failed',
+        loginError.value =
           err instanceof Error
             ? err.message
-            : 'An unknown error occurred while attempting to log you in via social login.'
-        );
+            : 'An unknown error occurred while attempting to log you in via social login.';
       }
     });
   })
@@ -58,7 +59,12 @@ tryOnMounted(() =>
       <div id="social-final-template" class="flex justify-center">
         <div class="entry-container">
           <h3>Finalizing login</h3>
-          <div class="mt-6 mb-4">
+          <div v-if="loginError" class="mt-6 mb-4 text-center">
+            <p class="text-error mb-2">Social login failed.</p>
+            <p class="text-sm opacity-75 mb-4">{{ loginError }}</p>
+            <router-link to="/login" class="btn btn-primary">Back to Login</router-link>
+          </div>
+          <div v-else class="mt-6 mb-4">
             <div class="flex justify-center">
               <div class="m-auto">
                 <span v-if="waiting" class="loading loading-spinner loading-lg" />

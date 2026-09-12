@@ -6,9 +6,6 @@ import ProfileSection from './components/ProfileSection.vue';
 import SecuritySection from './components/SecuritySection.vue';
 import AuthenticationSection from './components/AuthenticationSection.vue';
 
-const store = useStore();
-store.setPageTitle('Account');
-
 type TabId = 'profile' | 'security' | 'authentication';
 
 interface Tab {
@@ -24,6 +21,9 @@ const tabs: Tab[] = [
 ];
 
 const validTabs: readonly TabId[] = ['profile', 'security', 'authentication'];
+
+const store = useStore();
+store.setPageTitle('Account');
 
 const activeTab = useRouteQuery<TabId>('tab', 'profile', {
   transform: (value) => validTabs.find((tab) => tab === value) ?? 'profile',
@@ -73,14 +73,14 @@ const currentTabComponent = computed(() => {
     <div class="sm:hidden mb-4">
       <ul class="menu menu-horizontal bg-base-200 rounded-box w-full justify-center">
         <li v-for="tab in tabs" :key="tab.id">
-          <a
+          <button
             class="gap-1 px-3"
             :class="{ active: activeTab === tab.id }"
             @click="activeTab = tab.id"
           >
             <fa-icon :icon="tab.icon" class="text-xs" />
             <span class="text-sm">{{ tab.label }}</span>
-          </a>
+          </button>
         </li>
       </ul>
     </div>
