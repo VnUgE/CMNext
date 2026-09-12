@@ -1,13 +1,14 @@
 import { computed, ref, type MaybeRef, type Ref, type ComputedRef, shallowRef } from 'vue';
-import { useToggle, toRef, get, computedAsync } from '@vueuse/core';
-import { isString, split, defer, isEmpty } from 'lodash-es';
+import { useToggle, toRef, get, computedAsync, tryOnMounted } from '@vueuse/core';
+import { defaultTo, filter, isEmpty, join, split, defer } from 'lodash-es';
 import { useRouter } from 'vue-router';
-import { BlogChannel, PostMeta } from '@vnuge/cmnext-admin';
+import { type BlogChannel, type FeedProperty, type PostMeta } from '@vnuge/cmnext-admin';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import * as yup from 'yup';
 import { useEditBuffer, type EditBuffer } from './editBuffer';
 import { toaster } from '../main';
 import { confirm } from './confirm';
+import { type Equal, type Expect } from './contract';
 import type { BlogAdminState } from './blog';
 
 export type ExtendedPostMeta = PostMeta & {
@@ -20,10 +21,10 @@ export type ExtendedPostMeta = PostMeta & {
 export const postSchema = yup.object({
   title: yup
     .string()
-    .required('Post title is required')
     .max(64, 'Post title must be less than 64 characters')
     // eslint-disable-next-line no-useless-escape -- `\/` is required: `/` ends a regex literal
-    .matches(/^[a-zA-Z0-9?&|.,\/ -]*$/, 'Post title must be alphanumeric'),
+    .matches(/^[a-zA-Z0-9?&|.,\/ -]*$/, 'Post title must be alphanumeric')
+    .required('Post title is required'),
   summary: yup
     .string()
     .required('Post summary is required')
@@ -32,7 +33,7 @@ export const postSchema = yup.object({
     .string()
     .required('Post author is required')
     .max(64, 'Post author must be less than 64 characters'),
-  tags: yup.array().of(yup.string().required()).default([]),
+  tags: yup.string().defined().default(''),
   image: yup
     .string()
     .max(200, 'Post image must be less than 200 characters')
@@ -42,20 +43,86 @@ export const postSchema = yup.object({
     .string()
     .required('Post content is required')
     .max(50000, 'Post content must be less than 50000 characters'),
-  id: yup.string().default(''),
-  created: yup.number().default(0),
-  date: yup.number().default(0),
-  name: yup.string().default(''),
-  html_description: yup.string().default(''),
-  properties: yup.mixed().nullable().default(undefined),
+  id: yup.string().defined().default(''),
+  created: yup.number().defined().default(0),
+  date: yup.number().defined().default(0),
+  name: yup.string().defined().default(''),
+  html_description: yup.string().defined().default(''),
+  properties: yup.mixed<FeedProperty[]>().nullable().default(undefined),
 });
+
+/**
+ * Form model for the post editor. The wire requires only `image` to stay
+ * optional; title/summary/author are required by the form even though the
+ * wire leaves them optional. Tags are a comma-separated string in the form
+ * and an array on the wire.
+ */
+export interface PostFormData
+  extends Pick<PostMeta, 'image'>, Required<Pick<PostMeta, 'title' | 'summary' | 'author'>> {
+  tags: string;
+  content: string;
+  id: string;
+  created: number;
+  date: number;
+  name: string;
+  html_description: string;
+  properties?: FeedProperty[] | null | undefined;
+}
+
+// The `.defined()` chains below accept '' (a new post has an empty id) while
+// still requiring the key. That keeps yup's `OptionalKeys` bookkeeping inside
+// `InferType`, so the pin maps over the form's own keys instead of comparing
+// whole types: it still fails on renames, removals, and type drift, but a
+// brand-new schema field must be added to the form and mappers by hand.
+export type AssertPostForm = Expect<
+  Equal<
+    { [K in keyof PostFormData]: PostFormData[K] },
+    { [K in keyof PostFormData]: yup.InferType<typeof postSchema>[K] }
+  >
+>;
+
+/**
+ * Maps a wire post to the form model, joining tags and filling the fields
+ * the wire may omit.
+ */
+export const toPostForm = (post?: ExtendedPostMeta): PostFormData => ({
+  title: defaultTo(post?.title, ''),
+  summary: defaultTo(post?.summary, ''),
+  author: defaultTo(post?.author, ''),
+  image: post?.image,
+  tags: join(defaultTo(post?.tags, []), ', '),
+  content: defaultTo(post?.content, ''),
+  id: defaultTo(post?.id, ''),
+  created: defaultTo(post?.created, 0),
+  date: defaultTo(post?.date, 0),
+  name: defaultTo(post?.name, ''),
+  html_description: defaultTo(post?.html_description, ''),
+  properties: defaultTo(post?.properties, undefined),
+});
+
+/**
+ * Maps the form model back to the wire, splitting the tags string and
+ * dropping empty entries.
+ */
+export const fromPostForm = (form: PostFormData, source?: PostMeta): ExtendedPostMeta => {
+  const tags = filter(
+    split(defaultTo(form.tags, ''), ',').map((tag) => tag.trim()),
+    (tag) => !isEmpty(tag)
+  );
+  return {
+    ...source,
+    ...form,
+    tags,
+    properties: defaultTo(form.properties, undefined),
+  };
+};
 
 export interface PostEditorState {
   // Core State
   readonly channelId: Ref<string>;
   readonly channels: Ref<BlogChannel[]>;
   readonly postId: Ref<string>;
-  readonly post: Pick<EditBuffer<ExtendedPostMeta>, 'raw' | 'buffer' | 'modified' | 'errors'>;
+  readonly post: Pick<EditBuffer<PostFormData>, 'raw' | 'buffer' | 'modified' | 'errors'>;
 
   // UI State
   readonly md: {
@@ -101,8 +168,8 @@ export const usePostEditor = (
   const postIdRef = toRef(postId);
 
   // API instances scoped to channel
-  const postApi = blog.createPostStore(channelIdRef.value);
-  const contentApi = blog.createContentStore(channelIdRef.value);
+  const postApi = blog.createPostStore(channelIdRef);
+  const contentApi = blog.createContentStore(channelIdRef);
 
   // API call state
   const { invoke: apiCall, waiting } = useApiCall({ toaster });
@@ -114,26 +181,20 @@ export const usePostEditor = (
   const sunEditor = shallowRef<unknown>();
 
   // Find single post from loaded posts based on postId
-  //const _post = shallowRef<ExtendedPostMeta>({} as ExtendedPostMeta);
-
   const _single = postApi.single(postIdRef);
-  const _post = computedAsync<ExtendedPostMeta>(async () => {
+  const _post = computedAsync<PostFormData>(async () => {
     const v = _single.value;
     if (v?.id) {
-      const content = await contentApi.getPostContent(v);
-      return { ...v, content };
+      // Posts without a saved body (including old posts) resolve to
+      // undefined from the api and load as an empty body
+      const content = defaultTo(await contentApi.getPostContent(v), '');
+      return toPostForm({ ...v, content });
     }
-    return {
-      created: 0,
-      date: 0,
-      id: '',
-      title: '',
-      summary: '',
-    };
+    return toPostForm(undefined);
   });
 
   // Edit buffer with validation
-  const postBuffer = useEditBuffer(_post, postSchema as any);
+  const postBuffer = useEditBuffer(_post, postSchema);
   const { modified } = postBuffer;
 
   // Derived State
@@ -145,7 +206,7 @@ export const usePostEditor = (
     }
 
     const postData: ExtendedPostMeta = {
-      ...postBuffer.buffer,
+      ...fromPostForm(postBuffer.buffer),
       content: undefined, // Always remove content as it's stored in contentApi
     };
 
@@ -157,17 +218,20 @@ export const usePostEditor = (
       delete postData.html_description;
     }
 
-    // Handle tags as comma-separated string or array
-    postData.tags = isString(postData.tags)
-      ? split(postData.tags as any, ',').map((tag) => tag.trim())
-      : postData.tags;
-
     await apiCall(async () => {
       if (isNew.value) {
-        const { title } = await postApi.add(postData);
-        toaster.success('Post Created', `Post '${title}' has been created.`);
+        // Create the post first: the returned meta carries the server id
+        // the content endpoint needs
+        const created = await postApi.add(postData);
+
+        await contentApi.updatePostContent(created, postBuffer.buffer.content);
+
+        toaster.success('Post Created', `Post '${created.title}' has been created.`);
       } else {
         const { title } = await postApi.update(postData);
+
+        await contentApi.updatePostContent(postData, postBuffer.buffer.content);
+
         toaster.success('Post Updated', `Post '${title}' has been updated.`);
       }
 
@@ -179,7 +243,7 @@ export const usePostEditor = (
   const deletePost = async () => {
     if (isNew.value) return;
 
-    const post = get(postBuffer.raw);
+    const post = fromPostForm(get(postBuffer.raw));
 
     const { isCanceled } = await confirm({
       title: 'Delete Post?',
