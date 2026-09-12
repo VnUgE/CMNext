@@ -4,16 +4,13 @@ import { useRouteQuery } from '@vueuse/router';
 import { get, useArrayFilter } from '@vueuse/core';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { toLower } from 'lodash-es';
-import { BlogChannel } from '@vnuge/cmnext-admin';
+import type { BlogChannel } from '@vnuge/cmnext-admin';
 import { cmnext, toaster } from '../../../main';
 import { confirm } from '../../../lib/confirm';
 import { computed } from 'vue';
-import { formatDate } from '../../../lib/helpers';
-
-type ChannelStatus = 'active' | 'inactive' | '';
 
 const store = useStore();
-const apiCall = useApiCall({ toaster });
+const { invoke: apiCall } = useApiCall({ toaster });
 
 // Set page title
 store.setPageTitle('Channels');
@@ -22,7 +19,6 @@ const { pinnedChannels } = store.preferences;
 
 // State
 const searchTerm = useRouteQuery<string>('search', '');
-const statusFilter = useRouteQuery<ChannelStatus>('status', '');
 
 const searchFilter = useArrayFilter(cmnext.channels.all, (channel) => {
   const search = toLower(get(searchTerm));
@@ -49,6 +45,9 @@ const deleteChannel = async (channel: BlogChannel) => {
     await cmnext.channels.delete(channel);
 
     toaster.success('Channel Deleted', `Channel "${channel.name}" has been deleted successfully.`);
+
+    // The channels store is app-wide; refresh so the card disappears
+    await cmnext.channels.refresh();
   });
 };
 
@@ -90,14 +89,8 @@ const togglePin = (channelId: string) => {
               type="text"
               placeholder="Search channels..."
               class="input input-bordered w-full"
+              aria-label="Search channels"
             />
-          </div>
-          <div class="flex gap-2">
-            <select v-model="statusFilter" class="select select-bordered">
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
           </div>
         </div>
       </div>
@@ -133,9 +126,6 @@ const togglePin = (channelId: string) => {
               </div>
               <div>
                 <h3 class="card-title text-lg">{{ channel.name }}</h3>
-                <div class="badge badge-sm" :class="true ? 'badge-success' : 'badge-ghost'">
-                  Active
-                </div>
               </div>
             </div>
             <div class="dropdown dropdown-left ml-auto">
@@ -159,20 +149,20 @@ const togglePin = (channelId: string) => {
                   </router-link>
                 </li>
                 <li>
-                  <a class="text-primary" @click="togglePin(channel.id)">
+                  <button class="text-primary" @click="togglePin(channel.id)">
                     <fa-icon
                       :icon="isPinned(channel.id) ? 'thumbtack-slash' : 'thumbtack'"
                       class="mr-2"
                     />
                     {{ isPinned(channel.id) ? 'Unpin Channel' : 'Pin Channel' }}
-                  </a>
+                  </button>
                 </li>
                 <li class="divider-sm" />
                 <li>
-                  <a class="text-error" @click="deleteChannel(channel)">
+                  <button class="text-error" @click="deleteChannel(channel)">
                     <fa-icon icon="trash" class="mr-2" />
                     Delete
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -189,10 +179,6 @@ const togglePin = (channelId: string) => {
               <div class="font-semibold">
                 {{ feedEnabled(channel) ? 'Configured' : 'Not Configured' }}
               </div>
-            </div>
-            <div>
-              <div class="text-base-content/50">Last Updated</div>
-              <div class="font-semibold">{{ formatDate(channel.date) }}</div>
             </div>
           </div>
 

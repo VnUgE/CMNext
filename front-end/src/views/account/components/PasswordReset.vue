@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { toSafeInteger } from 'lodash-es';
+import { isEmpty, toSafeInteger } from 'lodash-es';
 import { useAccount } from '@vnuge/vnlib.browser';
 import { computed, reactive } from 'vue';
 import { useToggle } from '@vueuse/core';
@@ -75,7 +75,8 @@ const onSubmit = async () => {
   await apiCall(async () => {
     const args: IResetPasswordArgs = {};
 
-    if (totpEnabled.value) {
+    // An empty code coerces to 0, which the server would reject — only send a code
+    if (totpEnabled.value && !isEmpty(vState.totpCode)) {
       args.totp_code = toSafeInteger(vState.totpCode);
     }
 
@@ -121,10 +122,11 @@ const resetForm = () => {
     <!-- Password reset form -->
     <form v-else class="space-y-3" @submit.prevent="onSubmit">
       <div class="form-control">
-        <label class="label py-1">
+        <label class="label py-1" for="reset-current-password">
           <span class="label-text text-sm">Current Password</span>
         </label>
         <input
+          id="reset-current-password"
           v-model="vState.current"
           type="password"
           class="input input-bordered input-sm w-full"
@@ -134,10 +136,11 @@ const resetForm = () => {
       </div>
 
       <div class="form-control">
-        <label class="label py-1">
+        <label class="label py-1" for="reset-new-password">
           <span class="label-text text-sm">New Password</span>
         </label>
         <input
+          id="reset-new-password"
           v-model="vState.newPassword"
           type="password"
           class="input input-bordered input-sm w-full"
@@ -147,10 +150,11 @@ const resetForm = () => {
       </div>
 
       <div class="form-control">
-        <label class="label py-1">
+        <label class="label py-1" for="reset-repeat-password">
           <span class="label-text text-sm">Confirm Password</span>
         </label>
         <input
+          id="reset-repeat-password"
           v-model="vState.repeatPassword"
           type="password"
           class="input input-bordered input-sm w-full"
@@ -160,10 +164,11 @@ const resetForm = () => {
       </div>
 
       <div v-if="totpEnabled" class="form-control">
-        <label class="label py-1">
+        <label class="label py-1" for="reset-totp-code">
           <span class="label-text text-sm">TOTP Code</span>
         </label>
         <input
+          id="reset-totp-code"
           v-model="vState.totpCode"
           type="text"
           class="input input-bordered input-sm w-full"

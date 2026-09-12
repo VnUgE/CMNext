@@ -33,7 +33,12 @@ const toggleThemeSync = () => {
             <strong>off</strong> for security.
           </p>
         </div>
-        <input v-model="autoHeartbeat" type="checkbox" class="toggle toggle-primary" />
+        <input
+          v-model="autoHeartbeat"
+          type="checkbox"
+          class="toggle toggle-primary"
+          aria-label="Keep me logged in"
+        />
       </div>
     </SettingsCard>
 
@@ -49,7 +54,7 @@ const toggleThemeSync = () => {
             <div class="font-medium text-sm">Theme</div>
             <p class="text-xs text-base-content/60 mt-0.5">Choose your preferred color scheme</p>
           </div>
-          <select v-model="theme" class="select select-bordered select-sm w-40">
+          <select v-model="theme" class="select select-bordered select-sm w-40" aria-label="Theme">
             <option v-for="t in themeNames" :key="t" :value="t">
               {{ capitalize(t) }}
             </option>
@@ -67,9 +72,10 @@ const toggleThemeSync = () => {
             </p>
           </div>
           <input
-            v-model="isThemeSyncEnabled"
+            :checked="isThemeSyncEnabled"
             type="checkbox"
             class="toggle toggle-sm"
+            aria-label="Sync theme across devices"
             @change="toggleThemeSync"
           />
         </div>

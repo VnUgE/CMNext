@@ -7,10 +7,6 @@ import * as yup from 'yup';
 
 const { validate } = useFormValidation({ toaster });
 
-const pwState = reactive({ password: '' });
-const message = ref<ConfirmMessage>({ title: '', message: '' });
-const revealed = computed(() => dialog.isRevealed.value);
-
 // Yup validation schema
 const passwordSchema = yup.object({
   password: yup
@@ -19,8 +15,15 @@ const passwordSchema = yup.object({
     .max(100, 'Password must be less than 100 characters'),
 });
 
-// When revealed, set the message
-dialog.onReveal((m) => (message.value = m || { title: '', message: '' }));
+const pwState = reactive({ password: '' });
+const message = ref<ConfirmMessage>({ title: '', message: '' });
+const revealed = computed(() => dialog.isRevealed.value);
+
+// Compute title and description from message
+const title = computed(() => message.value?.title || 'Enter your password');
+const description = computed(
+  () => message.value?.message || 'To confirm your identity, please enter your password.'
+);
 
 const formSubmitted = async () => {
   // Validate the password
@@ -46,11 +49,8 @@ const close = () => {
   dialog.cancel();
 };
 
-// Compute title and description from message
-const title = computed(() => message.value?.title || 'Enter your password');
-const description = computed(
-  () => message.value?.message || 'To confirm your identity, please enter your password.'
-);
+// When revealed, set the message
+dialog.onReveal((m) => (message.value = m || { title: '', message: '' }));
 </script>
 
 <template>
@@ -69,18 +69,23 @@ const description = computed(
           <form id="password-form" class="my-2 w-full" @submit.prevent="formSubmitted()">
             <fieldset>
               <div class="input-container">
+                <label class="label" for="password-prompt-input">
+                  <span class="label-text">Password</span>
+                </label>
                 <input
                   id="password-prompt-input"
                   v-model="pwState.password"
-                  tabindex="1"
                   type="password"
                   class="input input-primary w-full"
                   placeholder="Password"
+                  autocomplete="current-password"
                   autofocus
                 />
                 <div class="join mt-4 w-fit float-right">
                   <button class="btn btn-primary join-item" form="password-form">Submit</button>
-                  <button class="btn join-item" @click.prevent="close()">Close</button>
+                  <button type="button" class="btn join-item" @click.prevent="close()">
+                    Close
+                  </button>
                 </div>
               </div>
             </fieldset>

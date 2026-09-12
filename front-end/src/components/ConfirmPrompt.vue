@@ -6,9 +6,6 @@ import { confirm, ConfirmMessage } from '../lib/confirm';
 const message = ref<ConfirmMessage>();
 const revealed = computed(() => confirm.isRevealed.value);
 
-//Set message on reveal
-confirm.onReveal((m: ConfirmMessage) => (message.value = defaultTo(m, {})));
-
 const onConfirm = () => {
   confirm.confirm();
 };
@@ -16,6 +13,9 @@ const onConfirm = () => {
 const onCancel = () => {
   confirm.cancel();
 };
+
+//Set message on reveal
+confirm.onReveal((m: ConfirmMessage) => (message.value = defaultTo(m, {})));
 </script>
 
 <template>
@@ -26,10 +26,8 @@ const onCancel = () => {
       </template>
 
       <template #description>
-        <div :id="message?.title" class="max-w-md w-[75vw] md:w-screen">
+        <div id="confirm-prompt-message" class="max-w-md w-[75vw] md:w-screen">
           <p class="modal-description">{{ message?.message }}</p>
-
-          <p class="hidden modal-text-secondary">{{ message?.message }}</p>
 
           <div class="pt-4 join w-full flex justify-end">
             <button

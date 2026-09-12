@@ -111,13 +111,13 @@ export const themeNames: ThemeName[] = [
 export const useStore = defineStore('main', () => {
   //MANAGED STATE
   const pageTitle = shallowRef('');
-  const htmlRef = shallowRef<HTMLElement>(document.querySelector('html')!);
+  const htmlRef = shallowRef<HTMLElement>(document.documentElement);
 
-  //Get shared global state storage
-  const mainState = useLocalStorage<GlobalState | undefined>('vn-state', defaultState);
+  //Get shared global state storage.
+  const mainState = useLocalStorage('vn-state', defaultState);
   defaultsDeep(mainState.value, defaultState);
 
-  const stateRefs = toRefs<GlobalState>(mainState as any);
+  const stateRefs = toRefs<GlobalState>(mainState);
 
   const setPageTitle = (title: string) => set(pageTitle, title);
 

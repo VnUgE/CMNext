@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { assign, defaultTo, defer } from 'lodash-es';
 import { computed, reactive, watch } from 'vue';
+import { tryOnMounted } from '@vueuse/core';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { toaster } from '../../../main';
 import { useStore } from '../../../store';
@@ -19,7 +20,7 @@ const store = useStore();
 const [editMode, toggleEditMode] = useToggle(false);
 const profileBuffer = reactive<Profile>({} as Profile);
 
-const apiCall = useApiCall({ toaster });
+const { invoke: apiCall, waiting } = useApiCall({ toaster });
 const { validate } = useFormValidation({ toaster });
 
 const profileSchema = yup.object({
@@ -42,7 +43,7 @@ const revertProfile = () => {
 };
 
 const onSubmit = async () => {
-  if (apiCall.waiting.value) {
+  if (waiting.value) {
     return;
   }
 
@@ -62,8 +63,8 @@ const onSubmit = async () => {
 // Whenever the source profile changes, update the buffer
 watch(store.user.profile, (p) => assign(profileBuffer, p), { immediate: true });
 
-// Begin loading the profile
-defer(store.user.refresh);
+// Begin loading the profile once mounted, deferred so setup never blocks
+tryOnMounted(() => defer(() => store.user.refresh()));
 </script>
 
 <template>
@@ -75,12 +76,8 @@ defer(store.user.refresh);
     >
       <template #actions>
         <div v-if="editMode" class="join">
-          <button
-            class="btn btn-primary btn-sm join-item"
-            :disabled="apiCall.waiting.value"
-            @click="onSubmit"
-          >
-            <span v-if="apiCall.waiting.value" class="loading loading-spinner loading-sm" />
+          <button class="btn btn-primary btn-sm join-item" :disabled="waiting" @click="onSubmit">
+            <span v-if="waiting" class="loading loading-spinner loading-sm" />
             <fa-icon v-else icon="check" />
             Save
           </button>
@@ -113,10 +110,11 @@ defer(store.user.refresh);
       <form class="space-y-3" @submit.prevent="onSubmit">
         <fieldset :disabled="!editMode" class="space-y-3">
           <div class="form-control">
-            <label class="label py-1">
+            <label class="label py-1" for="profile-first-name">
               <span class="label-text text-sm">First Name</span>
             </label>
             <input
+              id="profile-first-name"
               v-model="profileBuffer.first"
               type="text"
               class="input input-bordered input-sm w-full"
@@ -126,10 +124,11 @@ defer(store.user.refresh);
           </div>
 
           <div class="form-control">
-            <label class="label py-1">
+            <label class="label py-1" for="profile-last-name">
               <span class="label-text text-sm">Last Name</span>
             </label>
             <input
+              id="profile-last-name"
               v-model="profileBuffer.last"
               type="text"
               class="input input-bordered input-sm w-full"

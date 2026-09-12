@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import { useStore } from './store';
 import { storeToRefs } from 'pinia';
-import { whenever } from '@vueuse/core';
+import { useTitle, whenever } from '@vueuse/core';
 import { cmnext, toaster } from './main';
 import Sidebar from './components/Sidebar.vue';
 const ConfirmPrompt = defineAsyncComponent(() => import('./components/ConfirmPrompt.vue'));
@@ -12,6 +12,8 @@ const store = useStore();
 const { pageTitle, loggedIn } = storeToRefs(store);
 
 store.setPageTitle('Home');
+
+useTitle(computed(() => `${pageTitle.value} | CMNext Admin`));
 
 // Refresh channels whenever the user logs in
 whenever(loggedIn, () => cmnext.channels.refresh());
@@ -25,10 +27,6 @@ whenever(
 </script>
 
 <template>
-  <head>
-    <title>{{ pageTitle }} | CMNext Admin</title>
-  </head>
-
   <div class="drawer lg:drawer-open">
     <input id="main-drawer" type="checkbox" class="drawer-toggle" />
     <div ref="content" class="drawer-content flex flex-col min-h-screen">

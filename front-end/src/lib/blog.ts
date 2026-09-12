@@ -59,7 +59,7 @@ export const useCmnextAdmin = (vnlib: ApiConfig, adminBaseUrl: string): BlogAdmi
   //createAxios documents that the caller caches it, which this closure does.
   const axios = createAxios(vnlib, {
     onUploadProgress: (e: AxiosProgressEvent) => {
-      uploadProgress.value = Math.round((e.loaded * 100) / e.total!);
+      uploadProgress.value = e.total ? Math.round((e.loaded * 100) / e.total) : 0;
     },
     timeout: 120000, //120 second timeout
   });

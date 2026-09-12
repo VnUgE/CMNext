@@ -51,12 +51,7 @@ defer(async () => {
 
         <div v-else>
           <div class="">
-            <button
-              form="user-pass-submit-form"
-              class="btn btn-primary w-full"
-              :disabled="waiting"
-              @click="submitLogout"
-            >
+            <button class="btn btn-primary w-full" :disabled="waiting" @click="submitLogout">
               <!-- Display spinner if waiting, otherwise the sign-in icon -->
               <span v-if="waiting" class="loading loading-spinner loading-sm" />
               <fa-icon v-else icon="sign-in-alt" />
@@ -68,18 +63,16 @@ defer(async () => {
         <div v-if="!loggedIn" class="w-full">
           <!-- pki button, forward to the pki route -->
           <div v-if="otpEnabled" class="mt-6">
-            <router-link to="/login/pki">
-              <button type="submit" class="btn w-full" :disabled="waiting">
-                <span>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 256 256">
-                    <path
-                      fill="currentColor"
-                      d="M248 128a56 56 0 1 0-96 39.14V224a8 8 0 0 0 11.58 7.16L192 216.94l28.42 14.22A8 8 0 0 0 232 224v-56.86A55.81 55.81 0 0 0 248 128Zm-56-40a40 40 0 1 1-40 40a40 40 0 0 1 40-40Zm3.58 112.84a8 8 0 0 0-7.16 0L168 211.06v-32.47a55.94 55.94 0 0 0 48 0v32.47ZM136 192a8 8 0 0 1-8 8H40a16 16 0 0 1-16-16V56a16 16 0 0 1 16-16h176a16 16 0 0 1 16 16a8 8 0 0 1-16 0H40v128h88a8 8 0 0 1 8 8Zm-16-56a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Zm0-32a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Z"
-                    />
-                  </svg>
-                </span>
-                Login with OTP
-              </button>
+            <router-link to="/login/pki" class="btn w-full" :class="{ 'btn-disabled': waiting }">
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 256 256">
+                  <path
+                    fill="currentColor"
+                    d="M248 128a56 56 0 1 0-96 39.14V224a8 8 0 0 0 11.58 7.16L192 216.94l28.42 14.22A8 8 0 0 0 232 224v-56.86A55.81 55.81 0 0 0 248 128Zm-56-40a40 40 0 1 1-40 40a40 40 0 0 1 40-40Zm3.58 112.84a8 8 0 0 0-7.16 0L168 211.06v-32.47a55.94 55.94 0 0 0 48 0v32.47ZM136 192a8 8 0 0 1-8 8H40a16 16 0 0 1-16-16V56a16 16 0 0 1 16-16h176a16 16 0 0 1 16 16a8 8 0 0 1-16 0H40v128h88a8 8 0 0 1 8 8Zm-16-56a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Zm0-32a8 8 0 0 1-8 8H72a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8Z"
+                  />
+                </svg>
+              </span>
+              Login with OTP
             </router-link>
           </div>
 
