@@ -49,7 +49,6 @@ import {
   faCopy,
   faFolderOpen,
   faKey,
-  faLink,
   faMinusCircle,
   faPlus,
   faSignInAlt,
@@ -69,7 +68,6 @@ import {
   faPalette,
   faInfoCircle,
   faBlog,
-  faCalendar,
   faArrowLeft,
   faArrowDown,
   faArrowUp,
@@ -102,7 +100,6 @@ library.add(
   faCheck,
   faTrash,
   faCopy,
-  faLink,
   faMarkdown,
   faBullhorn,
   faFolderOpen,
@@ -119,7 +116,6 @@ library.add(
   faPalette,
   faInfoCircle,
   faBlog,
-  faCalendar,
   faArrowLeft,
   faArrowDown,
   faArrowUp,
@@ -159,10 +155,10 @@ export const vnlib = createApiConfig({
   // storage auto-detected: uses wrapped localStorage in browser/jsdom
 });
 
-const createToastAdapter = (id: string) => {
+const createToastAdapter = (group: string) => {
   return createToaster({
-    show: (type, { title, message }) => notify({ type, id, text: message, title }),
-    close: () => notify.close(id),
+    show: (type, { title, message }) => notify({ type, group, text: message, title }),
+    close: () => notify({ group, clean: true }),
   });
 };
 
