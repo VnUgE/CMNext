@@ -11,6 +11,7 @@ import { useAsyncState } from '@vueuse/core';
 import { PiniaPluginContext, PiniaPlugin } from 'pinia';
 import { find, includes } from 'lodash-es';
 import { storeExport } from './index';
+import { logError } from '../lib/log';
 
 export interface MfaSettingsStore {
   readonly mfa: {
@@ -65,7 +66,7 @@ export const mfaSettingsPlugin = (config: ApiConfig): PiniaPlugin => {
           //errors are swallowed here
           return await mfaConfig.getData();
         } catch {
-          console.error('MFA Failure', 'Failed to load MFA settings');
+          logError('MFA Failure', 'Failed to load MFA settings');
           return {} as MfaGetResponse;
         }
       },

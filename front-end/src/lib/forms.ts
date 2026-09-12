@@ -16,6 +16,7 @@
 import { type MaybeRef, toValue } from 'vue';
 import { type ObjectSchema, type AnyObject, ValidationError } from 'yup';
 import { type Toaster } from '@vnuge/vnlib.browser/vue';
+import { logError } from './log';
 
 export interface UseFormValidationOptions {
   /**
@@ -35,15 +36,6 @@ export interface UseFormValidationReturn {
     data: MaybeRef<T>,
     schema: ObjectSchema<T>
   ) => Promise<boolean>;
-
-  /**
-   * Creates a validation function bound to a specific schema
-   * @param schema - The Yup schema to bind
-   * @returns Validation function that accepts data
-   */
-  readonly createValidator: <T extends AnyObject>(
-    schema: ObjectSchema<T>
-  ) => (data: MaybeRef<T>) => Promise<boolean>;
 }
 
 /**
@@ -105,7 +97,7 @@ export const useFormValidation = (options: UseFormValidationOptions): UseFormVal
         toaster.error(`Please verify your ${fieldName}`, firstError);
       } else {
         // Handle unexpected errors
-        console.error('Validation error:', error);
+        logError('Validation error:', error);
         toaster.error('Validation failed', 'An unexpected error occurred');
       }
 
@@ -113,15 +105,7 @@ export const useFormValidation = (options: UseFormValidationOptions): UseFormVal
     }
   };
 
-  /**
-   * Creates a validator function bound to a specific schema
-   */
-  const createValidator = <TData extends AnyObject>(schema: ObjectSchema<TData>) => {
-    return (data: MaybeRef<TData>) => validate(data, schema);
-  };
-
   return {
     validate,
-    createValidator,
   };
 };
