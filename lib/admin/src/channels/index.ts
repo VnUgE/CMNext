@@ -50,6 +50,9 @@ export const useChannels = ({ getAxios, baseUrl }: BlogAdminContext): ChannelApi
       const add = sanitizeNumbers({ ...item });
       //Call post with the channel data, unwrap the web-message envelope
       const { data } = await axios.post<WebMessage<BlogChannel>>(getUrl(), add);
+      //The server may ack creation with a bare 201 and no body; the sent
+      //item stands in so callers (which refresh after save) still resolve
+      if (!data) return add;
       return data.getResultOrThrow();
     },
 
@@ -59,6 +62,8 @@ export const useChannels = ({ getAxios, baseUrl }: BlogAdminContext): ChannelApi
       const update = sanitizeNumbers({ ...item });
       //Call patch with the channel data, unwrap the web-message envelope
       const { data } = await axios.patch<WebMessage<BlogChannel>>(getUrl(), update);
+      //Same bare-201 tolerance as add: the update path returns no body
+      if (!data) return update;
       return data.getResultOrThrow();
     },
 

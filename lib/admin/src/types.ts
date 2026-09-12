@@ -159,9 +159,9 @@ export interface ContentApi extends BlogApi<ContentMeta> {
   /**
    * Gets the content for a post as text
    * @param post The post to get the content for
-   * @returns A promise that resolves to the content string
+   * @returns The content string, or undefined when the post has no saved body
    */
-  getPostContent(post: BlogEntity): Promise<string>;
+  getPostContent(post: BlogEntity): Promise<string | undefined>;
   /**
    * Gets a single content meta object by its id
    * @param id The id of the content meta object to get

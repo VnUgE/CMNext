@@ -52,14 +52,18 @@ export const useContent = (
   /**
    * Gets the raw content item from the server and returns a string of the content
    * @param contentId The id of the content to get the raw value of
-   * @returns A promise that resolves to the raw content string
+   * @returns The raw content string, or undefined when the server has no
+   * body for the id (404 is scoped to non-throwing on this request)
    */
-  const _getContent = async (contentId: string): Promise<string> => {
+  const _getContent = async (contentId: string): Promise<string | undefined> => {
     const { get: getRequest } = getAxios();
-    return getRequest(`${getUrl()}&id=${contentId}`).then((s) => s.data);
+    const { data, status } = await getRequest<string | undefined>(`${getUrl()}&id=${contentId}`, {
+      validateStatus: (status) => status === 200 || status === 404,
+    });
+    return status === 404 ? undefined : data;
   };
 
-  const getPostContent = async (post: BlogEntity): Promise<string> => {
+  const getPostContent = async (post: BlogEntity): Promise<string | undefined> => {
     return await _getContent(post.id);
   };
 
