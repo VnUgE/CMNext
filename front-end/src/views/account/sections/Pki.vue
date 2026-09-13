@@ -6,14 +6,14 @@ import { ref } from 'vue';
 import { useToggle, set, toRefs, refDefault } from '@vueuse/core';
 import { useStore } from '../../../store';
 import { toaster } from '../../../main';
-import { confirm, promptForPassword } from '../../../lib/confirm';
+import { confirm, withPassword } from '../../../lib/confirm';
+import { logError } from '../../../lib/log';
 import * as yup from 'yup';
 import SettingsCard from './SettingsCard.vue';
 
 const store = useStore();
 const { invoke: apiCall } = useApiCall({ toaster });
 
-const isSupported = store.mfa.isSupported('pkotp');
 const pkiConfig = useOtpApi(store.mfa);
 
 const _otpData = store.mfa.getDataFor<{
@@ -22,6 +22,7 @@ const _otpData = store.mfa.getDataFor<{
   data_size: number;
   max_size: number;
 }>('pkotp');
+
 const otpData = refDefault(_otpData, { keys: [], can_add_keys: false, data_size: 0, max_size: 0 });
 const {
   keys: publicKeys,
@@ -31,6 +32,7 @@ const {
 } = toRefs(otpData);
 
 const [isOpen, toggleOpen] = useToggle();
+const [showInfo, toggleInfo] = useToggle();
 const keyData = ref('');
 
 const jwkSchema = yup.object({
@@ -53,21 +55,18 @@ const onRemoveKey = async (single: OtpPublicKey) => {
     return;
   }
 
-  const password = await promptForPassword();
-  if (!password) {
-    return;
-  }
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const { result, code } = await pkiConfig.removeKey(single, { password });
 
-  await apiCall(async () => {
-    const { result, code } = await pkiConfig.removeKey(single, { password });
+      if (code === 401) {
+        toaster.error('Error', 'Invalid password provided.');
+        return;
+      }
 
-    if (code === 401) {
-      toaster.error('Error', 'Invalid password provided.');
-      return;
-    }
-
-    toaster.success('Success', result);
-    store.mfa.refresh();
+      toaster.success('Success', result);
+      store.mfa.refresh();
+    });
   });
 };
 
@@ -81,15 +80,12 @@ const onDisable = async () => {
     return;
   }
 
-  const password = await promptForPassword();
-  if (!password) {
-    return;
-  }
-
-  await apiCall(async () => {
-    const { result } = await pkiConfig.disable({ password });
-    toaster.success('Success', result);
-    store.mfa.refresh();
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const { result } = await pkiConfig.disable({ password });
+      toaster.success('Success', result);
+      store.mfa.refresh();
+    });
   });
 };
 
@@ -110,8 +106,7 @@ const onSubmitKeys = async () => {
     //Try to parse as jwk
     jwk = JSON.parse(keyData.value);
   } catch (e) {
-    //Write error to debug log
-    console.error('Invalid JWK:', e);
+    logError('Invalid JWK:', e);
     toaster.error('Invalid JWK', 'Unable to parse JSON.');
     return;
   }
@@ -129,33 +124,29 @@ const onSubmitKeys = async () => {
 
   toggleOpen(false);
 
-  const password = await promptForPassword();
-  if (!password) {
-    return;
-  }
+  //Send to server gated on the password step
+  await withPassword(async (password) => {
+    const result = await apiCall(async () => {
+      //init/update the key
+      const { result } = await pkiConfig.addOrUpdate(jwk, { password });
 
-  //Send to server
-  const result = await apiCall(async () => {
-    //init/update the key
-    const { result } = await pkiConfig.addOrUpdate(jwk, { password });
+      toaster.success('Success', result);
 
-    toaster.success('Success', result);
+      set(keyData, '');
 
-    set(keyData, '');
+      store.mfa.refresh();
 
-    store.mfa.refresh();
+      return true;
+    });
 
-    return true;
+    //if the form failed to submit (password error or cancelled), open it again
+    toggleOpen(!result);
   });
-
-  //if the form failed to submit (password error or cancelled), open it again
-  toggleOpen(!result);
 };
 </script>
 
 <template>
   <SettingsCard
-    v-if="isSupported"
     title="OTP Public Keys"
     :description="
       publicKeys.length > 0
@@ -164,34 +155,49 @@ const onSubmitKeys = async () => {
     "
   >
     <template #actions>
-      <div v-if="publicKeys.length > 0" class="join">
+      <div class="flex items-center gap-1">
         <button
-          class="btn btn-sm join-item tooltip tooltip-left"
-          data-tip="Add a new OTP public key"
+          class="btn btn-sm btn-ghost tooltip tooltip-left"
+          data-tip="What is an OTP public key?"
+          aria-label="About OTP public keys"
+          @click.prevent="toggleInfo(true)"
+        >
+          <fa-icon icon="info-circle" />
+        </button>
+        <div v-if="publicKeys.length > 0" class="join">
+          <button
+            class="btn btn-sm join-item tooltip tooltip-left"
+            :data-tip="
+              !canAddKeys ? 'Key storage is full or unavailable' : 'Add a new OTP public key'
+            "
+            :disabled="!canAddKeys"
+            @click.prevent="toggleOpen(true)"
+          >
+            <fa-icon icon="plus" />
+            <span class="hidden sm:inline ml-1">Add</span>
+          </button>
+          <button
+            class="btn btn-sm text-error join-item tooltip tooltip-left tooltip-error"
+            data-tip="Remove all keys"
+            @click.prevent="onDisable"
+          >
+            <fa-icon icon="minus-circle" />
+            <span class="hidden sm:inline ml-1">Disable</span>
+          </button>
+        </div>
+        <button
+          v-else
+          class="btn btn-sm btn-primary tooltip tooltip-left"
+          :data-tip="
+            !canAddKeys ? 'Key storage is full or unavailable' : 'Add a new OTP public key'
+          "
           :disabled="!canAddKeys"
           @click.prevent="toggleOpen(true)"
         >
           <fa-icon icon="plus" />
-          <span class="hidden sm:inline ml-1">Add</span>
-        </button>
-        <button
-          class="btn btn-sm text-error join-item tooltip tooltip-left tooltip-error"
-          data-tip="Remove all keys"
-          @click.prevent="onDisable"
-        >
-          <fa-icon icon="minus-circle" />
-          <span class="hidden sm:inline ml-1">Disable</span>
+          <span class="ml-1">Add Key</span>
         </button>
       </div>
-      <button
-        v-else
-        class="btn btn-sm btn-primary"
-        :disabled="!canAddKeys"
-        @click.prevent="toggleOpen(true)"
-      >
-        <fa-icon icon="plus" />
-        <span class="ml-1">Add Key</span>
-      </button>
     </template>
 
     <!-- Keys Table -->
@@ -229,12 +235,30 @@ const onSubmitKeys = async () => {
     </p>
   </SettingsCard>
 
-  <!-- Not supported -->
-  <SettingsCard
-    v-else
-    title="OTP Public Keys"
-    description="OTP authentication is not enabled on this server"
-  />
+  <!-- Feature explainer -->
+  <Dialog :open="showInfo" @close="toggleInfo(false)">
+    <template #title>OTP Public Keys</template>
+    <template #description>
+      <div class="max-w-md space-y-3">
+        <p>
+          OTP authentication lets external tools sign in as you by presenting a signed token instead
+          of a password. To use it, register the
+          <strong>public half</strong> of a key here; the private half never leaves your tool.
+        </p>
+        <p>
+          Paste the key as a JSON Web Key (JWK) with
+          <span class="font-mono text-sm">kty</span>, <span class="font-mono text-sm">use</span>,
+          <span class="font-mono text-sm">alg</span>, <span class="font-mono text-sm">kid</span>,
+          <span class="font-mono text-sm">x</span>, and
+          <span class="font-mono text-sm">y</span> fields. You can inspect or craft keys at
+          <a class="link" href="https://jwt.io" target="_blank" rel="noopener">jwt.io</a>.
+        </p>
+        <div class="flex justify-end">
+          <button class="btn btn-sm btn-primary" @click.prevent="toggleInfo(false)">Got it</button>
+        </div>
+      </div>
+    </template>
+  </Dialog>
 
   <!-- Add Key Dialog -->
   <Dialog :open="isOpen" @close="toggleOpen(false)">

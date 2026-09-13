@@ -1,93 +1,48 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRouteQuery } from '@vueuse/router';
 import { useStore } from '../../store';
-import ProfileSection from './components/ProfileSection.vue';
-import SecuritySection from './components/SecuritySection.vue';
-import AuthenticationSection from './components/AuthenticationSection.vue';
-
-type TabId = 'profile' | 'security' | 'authentication';
-
-interface Tab {
-  id: TabId;
-  label: string;
-  icon: string;
-}
-
-const tabs: Tab[] = [
-  { id: 'profile', label: 'Profile', icon: 'user' },
-  { id: 'security', label: 'Security', icon: 'lock' },
-  { id: 'authentication', label: 'Authentication', icon: 'key' },
-];
-
-const validTabs: readonly TabId[] = ['profile', 'security', 'authentication'];
+import ProfileSection from './sections/ProfileSection.vue';
+import PreferencesSection from './sections/PreferencesSection.vue';
+import PasswordReset from './sections/PasswordReset.vue';
+import TotpSettings from './sections/TotpSettings.vue';
+import Fido from './sections/Fido.vue';
+import Pki from './sections/Pki.vue';
 
 const store = useStore();
-store.setPageTitle('Account');
+store.setPageTitle('Account Settings');
 
-const activeTab = useRouteQuery<TabId>('tab', 'profile', {
-  transform: (value) => validTabs.find((tab) => tab === value) ?? 'profile',
-});
-
-const currentTabComponent = computed(() => {
-  switch (activeTab.value) {
-    case 'profile':
-      return ProfileSection;
-    case 'security':
-      return SecuritySection;
-    case 'authentication':
-      return AuthenticationSection;
-    default:
-      return ProfileSection;
-  }
-});
+// Prime MFA state for the security section below
+store.mfa.refresh();
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 max-w-4xl mx-auto">
-    <!-- Page Header -->
-    <div class="mb-6">
-      <h2 class="text-2xl font-bold text-base-content">Account Settings</h2>
-      <p class="text-base-content/70 mt-1">
-        Manage your profile, security, and authentication options
-      </p>
+  <div class="p-6 space-y-6 max-w-6xl mx-auto">
+    <div>
+      <h1 class="text-3xl font-bold text-base-content">Account Settings</h1>
+      <p class="text-base-content/70 mt-1">Identity, security, and preferences for this operator</p>
     </div>
 
-    <!-- Desktop: Horizontal Tabs -->
-    <div class="hidden sm:block">
-      <div class="tabs tabs-border mb-6">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          class="tab gap-2"
-          :class="{ 'tab-active': activeTab === tab.id }"
-          @click="activeTab = tab.id"
-        >
-          <fa-icon :icon="tab.icon" class="text-sm" />
-          {{ tab.label }}
-        </button>
+    <!-- Two-column on wide screens: forms left, credentials right.
+      Single column on mobile, both columns scroll as one page. -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+      <div class="lg:col-span-3 space-y-6 min-w-0">
+        <section id="profile" class="scroll-mt-6">
+          <ProfileSection />
+        </section>
+
+        <section id="preferences" class="scroll-mt-6">
+          <PreferencesSection />
+        </section>
       </div>
-    </div>
 
-    <!-- Mobile: Compact Horizontal Menu -->
-    <div class="sm:hidden mb-4">
-      <ul class="menu menu-horizontal bg-base-200 rounded-box w-full justify-center">
-        <li v-for="tab in tabs" :key="tab.id">
-          <button
-            class="gap-1 px-3"
-            :class="{ active: activeTab === tab.id }"
-            @click="activeTab = tab.id"
-          >
-            <fa-icon :icon="tab.icon" class="text-xs" />
-            <span class="text-sm">{{ tab.label }}</span>
-          </button>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Tab Content -->
-    <div class="space-y-4">
-      <component :is="currentTabComponent" />
+      <div class="lg:col-span-2 space-y-6 min-w-0">
+        <section id="security" class="scroll-mt-6 space-y-4">
+          <PasswordReset />
+          <!-- Unsupported methods never mount their templates at all -->
+          <TotpSettings v-if="store.mfa.isSupported('totp')" />
+          <Fido v-if="store.mfa.isSupported('fido')" />
+          <Pki v-if="store.mfa.isSupported('pkotp')" />
+        </section>
+      </div>
     </div>
   </div>
 </template>

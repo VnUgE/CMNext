@@ -5,7 +5,16 @@ import { filter, includes, get as lodashGet } from 'lodash-es';
 import { useStore, themeNames } from '../store';
 import { storeToRefs } from 'pinia';
 import { get } from '@vueuse/core';
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from '@headlessui/vue';
 import { type BlogChannel } from '@vnuge/cmnext-admin';
 import { cmnext } from '../main';
 
@@ -24,8 +33,8 @@ const userEmail = computed(
 
 const userDisplayName = computed(() => {
   const profile = userProfileData.value;
-  const firstName = lodashGet(profile, 'first_name', '');
-  const lastName = lodashGet(profile, 'last_name', '');
+  const firstName = lodashGet(profile, 'first', '');
+  const lastName = lodashGet(profile, 'last', '');
 
   if (firstName && lastName) {
     return `${firstName} ${lastName}`;
@@ -103,11 +112,10 @@ const logout = () => {
           <span>Navigation</span>
         </li>
         <li>
-          <router-link to="/" :class="{ active: route.path === '/' }">
-            <fa-icon icon="blog" class="mr-2" />
-            Dashboard
-          </router-link>
-          <router-link to="/channels" :class="{ active: route.path === '/channels' }">
+          <router-link
+            to="/channels"
+            :class="{ active: route.path === '/channels' || route.path.startsWith('/channels/') }"
+          >
             <fa-icon icon="folder" class="mr-2" />
             Channels
           </router-link>
@@ -150,11 +158,9 @@ const logout = () => {
     <div class="mt-auto pt-4 border-t border-base-300">
       <!-- User Avatar/Name Section with Popover -->
       <div v-show="loggedIn" class="relative">
-        <div class="dropdown dropdown-top dropdown-end w-full">
-          <div
-            tabindex="0"
-            role="button"
-            class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-300 cursor-pointer w-full transition-colors"
+        <Menu as="div">
+          <MenuButton
+            class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-300 cursor-pointer w-full transition-colors text-left"
           >
             <div class="avatar placeholder">
               <div
@@ -163,59 +169,72 @@ const logout = () => {
                 <fa-icon icon="user" class="text-sm" />
               </div>
             </div>
-            <div class="flex-1 text-left">
+            <div class="flex-1 text-left min-w-0">
               <div class="text-sm font-semibold truncate">{{ userDisplayName }}</div>
               <div class="text-xs opacity-70 truncate">{{ userEmail }}</div>
             </div>
-            <fa-icon icon="ellipsis-h" class="text-xs opacity-50" />
-          </div>
+            <fa-icon icon="ellipsis-h" class="text-xs opacity-50 shrink-0" />
+          </MenuButton>
 
-          <ul
-            tabindex="0"
-            class="dropdown-content menu bg-base-100 rounded-box z-1 w-64 p-2 shadow-lg border border-base-300"
+          <MenuItems
+            as="ul"
+            class="absolute bottom-full left-0 z-30 mb-2 w-64 menu bg-base-100 rounded-box p-2 shadow-lg border border-base-300"
           >
-            <!-- Account Section -->
+            <li>
+              <div class="flex items-center gap-3 px-2 py-1 cursor-default">
+                <div class="avatar placeholder">
+                  <div
+                    class="bg-neutral text-neutral-content w-8 rounded-full flex items-center justify-center"
+                  >
+                    <fa-icon icon="user" class="text-xs" />
+                  </div>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold truncate">{{ userDisplayName }}</div>
+                  <div class="text-xs opacity-70 truncate">{{ userEmail }}</div>
+                </div>
+              </div>
+            </li>
+
             <li class="menu-title"><span>Account</span></li>
-            <li>
-              <router-link to="/account?tab=profile">
+            <MenuItem v-slot="{ active }" as="li">
+              <router-link to="/account" :class="{ 'bg-base-200': active }">
                 <fa-icon icon="user" class="mr-2" />
-                Profile
+                Settings
               </router-link>
-            </li>
-            <li>
-              <router-link to="/account?tab=security">
-                <fa-icon icon="lock" class="mr-2" />
-                Security
-              </router-link>
-            </li>
-            <li>
-              <button class="text-error" @click="logout()">
+            </MenuItem>
+            <MenuItem v-slot="{ active }" as="li">
+              <button :class="[{ 'bg-base-200': active }, 'text-error']" @click="logout()">
                 <fa-icon icon="sign-out-alt" class="mr-2" />
                 Logout
               </button>
-            </li>
+            </MenuItem>
 
-            <li class="divider-sm" />
+            <div class="divider my-1" />
 
-            <!-- Resources Section -->
             <li class="menu-title"><span>Resources</span></li>
-            <li>
+            <MenuItem v-slot="{ active }" as="li">
               <a
                 href="https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext"
                 target="_blank"
+                :class="{ 'bg-base-200': active }"
               >
                 <fa-icon icon="book" class="mr-2" />
                 Documentation
               </a>
-            </li>
-            <li>
-              <a href="https://github.com/VnUgE/CMNext" target="_blank">
+            </MenuItem>
+            <MenuItem v-slot="{ active }" as="li">
+              <a
+                href="https://github.com/VnUgE/CMNext"
+                target="_blank"
+                :class="{ 'bg-base-200': active }"
+              >
                 <fa-icon icon="code" class="mr-2" />
                 Source Code
               </a>
-            </li>
-          </ul>
-        </div>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
       </div>
 
       <!-- Footer Info -->

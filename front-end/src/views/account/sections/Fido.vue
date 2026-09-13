@@ -2,8 +2,8 @@
 import { defaultTo, isEmpty } from 'lodash-es';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { type FidoDevice as IFidoDevice, useFidoApi } from '@vnuge/vnlib.browser';
-import { reactive } from 'vue';
-import { confirm, promptForPassword } from '../../../lib/confirm';
+import { computed, reactive } from 'vue';
+import { confirm, promptForPassword, withPassword } from '../../../lib/confirm';
 import { useFormValidation } from '../../../lib/forms';
 import { toaster } from '../../../main';
 import { useStore } from '../../../store';
@@ -63,15 +63,12 @@ const onRemoveDevice = async (single: IFidoDevice) => {
     return;
   }
 
-  const password = await promptForPassword();
-  if (!password) {
-    return;
-  }
-
-  await apiCall(async () => {
-    const result = await fido.disableDevice(single, { password });
-    toaster.success('Success', result.result);
-    store.mfa.refresh();
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const result = await fido.disableDevice(single, { password });
+      toaster.success('Success', result.result);
+      store.mfa.refresh();
+    });
   });
 };
 
@@ -85,15 +82,12 @@ const onDisable = async () => {
     return;
   }
 
-  const password = await promptForPassword();
-  if (!password) {
-    return;
-  }
-
-  await apiCall(async () => {
-    const result = await fido.disableAllDevices({ password });
-    toaster.success('Success', result.result);
-    store.mfa.refresh();
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const result = await fido.disableAllDevices({ password });
+      toaster.success('Success', result.result);
+      store.mfa.refresh();
+    });
   });
 };
 
@@ -109,6 +103,8 @@ const onRegisterDevice = async () => {
 
   toggleOpen(false);
 
+  // Manual prompt (not the shared gate): abandoning it restores the dialog
+  // so the entered device name is not lost
   const password = await promptForPassword();
   if (!password) {
     toggleOpen(true);
@@ -132,6 +128,14 @@ const onRegisterDevice = async () => {
 
 const getAlgNameFromCode = (code: number): string => defaultTo(algNames[code], 'Unknown');
 
+// The disabled Add state cannot distinguish quota from policy server-side,
+// so the tip names the actionable cases honestly
+const addDeviceTip = computed(() => {
+  if (!fido.isSupported()) return 'This browser lacks WebAuthn support';
+  if (!can_add_devices.value) return 'Key storage is full or unavailable';
+  return 'Add a new security key';
+});
+
 whenever(isOpen, () => {
   vState.deviceName = '';
 });
@@ -139,7 +143,6 @@ whenever(isOpen, () => {
 
 <template>
   <SettingsCard
-    v-if="isSupported"
     title="Security Keys"
     :description="
       devices.length > 0
@@ -153,7 +156,7 @@ whenever(isOpen, () => {
         <div v-if="!isEmpty(devices)" class="join">
           <button
             class="btn btn-sm join-item tooltip tooltip-left"
-            data-tip="Add a new security key"
+            :data-tip="addDeviceTip"
             :disabled="!can_add_devices || !fido.isSupported()"
             @click.prevent="toggleOpen()"
           >
@@ -172,7 +175,8 @@ whenever(isOpen, () => {
         <button
           v-else
           :disabled="!fido.isSupported()"
-          class="btn btn-sm btn-primary"
+          class="btn btn-sm btn-primary tooltip tooltip-left"
+          :data-tip="addDeviceTip"
           @click.prevent="toggleOpen()"
         >
           <fa-icon icon="plus" />
@@ -220,9 +224,6 @@ whenever(isOpen, () => {
       security key like YubiKey as a second factor for your account.
     </p>
   </SettingsCard>
-
-  <!-- Not supported -->
-  <SettingsCard v-else title="Security Keys" description="WebAuthn is not enabled on this server" />
 
   <!-- Add Device Dialog -->
   <Dialog :open="isOpen" @close="toggleOpen(false)">

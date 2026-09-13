@@ -7,6 +7,9 @@ import { storeExport } from './index';
 
 interface ExUserProfile extends UserProfile {
   created: string | Date;
+  // Display names as stored by the server; omitted when null/undefined
+  first?: string;
+  last?: string;
 }
 
 export interface UserProfileStore {

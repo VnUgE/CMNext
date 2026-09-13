@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { isNil, chunk, defaultTo, map, join, toSafeInteger } from 'lodash-es';
 import base32Encode from 'base32-encode';
-import { computed, shallowRef } from 'vue';
-import { get, useToggle } from '@vueuse/core';
+import { computed, ref, shallowRef } from 'vue';
+import { get } from '@vueuse/core';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { useSession, useTotpApi, type TotpUpdateResponse } from '@vnuge/vnlib.browser';
 import { useStore } from '../../../store';
-import { confirm, promptForPassword } from '../../../lib/confirm';
+import { confirm, withPassword } from '../../../lib/confirm';
 import { vnlib, toaster } from '../../../main';
 import { storeToRefs } from 'pinia';
 import QrCodeVue from 'qrcode.vue';
@@ -19,13 +19,13 @@ const { isLocalAccount } = storeToRefs(store);
 const session = useSession(vnlib);
 const { invoke: apiCall } = useApiCall({ toaster });
 const totpApi = useTotpApi(store.mfa);
-const totpSupported = store.mfa.isSupported('totp');
 const totpEnabled = store.mfa.isEnabled('totp');
 
 const totpMessage = shallowRef<TotpUpdateResponse>();
-const [showSubmitButton, toggleSubmitButton] = useToggle();
 
-const showTotpCode = computed(() => !isNil(totpMessage.value?.secret));
+// Setup flow stage: idle (nothing started), setup (scan + verify), done (verified)
+type TotpStage = 'idle' | 'setup' | 'done';
+const totpStage = ref<TotpStage>('idle');
 
 const secretSegments = computed<string[]>(() => {
   const chunks = chunk(totpMessage.value?.secret, 6);
@@ -48,19 +48,17 @@ const qrCode = computed(() => {
 });
 
 const processAddOrUpdate = async () => {
-  const password = await promptForPassword();
-  if (!password) {
-    return;
-  }
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const totp = await totpApi.enable({ password });
 
-  await apiCall(async () => {
-    const totp = await totpApi.enable({ password });
-
-    // Decrypt the secret, then store a copy with the readable base32 value
-    const secret = base32Encode(await session.decryptPayload(totp.secret), 'RFC3548', {
-      padding: false,
+      // Decrypt the secret, then store a copy with the readable base32 value
+      const secret = base32Encode(await session.decryptPayload(totp.secret), 'RFC3548', {
+        padding: false,
+      });
+      totpMessage.value = { ...totp, secret };
+      totpStage.value = 'setup';
     });
-    totpMessage.value = { ...totp, secret };
   });
 };
 
@@ -102,15 +100,12 @@ const disable = async () => {
     return;
   }
 
-  const password = await promptForPassword();
-  if (!password) {
-    return;
-  }
-
-  await apiCall(async () => {
-    const result = await totpApi.disable({ password });
-    toaster.success('Success', result.result);
-    store.mfa.refresh();
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const result = await totpApi.disable({ password });
+      toaster.success('Success', result.result);
+      store.mfa.refresh();
+    });
   });
 };
 
@@ -119,7 +114,7 @@ const verifyTotp = (code: string) => {
     try {
       await totpApi.verify(toSafeInteger(code));
 
-      toggleSubmitButton(true);
+      totpStage.value = 'done';
 
       toaster.success('Success', 'Your TOTP code is valid and is now enabled');
     } catch {
@@ -129,7 +124,7 @@ const verifyTotp = (code: string) => {
 };
 
 const closeQrWindow = () => {
-  toggleSubmitButton(false);
+  totpStage.value = 'idle';
   totpMessage.value = undefined;
 
   //Fresh methods
@@ -139,7 +134,6 @@ const closeQrWindow = () => {
 
 <template>
   <SettingsCard
-    v-if="totpSupported"
     title="TOTP Authenticator"
     :description="
       totpEnabled ? 'TOTP is enabled for your account' : 'Use an authenticator app for 2FA'
@@ -147,23 +141,15 @@ const closeQrWindow = () => {
     :external-auth-blocked="!isLocalAccount"
   >
     <template #actions>
-      <div v-if="!showTotpCode && isLocalAccount">
-        <div v-if="totpEnabled" class="join">
-          <button
-            class="btn btn-sm join-item tooltip tooltip-left"
-            data-tip="Reset your TOTP secret"
-            @click.prevent="regenTotp"
-          >
+      <div v-if="totpStage === 'idle' && isLocalAccount">
+        <div v-if="totpEnabled" class="flex gap-2">
+          <button class="btn btn-sm btn-outline" @click.prevent="regenTotp">
             <fa-icon icon="sync" />
-            <span class="hidden sm:inline ml-1">Regenerate</span>
+            <span class="ml-1">Regenerate</span>
           </button>
-          <button
-            class="btn btn-sm text-error join-item tooltip tooltip-left tooltip-error"
-            data-tip="Disable TOTP"
-            @click.prevent="disable"
-          >
+          <button class="btn btn-sm btn-error btn-outline" @click.prevent="disable">
             <fa-icon icon="minus-circle" />
-            <span class="hidden sm:inline ml-1">Disable</span>
+            <span class="ml-1">Disable</span>
           </button>
         </div>
         <button v-else class="btn btn-sm btn-primary" @click.prevent="configTotp">
@@ -174,7 +160,7 @@ const closeQrWindow = () => {
     </template>
 
     <!-- QR Code Setup Flow -->
-    <div v-if="showTotpCode" class="text-center space-y-4">
+    <div v-if="totpStage !== 'idle'" class="text-center space-y-4">
       <p class="text-sm">Scan the QR code with your authenticator app.</p>
 
       <div class="flex justify-center">
@@ -196,7 +182,7 @@ const closeQrWindow = () => {
             input-type="letter-numeric"
             separator=""
             value=""
-            :is-disabled="showSubmitButton"
+            :is-disabled="totpStage === 'done'"
             input-classes="input input-bordered w-10 h-10 text-center mx-0.5"
             :num-inputs="6"
             @on-complete="verifyTotp"
@@ -204,7 +190,7 @@ const closeQrWindow = () => {
         </div>
       </div>
 
-      <div v-if="showSubmitButton" class="pt-2">
+      <div v-if="totpStage === 'done'" class="pt-2">
         <button class="btn btn-primary btn-sm" @click.prevent="closeQrWindow">
           Complete Setup
         </button>
@@ -223,11 +209,4 @@ const closeQrWindow = () => {
       </a>
     </p>
   </SettingsCard>
-
-  <!-- Not supported message -->
-  <SettingsCard
-    v-else
-    title="TOTP Authenticator"
-    description="TOTP is not enabled on this server"
-  />
 </template>

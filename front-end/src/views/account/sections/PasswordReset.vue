@@ -2,6 +2,7 @@
 import { isEmpty, toSafeInteger } from 'lodash-es';
 import { useAccount } from '@vnuge/vnlib.browser';
 import { computed, reactive } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useToggle } from '@vueuse/core';
 import { useStore } from '../../../store';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
@@ -11,6 +12,7 @@ import * as yup from 'yup';
 import SettingsCard from './SettingsCard.vue';
 
 const store = useStore();
+const { isLocalAccount } = storeToRefs(store);
 const totpEnabled = store.mfa.isEnabled('totp');
 
 const { resetPassword } = useAccount(vnlib);
@@ -107,20 +109,23 @@ const resetForm = () => {
     "
   >
     <template #actions>
-      <button v-if="!pwResetShow" class="btn btn-sm btn-ghost" @click="showForm(true)">
+      <button
+        v-if="isLocalAccount && !pwResetShow"
+        class="btn btn-sm btn-ghost"
+        @click="showForm(true)"
+      >
         <fa-icon icon="sync" class="text-sm" />
         Change
       </button>
     </template>
 
-    <!-- Default state -->
-    <p v-if="!pwResetShow" class="text-sm text-base-content/70">
-      Only available for internal accounts. External auth providers require password reset through
-      their service.
+    <!-- Single sign-on accounts have no local password to change -->
+    <p v-if="!isLocalAccount" class="text-sm text-base-content/70">
+      Your password is managed by your single sign-on provider and cannot be changed here.
     </p>
 
     <!-- Password reset form -->
-    <form v-else class="space-y-3" @submit.prevent="onSubmit">
+    <form v-else-if="pwResetShow" class="space-y-3" @submit.prevent="onSubmit">
       <div class="form-control">
         <label class="label py-1" for="reset-current-password">
           <span class="label-text text-sm">Current Password</span>

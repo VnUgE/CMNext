@@ -65,3 +65,14 @@ export const promptForPassword = async (): Promise<string | undefined> => {
   // Get the password
   return pc.data?.password;
 };
+
+/**
+ * Prompts for the account password and runs the gated action with it.
+ * Cancellation (or an empty password) aborts silently: the action never runs.
+ */
+export const withPassword = async (action: (password: string) => Promise<void>): Promise<void> => {
+  const password = await promptForPassword();
+  if (password) {
+    await action(password);
+  }
+};
