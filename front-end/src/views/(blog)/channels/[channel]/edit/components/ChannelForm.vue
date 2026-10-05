@@ -72,7 +72,7 @@ const storageRoot = computed(() => buffer.path?.replace(/\/+$/, '') || 'channel-
 
 <template>
   <form id="channel-edit-form" class="flex" @submit.prevent="editor.saveChannel">
-    <fieldset class="mx-auto flex flex-col gap-6 w-lg">
+    <fieldset class="mx-auto flex flex-col gap-6 w-full max-w-lg min-w-0">
       <!-- Channel Fields -->
       <div class="space-y-4">
         <h5 class="text-lg font-semibold">Channel Settings</h5>
@@ -292,13 +292,3 @@ const storageRoot = computed(() => buffer.path?.replace(/\/+$/, '') || 'channel-
     </fieldset>
   </form>
 </template>
-
-<style scoped>
-.form-control {
-  margin-bottom: 1rem;
-}
-
-.divider {
-  margin: 2rem 0;
-}
-</style>

@@ -15,9 +15,9 @@ store.mfa.refresh();
 </script>
 
 <template>
-  <div class="p-6 space-y-6 max-w-6xl mx-auto">
+  <div class="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
     <div>
-      <h1 class="text-3xl font-bold text-base-content">Account Settings</h1>
+      <h1 class="text-2xl md:text-3xl font-bold text-base-content">Account Settings</h1>
       <p class="text-base-content/70 mt-1">Identity, security, and preferences for this operator</p>
     </div>
 
@@ -44,5 +44,8 @@ store.mfa.refresh();
         </section>
       </div>
     </div>
+
+    <!-- Footer spacing -->
+    <div class="h-8" />
   </div>
 </template>

@@ -14,11 +14,11 @@ const waiting = computed(() => editor.waiting.value);
 </script>
 
 <template>
-  <div id="channel-editor-page" class="p-6 space-y-6 max-w-5xl mx-auto">
+  <div id="channel-editor-page" class="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-base-content">
+        <h1 class="text-2xl md:text-3xl font-bold text-base-content">
           {{ editor.isNew.value ? 'Create New Channel' : 'Edit Channel' }}
         </h1>
         <p class="text-base-content/70 mt-1">
@@ -29,7 +29,7 @@ const waiting = computed(() => editor.waiting.value);
           }}
         </p>
       </div>
-      <div class="flex gap-2">
+      <div class="grid grid-cols-2 sm:flex gap-2">
         <button
           :disabled="waiting || !editor.channel.modified.value"
           class="btn btn-primary"
@@ -52,9 +52,9 @@ const waiting = computed(() => editor.waiting.value);
 
     <!-- Unknown channel id -->
     <div v-else-if="!editor.isNew.value && !editor.hasSource.value" class="text-center py-12">
-      <fa-icon icon="bullhorn" size="3x" class="text-base-content/30 mb-4" />
-      <h3 class="text-xl font-semibold text-base-content/70 mb-2">Channel not found</h3>
-      <p class="text-base-content/50 mb-6">
+      <fa-icon icon="bullhorn" class="text-6xl text-base-300 mb-4" />
+      <h3 class="text-2xl font-bold mb-2">Channel Not Found</h3>
+      <p class="text-lg opacity-75 mb-4">
         The requested channel could not be found or you don't have access to it.
       </p>
       <router-link to="/channels" class="btn btn-primary">
@@ -75,5 +75,8 @@ const waiting = computed(() => editor.waiting.value);
         Delete Channel Forever
       </button>
     </div>
+
+    <!-- Footer spacing -->
+    <div class="h-8" />
   </div>
 </template>

@@ -42,7 +42,7 @@ const mdEditorVisible = computed({
     <PostEditorToolbar :editor="editor" />
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Left Column - Main Form -->
         <div class="xl:col-span-2 space-y-6">
@@ -205,6 +205,9 @@ const mdEditorVisible = computed({
           <PostQuickActions :editor="editor" />
         </div>
       </div>
+
+      <!-- Footer spacing -->
+      <div class="h-8" />
     </div>
 
     <!-- Keyboard Shortcuts Help -->

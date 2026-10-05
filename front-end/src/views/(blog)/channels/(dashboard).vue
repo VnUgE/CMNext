@@ -33,7 +33,7 @@ const isPinned = (channelId: string) => pinnedChannels.isPinned(channelId);
 
 const deleteChannel = async (channel: BlogChannel) => {
   const { isCanceled } = await confirm({
-    title: 'Delete Channel',
+    title: 'Delete Channel?',
     message: `Are you sure you want to delete the channel "${channel.name}"? This action cannot be undone.`,
     isWarning: true,
   });
@@ -68,14 +68,14 @@ const copyChannelId = async (channel: BlogChannel) => {
 };
 </script>
 <template>
-  <div class="p-6 space-y-6 max-w-7xl mx-auto">
+  <div class="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-base-content">Channels</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-base-content">Channels</h1>
         <p class="text-base-content/70 mt-1">Manage your content channels</p>
       </div>
-      <div class="flex gap-2">
+      <div class="grid grid-cols-2 sm:flex gap-2">
         <button class="btn btn-outline" :disabled="isLoading" @click="cmnext.channels.refresh()">
           <fa-icon icon="sync" :class="{ 'animate-spin': isLoading }" class="mr-2" />
           Refresh
@@ -108,10 +108,10 @@ const copyChannelId = async (channel: BlogChannel) => {
     </div>
 
     <div v-else-if="searchFilter.length === 0" class="text-center py-12">
-      <fa-icon icon="bullhorn" size="3x" class="text-base-content/30 mb-4" />
-      <h3 class="text-xl font-semibold text-base-content/70 mb-2">No channels found</h3>
-      <p v-if="searchTerm" class="text-base-content/50 mb-6">Try adjusting your search criteria</p>
-      <p v-else class="text-base-content/50 mb-6">Create your first channel to get started</p>
+      <fa-icon icon="bullhorn" class="text-6xl text-base-300 mb-4" />
+      <h3 class="text-2xl font-bold mb-2">No Channels Found</h3>
+      <p v-if="searchTerm" class="text-lg opacity-75 mb-4">Try adjusting your search criteria</p>
+      <p v-else class="text-lg opacity-75 mb-4">Create your first channel to get started</p>
       <router-link to="/channels/new/edit" class="btn btn-primary">
         <fa-icon icon="plus" class="mr-2" />
         Create Channel
@@ -173,7 +173,7 @@ const copyChannelId = async (channel: BlogChannel) => {
                 <li>
                   <router-link :to="`/channels/${channel.id}/edit`">
                     <fa-icon icon="edit" class="mr-2" />
-                    Edit Settings
+                    Settings
                   </router-link>
                 </li>
                 <li>
@@ -216,5 +216,8 @@ const copyChannelId = async (channel: BlogChannel) => {
         </div>
       </div>
     </div>
+
+    <!-- Footer spacing -->
+    <div class="h-8" />
   </div>
 </template>

@@ -9,27 +9,27 @@ const { post, isNew, waiting, savePost, deletePost, navigateBack, openPreview } 
 </script>
 
 <template>
-  <div class="sticky top-0 z-40 bg-base-100 border-b border-base-200 shadow-sm">
-    <div class="container mx-auto px-6 py-4">
+  <div class="sticky top-16 lg:top-0 z-40 bg-base-100 border-b border-base-200 shadow-sm">
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex items-center gap-4">
-          <button class="btn btn-ghost btn-sm" @click="navigateBack">
+          <button class="btn btn-ghost btn-sm shrink-0" @click="navigateBack">
             <fa-icon icon="arrow-left" class="mr-2" />
             Back
           </button>
           <div class="divider divider-horizontal mx-0" />
-          <div>
-            <h1 class="text-3xl font-bold text-base-content">
+          <div class="min-w-0">
+            <h1 class="text-2xl md:text-3xl font-bold text-base-content truncate">
               {{ isNew ? 'Create New Post' : 'Edit Post' }}
             </h1>
             <p v-if="!isNew" class="text-base-content/70 mt-1">ID: {{ post.raw.value.id }}</p>
           </div>
         </div>
 
-        <div class="flex gap-2">
+        <div class="grid grid-cols-2 sm:flex gap-2">
           <!-- Save Button -->
           <button
-            class="btn btn-primary"
+            class="btn btn-primary max-sm:col-span-2"
             :class="{ loading: waiting }"
             :disabled="waiting || !post.modified"
             @click="savePost"

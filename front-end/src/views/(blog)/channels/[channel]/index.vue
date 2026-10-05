@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { useStore } from '../../../../store';
 import { useRouteParams } from '@vueuse/router';
 import { useTimeAgo, useArrayReduce, useSorted } from '@vueuse/core';
-import { compact, defaultTo, map, maxBy, take, uniq } from 'lodash-es';
+import { compact, defaultTo, map, maxBy, orderBy, take, uniq } from 'lodash-es';
 import { formatBytes, formatDate } from '../../../../lib/helpers';
 import { cmnext } from '../../../../main';
 
@@ -38,13 +38,19 @@ const largestFile = computed(() => maxBy(content.value, (file) => defaultTo(file
 const contentSize = computed(() => formatBytes(totalBytes.value));
 
 // Panels
-const recentPosts = computed(() => take(posts.value, 5));
+// Store order is not chronological, so sort newest-first before slicing;
+// without this "recent" just means "first five returned"
+const recentPosts = computed(() =>
+  take(orderBy(posts.value, [(post) => defaultTo(post.date, 0)], ['desc']), 5)
+);
 const sortedFiles = useSorted(content, (a, b) => defaultTo(b.length, 0) - defaultTo(a.length, 0));
+// Preview only: the full list lives on the content page
+const largestFiles = computed(() => take(sortedFiles.value, 5));
 
 const feedUrl = computed(() => channel.value?.feed?.url || undefined);
 </script>
 <template>
-  <div class="p-6 space-y-6 max-w-7xl mx-auto">
+  <div class="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex justify-center py-12">
       <span class="loading loading-spinner loading-lg" />
@@ -52,9 +58,9 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
 
     <!-- Channel Not Found -->
     <div v-else-if="!channel" class="text-center py-12">
-      <fa-icon icon="bullhorn" size="3x" class="text-base-content/30 mb-4" />
-      <h3 class="text-xl font-semibold text-base-content/70 mb-2">Channel not found</h3>
-      <p class="text-base-content/50 mb-6">
+      <fa-icon icon="bullhorn" class="text-6xl text-base-300 mb-4" />
+      <h3 class="text-2xl font-bold mb-2">Channel Not Found</h3>
+      <p class="text-lg opacity-75 mb-4">
         The requested channel could not be found or you don't have access to it.
       </p>
       <router-link to="/channels" class="btn btn-primary">
@@ -68,7 +74,7 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
       <!-- Header -->
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex items-center gap-4">
-          <router-link to="/channels" class="btn btn-ghost btn-sm">
+          <router-link to="/channels" class="btn btn-ghost btn-sm shrink-0">
             <fa-icon icon="arrow-left" class="mr-2" />
             Back
           </router-link>
@@ -77,15 +83,20 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
             <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
               <fa-icon icon="blog" class="text-primary text-xl" />
             </div>
-            <div>
-              <h1 class="text-3xl font-bold text-base-content">{{ channel.name }}</h1>
-              <p class="text-base-content/70 mt-1">
+            <div class="min-w-0">
+              <h1
+                class="text-2xl md:text-3xl font-bold text-base-content truncate"
+                :title="channel.name"
+              >
+                {{ channel.name }}
+              </h1>
+              <p class="text-base-content/70 mt-1 truncate" :title="channel.path || ''">
                 {{ channel.path || 'No path provided' }}
               </p>
             </div>
           </div>
         </div>
-        <div class="flex gap-2">
+        <div class="grid grid-cols-2 sm:flex gap-2">
           <router-link :to="`/channels/${channelId}/posts/new`" class="btn btn-primary">
             <fa-icon icon="plus" class="mr-2" />
             New Post
@@ -98,20 +109,20 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
       </div>
 
       <!-- Channel Stats -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-2">
-        <div class="stat bg-base-100 rounded-lg shadow">
-          <div class="stat-figure text-primary">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 py-2">
+        <div class="stat bg-base-100 rounded-lg shadow max-sm:p-3">
+          <div class="stat-figure text-secondary max-sm:hidden">
             <fa-icon icon="comment" size="2x" />
           </div>
           <div class="stat-title">Total Posts</div>
-          <div class="stat-value text-primary">{{ postCount }}</div>
+          <div class="stat-value text-secondary max-sm:text-lg">{{ postCount }}</div>
           <div v-if="authorCount > 0" class="stat-desc">
             {{ authorCount }} {{ authorCount === 1 ? 'author' : 'authors' }}
           </div>
         </div>
 
-        <div class="stat bg-base-100 rounded-lg shadow">
-          <div class="stat-figure text-secondary">
+        <div class="stat bg-base-100 rounded-lg shadow max-sm:p-3">
+          <div class="stat-figure text-secondary max-sm:hidden">
             <fa-icon icon="clock" size="2x" />
           </div>
           <div class="stat-title">Last Modified</div>
@@ -119,36 +130,36 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
             <div class="stat-value text-secondary text-lg">
               {{ lastModifiedAgo }}
             </div>
-            <div class="stat-desc truncate">{{ latestPost.title }}</div>
+            <div class="stat-desc truncate min-w-0">{{ latestPost.title }}</div>
           </template>
           <template v-else>
             <div class="stat-value text-secondary text-lg">Never</div>
-            <div class="stat-desc">No posts yet</div>
+            <div class="stat-desc">No Posts Yet</div>
           </template>
         </div>
 
-        <div class="stat bg-base-100 rounded-lg shadow">
-          <div class="stat-figure text-info">
+        <div class="stat bg-base-100 rounded-lg shadow max-sm:p-3">
+          <div class="stat-figure text-secondary max-sm:hidden">
             <fa-icon icon="folder-open" size="2x" />
           </div>
           <div class="stat-title">Storage Used</div>
-          <div class="stat-value text-info text-lg">{{ contentSize }}</div>
+          <div class="stat-value text-secondary text-lg">{{ contentSize }}</div>
           <div class="stat-desc">{{ contentCount || 0 }} files</div>
         </div>
 
-        <div class="stat bg-base-100 rounded-lg shadow">
-          <div class="stat-figure text-accent">
+        <div class="stat bg-base-100 rounded-lg shadow max-sm:p-3">
+          <div class="stat-figure text-secondary max-sm:hidden">
             <fa-icon icon="file-alt" size="2x" />
           </div>
           <div class="stat-title">Largest File</div>
           <template v-if="largestFile">
-            <div class="stat-value text-accent text-lg">
+            <div class="stat-value text-secondary text-lg">
               {{ formatBytes(largestFile.length) }}
             </div>
-            <div class="stat-desc truncate">{{ largestFile.path }}</div>
+            <div class="stat-desc truncate min-w-0">{{ largestFile.path }}</div>
           </template>
           <template v-else>
-            <div class="stat-value text-accent text-lg">—</div>
+            <div class="stat-value text-secondary text-lg">—</div>
             <div class="stat-desc">No files</div>
           </template>
         </div>
@@ -157,7 +168,7 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
       <!-- Section switcher -->
       <nav
         aria-label="Channel sections"
-        class="flex gap-1 border-b border-base-300 overflow-x-auto"
+        class="flex gap-1 border-b border-base-300 overflow-x-auto overflow-y-hidden"
       >
         <button
           :aria-pressed="activeTab === 'posts'"
@@ -219,14 +230,8 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
             </div>
           </div>
           <div v-if="recentPosts.length === 0" class="text-center py-8">
-            <fa-icon icon="comment" size="2x" class="text-base-content/30 mb-4" />
-            <p class="text-base-content/50">No posts yet</p>
-            <router-link
-              :to="`/channels/${channelId}/posts/new`"
-              class="btn btn-sm btn-primary mt-2"
-            >
-              Create First Post
-            </router-link>
+            <fa-icon icon="comment" class="text-4xl text-base-300 mb-3" />
+            <p class="opacity-75">No Posts Yet</p>
           </div>
           <div v-else class="space-y-3">
             <div
@@ -239,7 +244,7 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
                   :to="`/channels/${channelId}/posts/${post.id}`"
                   class="font-medium truncate block link link-hover"
                 >
-                  {{ post.title }}
+                  {{ post.title || 'Untitled Post' }}
                 </router-link>
                 <div class="text-sm text-base-content/70">
                   Modified {{ formatDate(post.date) }}
@@ -266,7 +271,7 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
                 <router-link
                   :to="`/channels/${channelId}/posts/${post.id}`"
                   class="btn btn-xs btn-ghost"
-                  :aria-label="`Edit ${post.title}`"
+                  :aria-label="`Edit ${post.title || 'Untitled Post'}`"
                 >
                   <fa-icon icon="edit" />
                 </router-link>
@@ -279,10 +284,18 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
       <!-- Files Panel -->
       <div v-if="activeTab === 'files'" class="card bg-base-100 shadow">
         <div class="card-body">
-          <div v-if="sortedFiles.length === 0" class="text-center py-8">
-            <fa-icon icon="folder-open" size="2x" class="text-base-content/30 mb-4" />
-            <p class="text-base-content/50">No files yet</p>
-            <p class="text-sm text-base-content/40 mt-1">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="font-semibold text-base-content/70">Largest Files</h3>
+            <div class="flex items-center gap-2">
+              <router-link :to="`/channels/${channelId}/content`" class="btn btn-sm btn-outline">
+                Manage Content
+              </router-link>
+            </div>
+          </div>
+          <div v-if="largestFiles.length === 0" class="text-center py-8">
+            <fa-icon icon="folder-open" class="text-4xl text-base-300 mb-3" />
+            <p class="opacity-75">No Files Yet</p>
+            <p class="text-sm opacity-60 mt-1">
               Uploaded content and attachments will appear here
             </p>
           </div>
@@ -297,7 +310,7 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="file in sortedFiles" :key="file.id">
+                <tr v-for="file in largestFiles" :key="file.id">
                   <td>
                     <div class="flex items-center gap-2 min-w-0">
                       <fa-icon icon="file-alt" class="text-base-content/40 shrink-0" />
@@ -316,11 +329,6 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
                 </tr>
               </tbody>
             </table>
-          </div>
-          <div class="card-actions justify-end mt-4">
-            <router-link :to="`/channels/${channelId}/content`" class="btn btn-sm btn-outline">
-              Manage Content
-            </router-link>
           </div>
         </div>
       </div>
@@ -372,14 +380,11 @@ const feedUrl = computed(() => channel.value?.feed?.url || undefined);
               </div>
             </div>
           </div>
-          <div class="card-actions justify-end mt-6">
-            <router-link :to="`/channels/${channelId}/edit`" class="btn btn-primary">
-              <fa-icon icon="cog" class="mr-2" />
-              Edit Settings
-            </router-link>
-          </div>
         </div>
       </div>
     </div>
+
+    <!-- Footer spacing -->
+    <div class="h-8" />
   </div>
 </template>

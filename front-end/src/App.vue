@@ -32,6 +32,25 @@ whenever(
   <div class="drawer" :class="{ 'lg:drawer-open': loggedIn }">
     <input id="main-drawer" type="checkbox" class="drawer-toggle" />
     <div ref="content" class="drawer-content flex flex-col min-h-screen">
+      <div
+        v-if="loggedIn"
+        class="lg:hidden sticky top-0 z-40 navbar bg-base-100 border-b border-base-200 min-h-16"
+      >
+        <div class="flex-none">
+          <label
+            for="main-drawer"
+            class="btn btn-ghost btn-square drawer-button"
+            aria-label="Open navigation"
+          >
+            <fa-icon icon="bars" />
+          </label>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-lg font-semibold truncate block">{{ pageTitle }}</span>
+        </div>
+        <div class="flex-none w-10" />
+      </div>
+
       <!-- Toasts render in a centered, width-capped stack (see style block) -->
       <notifications
         class="toast-stack"
@@ -46,17 +65,10 @@ whenever(
       <div id="env-body" class="grow w-full">
         <router-view />
       </div>
-
-      <!-- Hamburger button for mobile to open drawer -->
-      <div v-if="loggedIn" class="lg:hidden fixed top-4 left-4 z-50">
-        <label for="main-drawer" class="btn btn-primary drawer-button">
-          <fa-icon icon="bars" />
-        </label>
-      </div>
     </div>
 
     <div v-if="loggedIn" class="drawer-side z-50">
-      <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay" />
+      <label for="main-drawer" aria-label="Close sidebar" class="drawer-overlay" />
       <Sidebar />
     </div>
   </div>

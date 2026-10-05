@@ -2,7 +2,8 @@
 import { computed } from 'vue';
 import { useRouteParams, useRouteQuery } from '@vueuse/router';
 import { get } from '@vueuse/core';
-import { defaultTo, isNil, filter, toLower, includes, orderBy } from 'lodash-es';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
+import { defaultTo, isNil, filter, find, toLower, includes, orderBy } from 'lodash-es';
 import type { PostMeta } from '@vnuge/cmnext-admin';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { useStore } from '../../../../../store';
@@ -11,6 +12,13 @@ import { confirm } from '../../../../../lib/confirm';
 import { formatDate, truncateText } from '../../../../../lib/helpers';
 
 type SortType = 'created' | 'title' | 'author' | 'lastUpdated';
+
+const sortOptions: { value: SortType; label: string }[] = [
+  { value: 'created', label: 'Created' },
+  { value: 'title', label: 'Title' },
+  { value: 'author', label: 'Author' },
+  { value: 'lastUpdated', label: 'Last Modified' },
+];
 
 const store = useStore();
 const { invoke: apiCall } = useApiCall({ toaster });
@@ -30,10 +38,13 @@ const posts = cmnext.createPostStore(channelId);
 const channel = cmnext.channels.single(channelId);
 
 // Computed values
-const pageTitle = computed(() => `Posts in ${channel.value?.name}`);
+const pageTitle = computed(() => `Posts in ${channel.value?.name ?? 'Unknown Channel'}`);
 const hasChannel = computed(() => !isNil(channel.value));
 const hasPosts = computed(() => posts.all.value.length > 0);
 const postCount = computed(() => posts.all.value.length);
+const sortLabel = computed(
+  () => find(sortOptions, (opt) => opt.value === sortMode.value)?.label ?? 'Sort'
+);
 
 const sortedPosts = computed(() => {
   if (!hasPosts.value) return [];
@@ -56,6 +67,10 @@ const sortedPosts = computed(() => {
     case 'lastUpdated':
       sorted = orderBy(all, [(post) => defaultTo(post.created, post.date)], ['desc']);
       break;
+    default:
+      // Unknown ?sort= values (hand-edited URLs) fall back to the default order
+      sorted = orderBy(all, ['date'], ['desc']);
+      break;
   }
 
   // Filter by search term (toLower coerces missing values to '')
@@ -73,7 +88,7 @@ const sortedPosts = computed(() => {
 const onDeletePost = async (post: PostMeta) => {
   const { isCanceled } = await confirm({
     title: 'Delete Post?',
-    message: `Are you sure you want to delete post "${post.title}"? This action cannot be undone.`,
+    message: `Are you sure you want to delete the post "${post.title}"? This action cannot be undone.`,
   });
 
   if (isCanceled) return;
@@ -89,21 +104,23 @@ const onDeletePost = async (post: PostMeta) => {
 </script>
 
 <template>
-  <div id="channel-posts-page" class="p-6 space-y-6 max-w-7xl mx-auto">
+  <div id="channel-posts-page" class="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="flex items-center gap-4">
-        <router-link :to="`/channels/${channelId}`" class="btn btn-ghost btn-sm">
+        <router-link :to="`/channels/${channelId}`" class="btn btn-ghost btn-sm shrink-0">
           <fa-icon icon="arrow-left" class="mr-2" />
           Back
         </router-link>
         <div class="divider divider-horizontal mx-0" />
-        <div>
-          <h1 class="text-3xl font-bold text-base-content">{{ pageTitle }}</h1>
+        <div class="min-w-0">
+          <h1 class="text-2xl md:text-3xl font-bold text-base-content truncate" :title="pageTitle">
+            {{ pageTitle }}
+          </h1>
           <p class="text-base-content/70 mt-1">Manage and create posts for this channel</p>
         </div>
       </div>
-      <div class="flex gap-2">
+      <div class="grid grid-cols-2 sm:flex gap-2">
         <router-link :to="`/channels/${channelId}/posts/new`" class="btn btn-primary">
           <fa-icon icon="plus" class="mr-2" />
           New Post
@@ -120,50 +137,59 @@ const onDeletePost = async (post: PostMeta) => {
       <span class="loading loading-spinner loading-lg" />
     </div>
 
-    <div v-else>
-      <div v-if="channel" class="card bg-base-100 shadow mb-6">
-        <div class="card-body">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-lg font-semibold">{{ channel.name }}</h2>
-              <p class="text-sm opacity-75">{{ channel.path }}</p>
-              <p v-if="channel.feed" class="text-sm text-success">
-                <fa-icon icon="rss" /> RSS Feed Enabled
-              </p>
-            </div>
-            <div class="stats shadow">
-              <div class="stat">
-                <div class="stat-value text-primary">{{ postCount }}</div>
-                <div class="stat-title">Total Posts</div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div v-else class="space-y-6">
+      <!-- Stats strip, ahead of the main section -->
+      <div
+        v-if="hasChannel"
+        class="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-base-content/60"
+      >
+        <span class="inline-flex items-center gap-1.5">
+          <fa-icon icon="comment" />
+          {{ postCount }} {{ postCount === 1 ? 'post' : 'posts' }}
+        </span>
+        <span v-if="channel?.feed" class="inline-flex items-center gap-1.5">
+          <fa-icon icon="rss" />
+          RSS Enabled
+        </span>
       </div>
 
-      <!-- Search and filter controls -->
-      <div class="card bg-base-100 shadow mb-6">
-        <div class="card-body py-4">
-          <div class="flex gap-4 items-center">
-            <div class="form-control flex-1">
-              <input
-                v-model="search"
-                type="text"
-                class="input input-bordered w-full"
-                placeholder="Search posts..."
-                aria-label="Search posts"
-              />
-            </div>
-            <div class="form-control">
-              <select v-model="sortMode" class="select select-bordered" aria-label="Sort posts">
-                <option value="created">Sort by Date</option>
-                <option value="title">Sort by Title</option>
-                <option value="author">Sort by Author</option>
-                <option value="lastUpdated">Sort by Last Updated</option>
-              </select>
-            </div>
-          </div>
+      <!-- Search filter bar, sort control rides along on desktop, popover on mobile -->
+      <div class="flex gap-2">
+        <div class="form-control flex-1 min-w-0">
+          <input
+            v-model="search"
+            type="text"
+            class="input input-bordered w-full"
+            placeholder="Search posts..."
+            aria-label="Search posts"
+          />
         </div>
+        <select
+          v-model="sortMode"
+          class="hidden md:block select select-bordered w-auto"
+          aria-label="Sort posts"
+        >
+          <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+            Sort by {{ opt.label }}
+          </option>
+        </select>
+        <Menu as="div" class="relative md:hidden shrink-0">
+          <MenuButton class="btn btn-outline" aria-label="Sort posts">
+            <fa-icon icon="chevron-down" class="mr-2" />
+            {{ sortLabel }}
+          </MenuButton>
+          <MenuItems
+            as="ul"
+            class="absolute right-0 z-30 mt-2 w-48 menu bg-base-100 rounded-box p-2 shadow-lg border border-base-300"
+          >
+            <MenuItem v-for="opt in sortOptions" :key="opt.value" v-slot="{ active }" as="li">
+              <button :class="{ 'bg-base-200': active }" @click="sortMode = opt.value">
+                <fa-icon icon="check" class="mr-2" :class="{ invisible: sortMode !== opt.value }" />
+                Sort by {{ opt.label }}
+              </button>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
       </div>
     </div>
 
@@ -178,7 +204,7 @@ const onDeletePost = async (post: PostMeta) => {
       <fa-icon icon="triangle-exclamation" class="text-6xl text-warning mb-4" />
       <h3 class="text-2xl font-bold mb-2">No Channel Selected</h3>
       <p class="text-lg opacity-75 mb-4">Please select a channel to view its posts.</p>
-      <router-link to="/channels" class="btn btn-primary"> Go to Blog Dashboard </router-link>
+      <router-link to="/channels" class="btn btn-primary"> Back to Channels </router-link>
     </div>
 
     <!-- No posts found -->
@@ -190,6 +216,14 @@ const onDeletePost = async (post: PostMeta) => {
         <fa-icon icon="plus" />
         Create First Post
       </router-link>
+    </div>
+
+    <!-- No search results -->
+    <div v-else-if="sortedPosts.length === 0" class="text-center py-12">
+      <fa-icon icon="file-alt" class="text-6xl text-base-300 mb-4" />
+      <h3 class="text-2xl font-bold mb-2">No Matches</h3>
+      <p class="text-lg opacity-75 mb-4">No posts match &quot;{{ search }}&quot;.</p>
+      <button class="btn btn-outline" @click="search = ''">Clear Search</button>
     </div>
 
     <!-- Posts grid -->
@@ -243,24 +277,3 @@ const onDeletePost = async (post: PostMeta) => {
     <div class="h-8" />
   </div>
 </template>
-
-<style scoped>
-.stats .stat {
-  place-items: center;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  transition: transform 0.2s ease-in-out;
-}
-
-.btn-group .btn:first-child {
-  border-top-left-radius: 0.5rem;
-  border-bottom-left-radius: 0.5rem;
-}
-
-.btn-group .btn:last-child {
-  border-top-right-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
-}
-</style>

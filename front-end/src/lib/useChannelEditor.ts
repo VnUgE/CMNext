@@ -273,7 +273,6 @@ export const useChannelEditor = (
       router.push('/channels');
     } else {
       router.push(`/channels/${channelIdRef.value}`);
-      toaster.info('Changes Reverted', 'All changes have been discarded.');
     }
   };
 

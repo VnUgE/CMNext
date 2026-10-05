@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { reactiveComputed, useFileDialog, useDropZone } from '@vueuse/core';
-import { useRouteQuery } from '@vueuse/router';
+import { useRouteParams, useRouteQuery } from '@vueuse/router';
 import { useRouter } from 'vue-router';
 import { type ContentMeta } from '@vnuge/cmnext-admin';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
@@ -19,12 +19,12 @@ const { waiting, invoke: apiCall } = useApiCall({ toaster });
 // Set page title
 store.setPageTitle('Edit Content');
 
-// Get route parameters - id from route path, channel from query
+// Get route parameters - id from query string, channel from the route path
 const id = useRouteQuery<string>('id', '');
-const channelIdQ = useRouteQuery<string>('channel', '', { mode: 'push' });
+const channelId = useRouteParams<string>('channel', '');
 
 // Create scoped stores based on route parameters
-const contentApi = cmnext.createContentStore(channelIdQ);
+const contentApi = cmnext.createContentStore(channelId);
 const selectedContent = contentApi.single(id);
 
 const newFileDropZone = ref<HTMLElement>();
@@ -76,9 +76,9 @@ watch(
 
 // Watch for channel changes and update the content store
 watch(
-  channelIdQ,
+  channelId,
   () => {
-    if (channelIdQ.value) {
+    if (channelId.value) {
       contentApi.refresh();
     }
   },
@@ -140,21 +140,28 @@ const onSubmit = async () => {
     }
 
     // Navigate back to the blog
-    await router.push(`/channels/${channelIdQ.value}`);
+    await router.push(`/channels/${channelId.value}`);
   });
 };
 
 const onClose = () => {
-  router.push(`/channels/${channelIdQ.value}`);
+  router.push(`/channels/${channelId.value}`);
 };
 
 const onDelete = async () => {
   if (!selectedContent.value?.id) return;
 
+  const { isCanceled } = await confirm({
+    title: 'Delete File?',
+    message: `Are you sure you want to delete the file "${selectedContent.value.name}"? This action cannot be undone.`,
+  });
+
+  if (isCanceled) return;
+
   apiCall(async () => {
     await contentApi.delete(selectedContent.value!);
     toaster.success('Content deleted successfully');
-    await router.push(`/channels/${channelIdQ.value}`);
+    await router.push(`/channels/${channelId.value}`);
   });
 };
 
@@ -171,19 +178,21 @@ const pageTitle = computed(() => {
 });
 
 // Check if we have a valid channel selected
-const isChannelSelected = computed(() => !isEmpty(channelIdQ.value));
+const isChannelSelected = computed(() => !isEmpty(channelId.value));
 </script>
 
 <template>
-  <div id="content-editor-page" class="p-6 space-y-6 max-w-7xl mx-auto">
+  <div id="content-editor-page" class="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-base-content">{{ pageTitle }}</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-base-content truncate" :title="pageTitle">
+          {{ pageTitle }}
+        </h1>
         <p v-if="isNew" class="text-base-content/70 mt-1">Upload new content to this channel</p>
         <p v-else class="text-base-content/70 mt-1">Edit content metadata and file</p>
       </div>
-      <div class="flex gap-2">
+      <div class="grid grid-cols-2 sm:flex gap-2">
         <button
           :disabled="waiting.value || !isChannelSelected"
           class="btn btn-primary"
@@ -205,80 +214,89 @@ const isChannelSelected = computed(() => !isEmpty(channelIdQ.value));
     <!-- Content form -->
     <div id="content-edit-body" class="my-10">
       <form id="content-upload-form" class="flex" @submit.prevent="onSubmit">
-        <fieldset class="mx-auto flex flex-col gap-10 w-lg" :disabled="!isChannelSelected">
-          <div class="flex flex-col">
-            <!-- File name input -->
-            <div class="p-3 py-0.5">
-              <label class="">File name</label>
-              <input
-                v-model="metaBuffer.name"
-                type="text"
-                class="w-full input input-bordered"
-                placeholder="Enter file name"
-              />
+        <fieldset
+          class="mx-auto flex flex-col gap-6 w-full max-w-lg min-w-0"
+          :disabled="!isChannelSelected"
+        >
+          <!-- File name input -->
+          <div class="form-control">
+            <label class="label" for="content-name">
+              <span class="label-text">File name</span>
+            </label>
+            <input
+              id="content-name"
+              v-model="metaBuffer.name"
+              type="text"
+              class="input input-bordered w-full"
+              placeholder="Enter file name"
+            />
+          </div>
 
-              <!-- File drop zone for new uploads -->
-              <div
-                v-if="isNew"
-                id="file-drop-zone"
-                ref="newFileDropZone"
-                class="py-16 mt-3 transition-all duration-150 ease-linear border-2 border-dashed rounded cursor-pointer border-base-300"
-                :class="{ 'border-primary': isOverDropZone }"
-                @click.prevent="open()"
-              >
-                <div class="flex flex-col items-center justify-center">
-                  <fa-icon icon="file-upload" class="text-4xl" />
-                  <p class="mt-2 text-sm text-center">Drop file here or click to select file</p>
+          <!-- File drop zone for new uploads -->
+          <div
+            v-if="isNew"
+            id="file-drop-zone"
+            ref="newFileDropZone"
+            class="py-16 transition-all duration-150 ease-linear border-2 border-dashed rounded cursor-pointer border-base-300"
+            :class="{ 'border-primary': isOverDropZone }"
+            @click.prevent="open()"
+          >
+            <div class="flex flex-col items-center justify-center">
+              <fa-icon icon="file-upload" class="text-4xl" />
+              <p class="mt-2 text-sm text-center">Drop file here or click to select file</p>
+            </div>
+          </div>
+
+          <!-- Content ID for existing files -->
+          <div v-if="editFile?.id" class="form-control">
+            <label class="label" for="content-id">
+              <span class="label-text">Content ID</span>
+            </label>
+            <input
+              id="content-id"
+              type="text"
+              class="input input-bordered w-full"
+              :value="editFile.id"
+              readonly
+            />
+          </div>
+
+          <!-- New file preview -->
+          <div
+            v-if="uploadedFile.name"
+            class="border border-base-300 rounded-lg p-4 w-full max-w-md mx-auto"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0 text-sm">
+                <div class="truncate" :title="uploadedFile.name">{{ uploadedFile.name }}</div>
+                <div class="mt-1 opacity-70">Size: {{ getFileSize(uploadedFile) }}</div>
+                <div class="mt-1 opacity-70 break-all">
+                  Content-Type: {{ getContentType(uploadedFile) }}
                 </div>
               </div>
-            </div>
-
-            <!-- Content ID for existing files -->
-            <div v-if="editFile?.id" class="mt-3">
-              <div class="p-3 py-0.5">
-                <label>Content Id</label>
-                <input
-                  type="text"
-                  class="w-full input input-bordered"
-                  :value="editFile.id"
-                  readonly
-                />
-              </div>
-            </div>
-
-            <!-- New file preview -->
-            <div
-              v-if="uploadedFile.name"
-              class="border border-base-300 p-4 w-[24rem] mx-auto rounded-sm relative mt-5"
-            >
-              <div class="absolute top-0 text-right -right-12">
-                <button class="rounded-sm btn sm red" @click.prevent="removeNewFile">
-                  <fa-icon :icon="['fas', 'trash']" />
-                </button>
-              </div>
-              <div class="">
-                Name:
-                <span class="pr-4 truncate border-b border-coolGray-400">
-                  {{ uploadedFile.name }}
-                </span>
-              </div>
-              <div class="mt-3">Size: {{ getFileSize(uploadedFile) }}</div>
-              <div class="mt-3">Content-Type: {{ getContentType(uploadedFile) }}</div>
-            </div>
-
-            <!-- Existing file preview -->
-            <div v-else-if="editFile?.id">
-              <div
-                class="border border-base-300 p-4 min-w-[24rem] mx-auto rounded-sm relative mt-5"
+              <button
+                class="btn btn-sm btn-error shrink-0"
+                title="Remove File"
+                @click.prevent="removeNewFile"
               >
-                <div class="pr-4 truncate">Name: {{ editFile.name }}</div>
-                <div class="mt-3">Size: {{ getSizeinKb(editFile?.length) }}</div>
-                <div class="mt-3">File Path: {{ editFile.path }}</div>
-                <div class="mt-3">Content-Type: {{ editFile.content_type }}</div>
-              </div>
-              <div class="m-auto mt-5 w-fit">
-                <button class="btn" @click.prevent="open()">Overwrite file</button>
-              </div>
+                <fa-icon :icon="['fas', 'trash']" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing file preview -->
+          <div
+            v-else-if="editFile?.id"
+            class="border border-base-300 rounded-lg p-4 w-full max-w-md mx-auto"
+          >
+            <div class="text-sm">
+              <div class="truncate" :title="editFile.name">Name: {{ editFile.name }}</div>
+              <div class="mt-1 opacity-70">Size: {{ getSizeinKb(editFile?.length) }}</div>
+              <div class="mt-1 opacity-70 break-all">File Path: {{ editFile.path }}</div>
+              <div class="mt-1 opacity-70 break-all">Content-Type: {{ editFile.content_type }}</div>
+            </div>
+            <div class="mt-4 flex justify-center">
+              <button class="btn btn-outline" @click.prevent="open()">Overwrite file</button>
             </div>
           </div>
         </fieldset>
@@ -286,33 +304,14 @@ const isChannelSelected = computed(() => !isEmpty(channelIdQ.value));
     </div>
 
     <!-- Delete button for existing content -->
-    <div v-if="!isNew" class="mt-4">
-      <div class="mx-auto w-fit">
-        <button class="btn btn-error" :disabled="waiting.value" @click="onDelete">
-          Delete Forever
-        </button>
-      </div>
+    <div v-if="!isNew" class="flex justify-center mt-6">
+      <button class="btn btn-error" :disabled="waiting.value" @click="onDelete">
+        <fa-icon icon="trash" class="mr-2" />
+        Delete Content Forever
+      </button>
     </div>
+
+    <!-- Footer spacing -->
+    <div class="h-8" />
   </div>
 </template>
-
-<style scoped>
-.btn.red {
-  background-color: rgb(239 68 68);
-  border-color: rgb(239 68 68);
-  color: white;
-}
-
-.btn.red:hover {
-  background-color: rgb(220 38 38);
-  border-color: rgb(220 38 38);
-}
-
-.btn.sm {
-  height: 2rem;
-  min-height: 2rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  font-size: 0.875rem;
-}
-</style>
