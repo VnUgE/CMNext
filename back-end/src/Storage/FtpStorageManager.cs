@@ -29,6 +29,7 @@ using System.Threading.Tasks;
 using FluentFTP;
 using FluentFTP.Exceptions;
 
+using VNLib.Utils.Extensions;
 using VNLib.Utils.Logging;
 using VNLib.Utils.Resources;
 using VNLib.Plugins;
@@ -40,10 +41,13 @@ namespace Content.Publishing.Blog.Admin.Storage
 {
 
     [ConfigurationName("storage")]
-    internal class FtpStorageManager : StorageBase, IDisposable, IIntervalScheduleable
+    internal class FtpStorageManager : StorageBase, IDisposable
     {
         private readonly AsyncFtpClient _client;
         private readonly FtpStorageConfig _storageConf;
+
+        //Serializes all control-connection use, FluentFTP clients are not thread-safe
+        private readonly SemaphoreSlim _clientLock = new(1, 1);
 
         protected override string? BasePath => _storageConf.BaseBucket;
 
@@ -63,19 +67,21 @@ namespace Content.Publishing.Blog.Admin.Storage
             );
 
 
-            // If a keepalive interval is set, regularly ping the server to keep the connection alive
-            if (_storageConf.KeepaliveSeconds > 0)
-            {
-                plugin.ScheduleInterval(this, TimeSpan.FromSeconds(_storageConf.KeepaliveSeconds), false);
-            }
         }
 
         public override async Task ConfigureServiceAsync(PluginBase plugin)
         {
+            // Hold the lock for the entire configuration so no operations
+            // can run on an unconfigured client
+            using SemSlimReleaser _ = await _clientLock.GetReleaserAsync(CancellationToken.None);
+
             using ISecretResult password = await plugin.Secrets().GetAsync("storage_secret");
 
             //Init client credentials
-            _client.Credentials = new NetworkCredential(_storageConf.Username, password?.Result.ToString());
+            _client.Credentials = new NetworkCredential(
+                _storageConf.Username, 
+                password.Result.ToString()
+            );
 
             //If the user forces ssl, then assume it's an implicit connection and force certificate checking
             if (_storageConf.UseSsl == true)
@@ -95,6 +101,10 @@ namespace Content.Publishing.Blog.Admin.Storage
             //Bound stalled uploads instead of hanging indefinitely
             _client.Config.WriteTimeout = 10 * 1000;
 
+            //Send periodic NOOPs on idle control connections instead of a manual ping schedule
+            _client.Config.Noop = _storageConf.KeepaliveSeconds > 0;
+            _client.Config.NoopInterval = _storageConf.KeepaliveSeconds * 1000;
+
             plugin.Log.Information("Connecting to ftp server");
 
             await _client.AutoConnect(CancellationToken.None);
@@ -103,14 +113,18 @@ namespace Content.Publishing.Blog.Admin.Storage
 
 
         ///<inheritdoc/>
-        public override ValueTask DeleteFileAsync(string filePath, CancellationToken cancellation)
+        public override async ValueTask DeleteFileAsync(string filePath, CancellationToken cancellation)
         {
-            return new(_client.DeleteFile(GetExternalFilePath(filePath), cancellation));
+            using SemSlimReleaser _ = await _clientLock.GetReleaserAsync(cancellation);
+
+            await _client.DeleteFile(GetExternalFilePath(filePath), cancellation);
         }
 
         ///<inheritdoc/>
         public override async ValueTask<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
         {
+            using SemSlimReleaser _ = await _clientLock.GetReleaserAsync(cancellation);
+
             try
             {
                 //Read the file 
@@ -127,11 +141,15 @@ namespace Content.Publishing.Blog.Admin.Storage
         ///<inheritdoc/>
         public override async ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
-            //Upload the file to the server
+            using SemSlimReleaser _ = await _clientLock.GetReleaserAsync(cancellation);
+
+            string remotePath = GetExternalFilePath(filePath);
+
+            //Upload the file to the server without deleting it first
             FtpStatus status = await _client.UploadStream(
                 data,
-                GetExternalFilePath(filePath),
-                FtpRemoteExists.Overwrite,
+                remotePath,
+                FtpRemoteExists.OverwriteInPlace,
                 createRemoteDir: true,
                 token: cancellation
             );
@@ -139,6 +157,12 @@ namespace Content.Publishing.Blog.Admin.Storage
             if (status == FtpStatus.Failed)
             {
                 throw new ResourceUpdateFailedException($"Failed to update the remote resource {filePath}");
+            }
+
+            //Streams have no checksum API, so verify the transfer by size
+            if (data.CanSeek && await _client.GetFileSize(remotePath, -1, cancellation) != data.Length)
+            {
+                throw new ResourceUpdateFailedException($"Uploaded file size mismatch for {filePath}");
             }
         }
 
@@ -151,12 +175,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         public void Dispose()
         {
             _client?.Dispose();
-        }
-
-        public async Task OnIntervalAsync(ILogProvider log, CancellationToken cancellationToken)
-        {
-            // Ping the server on regular intervals to check if it's still connected
-            await _client.IsStillConnected(token: cancellationToken);
+            _clientLock.Dispose();
         }
 
         sealed class FtpDebugLogger(ILogProvider Log) : IFtpLogger
