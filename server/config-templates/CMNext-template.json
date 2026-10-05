@@ -20,10 +20,16 @@
 
     //storage config
     "server_address": "${STORAGE_SERVER_ADDRESS}",
-    "access_key": "${STORAGE_USERNAME}",
     "bucket": "${STORAGE_BUCKET}",
     "use_ssl": ${STORAGE_USE_SSL:-false},
-    "Region": "${S3_REGION}"
+
+    //s3 keys
+    "access_key": "${STORAGE_USERNAME}",
+    "region": "${S3_REGION}",
+
+    //ftp keys
+    "username": "${STORAGE_USERNAME}",
+    "keepalive_sec": ${FTP_KEEPALIVE_SEC:-0}
   },
 
   "secrets": {

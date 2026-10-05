@@ -2,13 +2,13 @@
 #Licensed under the GNU AGPL V3.0
 
 #use plain ubuntu latest to build native libraries in
-FROM ubuntu:25.10 AS native-cont
+FROM ubuntu:24.04 AS native-cont
 
 WORKDIR /build
 
 #download and install task (its easier and faster without npm)
-ADD --checksum=sha256:e5012dce7d845bc11b506ef08bccd7ecc1ad58c6692e68396f8e99b33b3fe2a0 \
-  https://github.com/go-task/task/releases/download/v3.45.4/task_linux_amd64.deb \
+ADD --checksum=sha256:fd2ca4e80422699cb8a85888fbca612bbcf3c62f946c1b4bb1ca9fbe9edb1c44 \
+  https://github.com/go-task/task/releases/download/v3.54.0/task_3.54.0_linux_amd64.deb \
   task_linux_amd64.deb
 
 RUN dpkg -i task_linux_amd64.deb
@@ -23,7 +23,7 @@ RUN task container-create-cert
 
 #APP CONTAINER
 #move into a clean dotnet ubuntu lean image
-FROM mcr.microsoft.com/dotnet/runtime:8.0.20-noble AS app-cont
+FROM mcr.microsoft.com/dotnet/runtime:8.0.31-noble AS app-cont
 
 LABEL name="vnuge/cmnext"
 LABEL maintainer="Vaughn Nugent <vnpublic@proton.me>"

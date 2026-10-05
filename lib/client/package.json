@@ -16,11 +16,11 @@
     "clean": "if exist dist ( rd /S /Q lib)"
   },
   "devDependencies": {
-    "@types/lodash-es": "^4.14.194",
-    "prettier": "^3.9.6",
-    "typescript": "^5.9.2"
+    "@types/lodash-es": "^4.17.12",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "lodash-es": "^4.x"
+    "lodash-es": "^4.18.1"
   }
 }

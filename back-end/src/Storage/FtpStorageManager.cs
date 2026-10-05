@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2025 Vaughn Nugent
+* Copyright (c) 2026 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -22,6 +22,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,6 +33,7 @@ using VNLib.Utils.Logging;
 using VNLib.Utils.Resources;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
+using VNLib.Plugins.Extensions.Loading.Configuration;
 using VNLib.Plugins.Extensions.Loading.Events;
 
 namespace Content.Publishing.Blog.Admin.Storage
@@ -41,13 +43,14 @@ namespace Content.Publishing.Blog.Admin.Storage
     internal class FtpStorageManager : StorageBase, IDisposable, IIntervalScheduleable
     {
         private readonly AsyncFtpClient _client;
-        private readonly S3Config _storageConf;
+        private readonly FtpStorageConfig _storageConf;
 
         protected override string? BasePath => _storageConf.BaseBucket;
 
         public FtpStorageManager(PluginBase plugin, IConfigScope config)
         {
-            _storageConf = config.Deserialize<S3Config>();
+            //Method name retains vnlib 0.1.5 spelling, renamed in 0.2.0
+            _storageConf = config.DeserialzeAndValidate<FtpStorageConfig>();
 
             Uri uri = new (_storageConf.ServerAddress!);
 
@@ -61,10 +64,9 @@ namespace Content.Publishing.Blog.Admin.Storage
 
 
             // If a keepalive interval is set, regularly ping the server to keep the connection alive
-            int keepaliveIntervalSec = config.GetValueOrDefault("keepalive_sec", 0);
-            if (keepaliveIntervalSec > 0)
+            if (_storageConf.KeepaliveSeconds > 0)
             {
-                plugin.ScheduleInterval(this, TimeSpan.FromSeconds(keepaliveIntervalSec), false);
+                plugin.ScheduleInterval(this, TimeSpan.FromSeconds(_storageConf.KeepaliveSeconds), false);
             }
         }
 
@@ -73,7 +75,7 @@ namespace Content.Publishing.Blog.Admin.Storage
             using ISecretResult password = await plugin.Secrets().GetAsync("storage_secret");
 
             //Init client credentials
-            _client.Credentials = new NetworkCredential(_storageConf.ClientId, password?.Result.ToString());
+            _client.Credentials = new NetworkCredential(_storageConf.Username, password?.Result.ToString());
 
             //If the user forces ssl, then assume it's an implicit connection and force certificate checking
             if (_storageConf.UseSsl == true)
@@ -85,6 +87,13 @@ namespace Content.Publishing.Blog.Admin.Storage
                 _client.Config.EncryptionMode = FtpEncryptionMode.Auto;
                 _client.Config.ValidateAnyCertificate = true;
             }
+
+            //FluentFTP 54+ sanitizes every remote path, fail loudly on
+            //unsafe input instead of silently renaming it server-side
+            _client.Config.SanitizeMode = FtpSanitize.Throw;
+
+            //Bound stalled uploads instead of hanging indefinitely
+            _client.Config.WriteTimeout = 10 * 1000;
 
             plugin.Log.Information("Connecting to ftp server");
 
@@ -155,6 +164,32 @@ namespace Content.Publishing.Blog.Admin.Storage
             void IFtpLogger.Log(FtpLogEntry entry)
             {
                 Log.Debug("FTP [{lvl}] -> {cnt}", entry.Severity.ToString(), entry.Message);
+            }
+        }
+
+        //Private storage configuration, validated at load
+        private sealed class FtpStorageConfig : IOnConfigValidation
+        {
+            [JsonPropertyName("server_address")]
+            public string ServerAddress { get; init; } = string.Empty;
+
+            [JsonPropertyName("username")]
+            public string Username { get; init; } = string.Empty;
+
+            [JsonPropertyName("bucket")]
+            public string? BaseBucket { get; init; }
+
+            [JsonPropertyName("use_ssl")]
+            public bool? UseSsl { get; init; }
+
+            [JsonPropertyName("keepalive_sec")]
+            public int KeepaliveSeconds { get; init; }
+
+            public void OnValidate()
+            {
+                Validate.NotNull(ServerAddress, "FTP storage requires a server address");
+                Validate.NotNull(Username, "FTP storage requires a username");
+                Validate.Assert(KeepaliveSeconds >= 0, "FTP keepalive interval cannot be negative");
             }
         }
 

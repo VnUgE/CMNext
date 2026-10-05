@@ -1,9 +1,5 @@
 # CMNext — development overlay (dev/)
 #
-# Mise merges this ON TOP of the production ../mise.toml when you work from
-# dev/. Only dev-only runtimes and paths live here: process-compose, minio,
-# dev server dirs, dev.env secrets. Shared toolchain (node, pnpm, dotnet,
-# task, cmake, vnbuild) is inherited from the root — do not duplicate it.
 
 min_version = "2024.9.5"
 

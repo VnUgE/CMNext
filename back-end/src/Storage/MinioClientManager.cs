@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2025 Vaughn Nugent
+* Copyright (c) 2026 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -20,6 +20,7 @@
 */
 
 using System.IO;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,6 +28,7 @@ using Minio;
 using Minio.Handlers;
 using Minio.DataModel;
 using Minio.DataModel.Args;
+using Minio.DataModel.Response;
 using Minio.DataModel.Tracing;
 
 using VNLib.Utils.Memory;
@@ -34,6 +36,7 @@ using VNLib.Utils.Logging;
 using VNLib.Utils.Extensions;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
+using VNLib.Plugins.Extensions.Loading.Configuration;
 
 namespace Content.Publishing.Blog.Admin.Storage
 {
@@ -42,7 +45,8 @@ namespace Content.Publishing.Blog.Admin.Storage
     internal sealed class MinioClientManager(PluginBase plugin, IConfigScope s3Config) : StorageBase
     {
         private readonly MinioClient Client = new();
-        private readonly S3Config Config = s3Config.Deserialize<S3Config>();
+        //Method name retains vnlib 0.1.5 spelling, renamed in 0.2.0
+        private readonly S3StorageConfig Config = s3Config.DeserialzeAndValidate<S3StorageConfig>();
 
         ///<inheritdoc/>
         protected override string? BasePath => Config.BaseBucket;
@@ -50,7 +54,8 @@ namespace Content.Publishing.Blog.Admin.Storage
         ///<inheritdoc/>
         public override async Task ConfigureServiceAsync(PluginBase plugin)
         {
-            using ISecretResult? secret = await plugin.Secrets().GetAsync("storage_secret");
+            //GetAsync raises KeyNotFoundException when the secret is not configured
+            using ISecretResult secret = await plugin.Secrets().GetAsync("storage_secret");
 
             Client.WithEndpoint(Config.ServerAddress)
                     .WithCredentials(Config.ClientId, secret.Result.ToString())
@@ -87,7 +92,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public override ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
+        public override async ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             PutObjectArgs args = new();
             args.WithBucket(Config.BaseBucket)
@@ -96,8 +101,10 @@ namespace Content.Publishing.Blog.Admin.Storage
                 .WithObjectSize(data.Length)
                 .WithStreamData(data);
 
-            //Upload the object
-            return new ValueTask(Client.PutObjectAsync(args, cancellation));
+            //Upload the object and record the server ETag for traceability
+            PutObjectResponse response = await Client.PutObjectAsync(args, cancellation);
+
+            plugin.Log.Debug("Uploaded {path} ETag {etag}", filePath, response.Etag);
         }
 
         ///<inheritdoc/>
@@ -134,6 +141,32 @@ namespace Content.Publishing.Blog.Admin.Storage
                     requestToLog.Method, requestToLog.Resource, durationMs,
                     responseToLog.StatusCode, responseToLog.ErrorMessage, responseToLog.Content
                 );
+            }
+        }
+
+        //Private storage configuration, validated at load
+        private sealed class S3StorageConfig : IOnConfigValidation
+        {
+            [JsonPropertyName("server_address")]
+            public string ServerAddress { get; init; } = string.Empty;
+
+            [JsonPropertyName("access_key")]
+            public string ClientId { get; init; } = string.Empty;
+
+            [JsonPropertyName("bucket")]
+            public string BaseBucket { get; init; } = string.Empty;
+
+            [JsonPropertyName("use_ssl")]
+            public bool? UseSsl { get; init; }
+
+            [JsonPropertyName("region")]
+            public string? Region { get; init; }
+
+            public void OnValidate()
+            {
+                Validate.NotNull(ServerAddress, "S3 storage requires a server address");
+                Validate.NotNull(ClientId, "S3 storage requires a client id");
+                Validate.NotNull(BaseBucket, "S3 storage requires a base bucket");
             }
         }
     }

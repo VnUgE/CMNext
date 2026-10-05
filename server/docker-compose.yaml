@@ -11,7 +11,7 @@ version: '3.6'
 
 services:
   cmnexts:
-    build:        #builds in the current directory
+    build: #builds in the current directory
       context: .
 
     image: vnuge/cmnext
@@ -26,30 +26,34 @@ services:
     ports:
       - 8080:8080
     environment:
-      HTTP_BIND_PORT: "8080"
-      HTTP_DOWNSTREAM_SERVERS: '[]'   #a comma separated list of downstream (proxy) server ip addresses
-      HTTP_TRACE_ON: "false"          #enable http trace logging, requires you to set --debug to SERVER_ARGS variable below
-      MAX_CONTENT_LENGTH: 204800000         #20MB max upload size
+      HTTP_BIND_PORT: '8080'
+      HTTP_DOWNSTREAM_SERVERS: '[]' #a comma separated list of downstream (proxy) server ip addresses
+      HTTP_TRACE_ON: 'false' #enable http trace logging, requires you to set --debug to SERVER_ARGS variable below
+      MAX_CONTENT_LENGTH: 204800000 #20MB max upload size
 
-      MAX_LOGIN_ATTEMPS: "10"                 #max login attempts before user account is locked out
+      MAX_LOGIN_ATTEMPS: '10' #max login attempts before user account is locked out
       #PASSWORD_PEPPER: "file://my-secret.txt" #Must be a base64 encoded value, of realtivley any size
 
       #SQL Config
-      SQL_LIB_PATH: "VNLib.Plugins.Extensions.Sql.SQLite.dll" # use included sqlite library (can specify your own)
-      SQL_CONNECTION_STRING: "Data Source=data/cmnext.db;"
-      DATABASE_PASSWORD: ""   #overrides the 'Password' field in any SQL connection string
+      SQL_LIB_PATH: 'VNLib.Plugins.Extensions.Sql.SQLite.dll' # use included sqlite library (can specify your own)
+      SQL_CONNECTION_STRING: 'Data Source=data/cmnext.db;'
+      DATABASE_PASSWORD: '' #overrides the 'Password' field in any SQL connection string
 
-      CHANNEL_INDEX_FILE: "channels.json"   #required, should leave default unless you know what you are doing
+      CHANNEL_INDEX_FILE: 'channels.json' #required, should leave default unless you know what you are doing
 
-      #storage backend setup
-      STORAGE_TYPE: "s3"              #s3 | ftp
-      STORAGE_SERVER_ADDRESS: ""      #s3 or ftp server address
-      STORAGE_USERNAME: ""            #s3 client id or ftp username
-      STORAGE_BUCKET: ""              #s3 bucket or ftp root directory
-      STORAGE_USE_SSL: "true"         #force ssl for connections
-      S3_REGION: ""                   #optional s3 region when using s3 storage
+      #storage backend setup, only the selected type's keys are bound
+      STORAGE_TYPE: 's3' #s3 | ftp
+      #shared keys
+      STORAGE_SERVER_ADDRESS: '' #s3 or ftp server address
+      STORAGE_BUCKET: '' #s3 bucket or ftp root directory
+      STORAGE_USE_SSL: 'true' #force ssl for connections
+      #s3 keys
+      STORAGE_USERNAME: '' #s3 client id (reused as ftp username below)
+      S3_REGION: '' #optional s3 region
+      #ftp keys
+      FTP_KEEPALIVE_SEC: '0' #ftp keepalive interval in seconds, 0 disables
       #STORAGE_CUSTOM_ASSEMBLY: ""     #optional path to a custom storage assembly
-      STORAGE_SECRET: ""      #s3 client secret or ftp password
+      STORAGE_SECRET: '' #s3 client secret or ftp password
 
       #HC Vault client config
       #HC_VAULT_ADDR: ""
@@ -57,7 +61,7 @@ services:
       #HC_VAULT_TRUST_CERT: "false"
 
       # Cache settings (default to memory only)
-      MEMCACHE_ONLY: "true"   #if true, use in-memory caching only, no vncache cluster
+      MEMCACHE_ONLY: 'true' #if true, use in-memory caching only, no vncache cluster
 
       #if MEMCACHE_ONLY is false, then the following keys are required to connect to a VNCACHE cluster
       # CACHE_ASM_PATH: "VNLib.Data.Caching.Providers.VNCache.dll"
@@ -66,7 +70,7 @@ services:
       # VNCACHE_CACHE_PUBLIC_KEY: ""
 
       #Very Verbose plugin logging, required --debug CLI flag, prints literally everything to the logger (it's annoying)
-      DEBUG_PLUGINS: "false"
+      DEBUG_PLUGINS: 'false'
 
-      SERVER_ARGS: "" #optional server command line args, e.g. --debug --verbose
+      SERVER_ARGS: '' #optional server command line args, e.g. --debug --verbose
 

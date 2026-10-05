@@ -18,16 +18,21 @@
 
     "type": "s3", //s3 | ftp
 
-    //s3 config
     "server_address": "",
-    "access_key": "",
     "bucket": "",
     "use_ssl": false,
-    "Region": null
+
+    //s3 keys
+    "access_key": "",
+    "region": null,
+
+    //ftp keys
+    "username": "",
+    "keepalive_sec": 0
   },
 
   "secrets": {
     //Set the vault path to the s3 secret
-    "storage_secret": "",
+    "storage_secret": ""
   }
 }
