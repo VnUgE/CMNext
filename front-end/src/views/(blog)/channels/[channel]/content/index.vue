@@ -122,10 +122,7 @@ const onDeleteFile = async (file: ContentMeta) => {
         </div>
       </div>
       <div class="grid grid-cols-2 sm:flex gap-2">
-        <router-link
-          :to="{ path: `/channels/${channelId}/content/edit`, query: { id: 'new' } }"
-          class="btn btn-primary"
-        >
+        <router-link :to="`/channels/${channelId}/content/new`" class="btn btn-primary">
           <fa-icon icon="plus" class="mr-2" />
           Upload Content
         </router-link>
@@ -210,7 +207,7 @@ const onDeleteFile = async (file: ContentMeta) => {
       </p>
       <router-link
         class="btn btn-primary"
-        :to="{ path: `/channels/${channelId}/content/edit`, query: { id: 'new' } }"
+        :to="`/channels/${channelId}/content/new`"
       >
         <fa-icon icon="plus" />
         Upload First File
@@ -259,10 +256,7 @@ const onDeleteFile = async (file: ContentMeta) => {
                 <div class="join">
                   <router-link
                     class="btn btn-xs btn-primary join-item"
-                    :to="{
-                      path: `/channels/${channelId}/content/edit`,
-                      query: { id: file.id },
-                    }"
+                    :to="`/channels/${channelId}/content/${file.id}`"
                     title="Edit File"
                   >
                     <fa-icon icon="edit" />
