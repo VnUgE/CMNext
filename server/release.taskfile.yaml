@@ -3,23 +3,30 @@
 #Inlcuded taskfile for object cache server that is used to produce
 #ci builds for standalone caching servers
 
-version: "3.45"
+version: '3.45'
 
 vars:
-  SSL_DIR: "ssl"
-  DATA_DIR: "data"
-  DEFAULT_EC_CURVE: "secp384r1"
+  SSL_DIR: 'ssl'
+  DATA_DIR: 'data'
+  DEFAULT_EC_CURVE: 'secp384r1'
   PASS_PEPPER_SIZE: 64
 
   #lib file names
-  RPMALLOC_LIB_NAME: "vnlib_rpmalloc"
-  COMPRESS_LIB_NAME: "vnlib_compress"
-  ARGON2_LIB_NAME: "argon2"
+  RPMALLOC_LIB_NAME: 'vnlib_rpmalloc'
+  COMPRESS_LIB_NAME: 'vnlib_compress'
+  ARGON2_LIB_NAME: 'argon2'
+
+env:
+  # these variables will be substituted into the configuration when merge-config is run
+  # since the cert is created at build time, we can use the same path for the container
+  TLS_ENABLE: 'true'
+  TLS_CERT: '{{ .SSL_DIR }}/cert.pem'
+  TLS_PRIVATE_KEY: '{{ .SSL_DIR }}/key.pem'
 
 tasks:
   run:
     aliases: [default]
-    desc: "Runs the server in release mode"
+    desc: 'Runs the server in release mode'
     silent: true
     interactive: true
     env:
@@ -31,15 +38,9 @@ tasks:
       - cmd: dotnet webserver/VNLib.WebServer.dll --config config/config.json {{ .CLI_ARGS }} {{ .SERVER_ARGS }}
 
   container-run:
-    desc: "Runs the server if called from inside a container"
+    desc: 'Runs the server if called from inside a container'
     interactive: true
     platforms: [linux]
-    env:
-      # these variables will be substituted into the configuration when merge-config is run
-      # since the cert is created at build time, we can use the same path for the container
-      TLS_ENABLE: "true"
-      TLS_CERT: "{{ .SSL_DIR }}/cert.pem"
-      TLS_PRIVATE_KEY: "{{ .SSL_DIR }}/key.pem"
     cmds:
       - defer: rm -rf config/
 
@@ -60,7 +61,7 @@ tasks:
         vars: { SERVER_ARGS: '{{ env "SERVER_ARGS" }}' }
 
   setup-apt:
-    desc: "Performs initial setup on Debian apt amd64 based machines"
+    desc: 'Performs initial setup on Debian apt amd64 based machines'
     platforms: [linux]
     cmds:
       - cmd: apt update
@@ -70,7 +71,7 @@ tasks:
         silent: true
 
   setup-dnf:
-    desc: "Performs initial setup on Fedora/Redhat amd (dnf) based machines"
+    desc: 'Performs initial setup on Fedora/Redhat amd (dnf) based machines'
     platforms: [linux]
     cmds:
       - cmd: dnf update
@@ -81,7 +82,7 @@ tasks:
         silent: true
 
   setup-apk:
-    desc: "Performs initial setup using the APK package manager for amd64 based machines"
+    desc: 'Performs initial setup using the APK package manager for amd64 based machines'
     platforms: [linux]
     cmds:
       - cmd: apk update
@@ -91,7 +92,7 @@ tasks:
         silent: true
 
   setup:
-    desc: "Performs platform agnostic setup tasks without installing tools (no sudo needed)"
+    desc: 'Performs platform agnostic setup tasks without installing tools (no sudo needed)'
     deps:
       #build rpmalloc lib
       - task: build-rpmalloc
@@ -107,9 +108,9 @@ tasks:
         platforms: [windows]
 
   create-pepper:
-    desc: "Generates a new pepper for hashing passwords."
+    desc: 'Generates a new pepper for hashing passwords.'
     vars:
-      PEPPER_FILE: "secrets/password-pepper.txt"
+      PEPPER_FILE: 'secrets/password-pepper.txt'
     cmds:
       - cmd: mkdir -p secrets/
 
@@ -120,7 +121,7 @@ tasks:
         silent: true
 
   create-cert:
-    desc: "Generates a new self-signed TLS certificate"
+    desc: 'Generates a new self-signed TLS certificate'
     interactive: true
     cmds:
       - cmd: openssl req
@@ -148,7 +149,7 @@ tasks:
 
   build-rpmalloc:
     internal: true
-    dir: "lib/"
+    dir: 'lib/'
     cmds:
       #build rpmalloc library for linux/mac
       - cmd: cd vnlib_rpmalloc/ && task && cp build/{{ OS }}/libvn_rpmalloc{{if eq OS "darwin"}}.dylib{{else}}.so{{end}} ../{{ .RPMALLOC_LIB_NAME }}.so
@@ -160,7 +161,7 @@ tasks:
 
   build-argon2:
     internal: true
-    dir: "lib/"
+    dir: 'lib/'
     cmds:
       #build argon2 library for linux/mac
       - cmd: cd argon2/ && task && cp build/{{ OS }}/libargon2{{if eq OS "darwin"}}.dylib{{else}}.so{{end}} ../{{ .ARGON2_LIB_NAME }}.so
@@ -172,7 +173,7 @@ tasks:
 
   build-compress:
     internal: true
-    dir: "lib/"
+    dir: 'lib/'
     cmds:
       #build the native compressor library for linux/mac with rpmalloc support
       - cmd: cd vnlib_compress/ &&
@@ -198,7 +199,7 @@ tasks:
         cmd: ./compile.sh '{{ .ITEM }}' 'config/{{ .ITEM | base | replace "-template" "" }}'
 
   container-set-perms:
-    desc: "Sets file and folder permissions for container deployment"
+    desc: 'Sets file and folder permissions for container deployment'
     platforms: [linux]
     vars:
       READONLY_FILES: |

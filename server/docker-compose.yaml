@@ -7,15 +7,12 @@
 # env://MY_SECRET         reads the secret from an environment variable (case sensitive)
 # vault://<vault-path>?secret=<secret-name>   reads the value of the mysecret key in the secret/data path
 
-version: '3.6'
-
 services:
-  cmnexts:
-    build: #builds in the current directory
-      context: .
-
+  cmnext:
     image: vnuge/cmnext
     container_name: cmnext
+    build: #builds in the current directory
+      context: .
     restart: unless-stopped
     volumes:
       - ./data:/app/data
