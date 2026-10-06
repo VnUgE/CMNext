@@ -83,6 +83,7 @@ import {
   faThumbTack,
   faThumbTackSlash,
   faFolder,
+  faLink,
 } from '@fortawesome/free-solid-svg-icons';
 import { faGithub, faMarkdown } from '@fortawesome/free-brands-svg-icons';
 
@@ -132,7 +133,8 @@ library.add(
   faQuestionCircle,
   faThumbTack,
   faThumbTackSlash,
-  faFolder
+  faFolder,
+  faLink
 );
 
 //Add icons to library

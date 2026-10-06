@@ -38,7 +38,6 @@ const posts = cmnext.createPostStore(channelId);
 const channel = cmnext.channels.single(channelId);
 
 // Computed values
-const pageTitle = computed(() => `Posts in ${channel.value?.name ?? 'Unknown Channel'}`);
 const hasChannel = computed(() => !isNil(channel.value));
 const hasPosts = computed(() => posts.all.value.length > 0);
 const postCount = computed(() => posts.all.value.length);
@@ -114,9 +113,7 @@ const onDeletePost = async (post: PostMeta) => {
         </router-link>
         <div class="divider divider-horizontal mx-0" />
         <div class="min-w-0">
-          <h1 class="text-2xl md:text-3xl font-bold text-base-content truncate" :title="pageTitle">
-            {{ pageTitle }}
-          </h1>
+          <h1 class="text-2xl md:text-3xl font-bold text-base-content truncate">Manage Posts</h1>
           <p class="text-base-content/70 mt-1">Manage and create posts for this channel</p>
         </div>
       </div>

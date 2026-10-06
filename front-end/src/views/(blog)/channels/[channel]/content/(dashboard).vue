@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useRouteParams, useRouteQuery } from '@vueuse/router';
-import { get, useArrayReduce } from '@vueuse/core';
+import { get, useArrayReduce, useClipboard, useOffsetPagination } from '@vueuse/core';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { defaultTo, filter, find, includes, isNil, orderBy, toLower } from 'lodash-es';
+import { defaultTo, filter, find, includes, isNil, min, orderBy, slice, toLower } from 'lodash-es';
 import type { ContentMeta } from '@vnuge/cmnext-admin';
 import { useApiCall } from '@vnuge/vnlib.browser/vue';
 import { useStore } from '../../../../../store';
@@ -38,7 +38,6 @@ const content = cmnext.createContentStore(channelId);
 const channel = cmnext.channels.single(channelId);
 
 // Computed values
-const pageTitle = computed(() => `Content in ${channel.value?.name ?? 'Unknown Channel'}`);
 const hasChannel = computed(() => !isNil(channel.value));
 const hasContent = computed(() => content.all.value.length > 0);
 const fileCount = computed(() => content.all.value.length);
@@ -85,6 +84,35 @@ const sortedContent = computed(() => {
   return sorted;
 });
 
+const { currentPage, currentPageSize, pageCount, isFirstPage, isLastPage, prev, next } =
+  useOffsetPagination({
+    total: computed(() => sortedContent.value.length),
+    pageSize: 15,
+  });
+
+const pagedContent = computed(() => {
+  const start = (currentPage.value - 1) * currentPageSize.value;
+  return slice(sortedContent.value, start, start + currentPageSize.value);
+});
+
+// Display range for the current page, e.g. "1–15 of 42"
+const rangeStart = computed(() =>
+  sortedContent.value.length === 0 ? 0 : (currentPage.value - 1) * currentPageSize.value + 1
+);
+const rangeEnd = computed(
+  () => min([currentPage.value * currentPageSize.value, sortedContent.value.length]) ?? 0
+);
+
+// Clipboard
+const { copy, isSupported: clipboardSupported } = useClipboard();
+
+const copyFileField = (file: ContentMeta, field: 'id' | 'path', label: string) => {
+  const value = file[field];
+  if (!value) return;
+  copy(value);
+  toaster.success('Copied', `${label} "${value}" copied to clipboard.`);
+};
+
 // Content operations
 const onDeleteFile = async (file: ContentMeta) => {
   const { isCanceled } = await confirm({
@@ -102,12 +130,17 @@ const onDeleteFile = async (file: ContentMeta) => {
 
   await content.refresh();
 };
+
+// Reset to page 1 when search/sort changes
+watch([search, sortMode], () => {
+  if (currentPage.value > 1) currentPage.value = 1;
+});
 </script>
 
 <template>
   <div id="channel-content-page" class="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
     <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div class="flex items-center gap-4">
         <router-link :to="`/channels/${channelId}`" class="btn btn-ghost btn-sm shrink-0">
           <fa-icon icon="arrow-left" class="mr-2" />
@@ -115,16 +148,16 @@ const onDeleteFile = async (file: ContentMeta) => {
         </router-link>
         <div class="divider divider-horizontal mx-0" />
         <div class="min-w-0">
-          <h1 class="text-2xl md:text-3xl font-bold text-base-content truncate" :title="pageTitle">
-            {{ pageTitle }}
-          </h1>
-          <p class="text-base-content/70 mt-1">Manage uploads and attachments for this channel</p>
+          <h1 class="text-2xl md:text-3xl font-bold text-base-content truncate">Manage Content</h1>
+          <p class="text-base-content/70 mt-1 md:block hidden">
+            Manage uploads and attachments for this channel
+          </p>
         </div>
       </div>
-      <div class="grid grid-cols-2 sm:flex gap-2">
+      <div class="grid grid-cols-2 md:flex gap-2">
         <router-link :to="`/channels/${channelId}/content/new`" class="btn btn-primary">
           <fa-icon icon="plus" class="mr-2" />
-          Upload Content
+          Upload
         </router-link>
         <router-link :to="`/channels/${channelId}/edit`" class="btn btn-outline">
           <fa-icon icon="cog" class="mr-2" />
@@ -205,10 +238,7 @@ const onDeleteFile = async (file: ContentMeta) => {
       <p class="text-lg opacity-75 mb-4">
         This channel doesn&apos;t have any uploaded content yet.
       </p>
-      <router-link
-        class="btn btn-primary"
-        :to="`/channels/${channelId}/content/new`"
-      >
+      <router-link class="btn btn-primary" :to="`/channels/${channelId}/content/new`">
         <fa-icon icon="plus" />
         Upload First File
       </router-link>
@@ -223,7 +253,7 @@ const onDeleteFile = async (file: ContentMeta) => {
     </div>
 
     <!-- Content table -->
-    <div v-else class="card bg-base-100 shadow overflow-hidden">
+    <div v-else class="card bg-base-100 shadow overflow-hidden z-0">
       <div class="overflow-x-auto">
         <table class="table">
           <thead>
@@ -235,8 +265,8 @@ const onDeleteFile = async (file: ContentMeta) => {
               <th><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="file in sortedContent" :key="file.id">
+          <tbody class="overflow-x-auto relative">
+            <tr v-for="file in pagedContent" :key="file.id">
               <td>
                 <div class="flex items-center gap-2 min-w-0">
                   <fa-icon icon="file-alt" class="text-base-content/40 shrink-0" />
@@ -252,31 +282,79 @@ const onDeleteFile = async (file: ContentMeta) => {
               </td>
               <td class="hidden md:table-cell whitespace-nowrap">{{ formatDate(file.date) }}</td>
               <td class="text-right whitespace-nowrap">{{ formatBytes(file.length) }}</td>
-              <td class="text-right whitespace-nowrap">
-                <div class="join">
-                  <router-link
-                    class="btn btn-xs btn-primary join-item"
-                    :to="`/channels/${channelId}/content/${file.id}`"
-                    title="Edit File"
+              <td class="text-right whitespace-nowrap w-14">
+                <div class="dropdown dropdown-left shrink-0">
+                  <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
+                    <fa-icon icon="ellipsis-h" />
+                  </div>
+                  <ul
+                    tabindex="0"
+                    class="dropdown-content menu bg-base-100 rounded-box z-30 w-52 p-2 shadow"
                   >
-                    <fa-icon icon="edit" />
-                  </router-link>
-                  <button
-                    class="btn btn-xs btn-error join-item"
-                    title="Delete File"
-                    @click="onDeleteFile(file)"
-                  >
-                    <fa-icon icon="trash" />
-                  </button>
+                    <li>
+                      <router-link :to="`/channels/${channelId}/content/${file.id}`">
+                        <fa-icon icon="edit" />
+                        Edit
+                      </router-link>
+                    </li>
+                    <li v-if="clipboardSupported">
+                      <button @click="copyFileField(file, 'id', 'ID')">
+                        <fa-icon icon="copy" />
+                        Copy ID
+                      </button>
+                    </li>
+                    <li v-if="clipboardSupported">
+                      <button @click="copyFileField(file, 'path', 'Path')">
+                        <fa-icon icon="link" />
+                        Copy Path
+                      </button>
+                    </li>
+                    <li class="divider-sm" />
+                    <li>
+                      <button class="text-error" @click="onDeleteFile(file)">
+                        <fa-icon icon="trash" />
+                        Delete
+                      </button>
+                    </li>
+                  </ul>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-    </div>
 
-    <!-- Footer spacing -->
-    <div class="h-8" />
+      <!-- Pagination -->
+      <div
+        class="flex flex-row items-center justify-between gap-3 px-4 py-3 border-t border-base-300"
+      >
+        <p class="text-sm text-base-content/60">
+          Showing <span class="font-medium text-base-content">{{ rangeStart }}</span
+          >–<span class="font-medium text-base-content">{{ rangeEnd }}</span> of
+          <span class="font-medium text-base-content">{{ sortedContent.length }}</span>
+        </p>
+        <div class="join">
+          <button
+            class="btn btn-sm join-item"
+            :disabled="isFirstPage"
+            aria-label="Previous page"
+            @click="prev"
+          >
+            <fa-icon icon="chevron-left" />
+          </button>
+          <button class="btn btn-sm join-item pointer-events-none" disabled>
+            {{ currentPage }} / {{ pageCount }}
+          </button>
+          <button
+            class="btn btn-sm join-item"
+            :disabled="isLastPage"
+            aria-label="Next page"
+            @click="next"
+          >
+            <fa-icon icon="chevron-right" />
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
