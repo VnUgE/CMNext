@@ -83,7 +83,8 @@ namespace Content.Publishing.Blog.Admin.Storage
                 password.Result.ToString()
             );
 
-            //If the user forces ssl, then assume it's an implicit connection and force certificate checking
+            // If the user forces ssl, then assume it's an implicit connection and
+            //  force certificate checking
             if (_storageConf.UseSsl == true)
             {
                 _client.Config.EncryptionMode = FtpEncryptionMode.Implicit;
@@ -94,20 +95,19 @@ namespace Content.Publishing.Blog.Admin.Storage
                 _client.Config.ValidateAnyCertificate = true;
             }
 
-            //FluentFTP 54+ sanitizes every remote path, fail loudly on
-            //unsafe input instead of silently renaming it server-side
+            //FluentFTP 54+ sanitizes every remote path
             _client.Config.SanitizeMode = FtpSanitize.Throw;
 
             //Bound stalled uploads instead of hanging indefinitely
             _client.Config.WriteTimeout = 10 * 1000;
 
-            //Send periodic NOOPs on idle control connections instead of a manual ping schedule
+            //Send periodic NOOPs on idle control connections
             _client.Config.Noop = _storageConf.KeepaliveSeconds > 0;
             _client.Config.NoopInterval = _storageConf.KeepaliveSeconds * 1000;
 
             plugin.Log.Information("Connecting to ftp server");
 
-            await _client.AutoConnect(CancellationToken.None);
+            await _client.AutoConnect(plugin.UnloadToken);
             plugin.Log.Information("Successfully connected to ftp server");
         }
 

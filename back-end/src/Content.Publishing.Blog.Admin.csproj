@@ -35,6 +35,9 @@
     <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.5" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Content.Publishing.Blog.Admin.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="CMNext.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
