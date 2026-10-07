@@ -45,7 +45,7 @@ tasks:
       - defer: rm -rf config/
 
       #merge user assets
-      - cmd: cp -r 'usr/assets/*' 'plugins/assets/'
+      - cmd: cp -r 'usr/assets/' 'plugins/assets/'
         ignore_error: true
 
       #merge config files from environment
