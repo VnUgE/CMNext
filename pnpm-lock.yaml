@@ -53,6 +53,9 @@ importers:
       base32-encode:
         specifier: ^2.0.0
         version: 2.0.0
+      jodit:
+        specifier: ^4.17.2
+        version: 4.17.2
       jose:
         specifier: ^6.2.12
         version: 6.2.12
@@ -1417,6 +1420,9 @@ packages:
   jmespath@0.16.0:
     resolution: {integrity: sha512-9FzQjJ7MATs1tSpnco1K6ayiYE3figslrXA72G2HQ/n76RzvYlofyi5QM+iX4YRs/pu3yzxlVQSST23+dMDknw==}
     engines: {node: '>= 0.6.0'}
+
+  jodit@4.17.2:
+    resolution: {integrity: sha512-+Ka5PMK2p5ycB0j09QjAmO92mVTyCcddYUYAvjoR76RTSUITTKNRzyhZqDoM7WL5RsujKwyjtXbanF7xxZFkvA==}
 
   jose@6.2.12:
     resolution: {integrity: sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw==}
@@ -3160,6 +3166,8 @@ snapshots:
   jiti@2.7.0: {}
 
   jmespath@0.16.0: {}
+
+  jodit@4.17.2: {}
 
   jose@6.2.12: {}
 

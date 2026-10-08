@@ -33,6 +33,7 @@
     "@vueuse/router": "^14.4.0",
     "axios": "^1.20.0",
     "base32-encode": "^2.0.0",
+    "jodit": "^4.17.2",
     "jose": "^6.2.12",
     "json-editor-vue": "^0.19.2",
     "lodash-es": "^4.18.1",

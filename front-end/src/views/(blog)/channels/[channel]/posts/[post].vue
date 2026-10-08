@@ -30,10 +30,6 @@ const isNew = toRef(editor.isNew);
 
 const imageLoadError = ref(false);
 
-const strippedContent = computed(() => (buffer.content || '').replace(/<[^>]*>/g, ' '));
-const wordCount = computed(() => words(strippedContent.value).length);
-const charCount = computed(() => strippedContent.value.replace(/\s+/g, ' ').trim().length);
-
 const channel = computed(() => find(editor.channels.value, (c) => c.id === channelId.value));
 
 const properties = computed({
@@ -116,7 +112,7 @@ const mdEditorVisible = computed({
               <div class="min-h-100">
                 <Suspense>
                   <template #default>
-                    <ContentEditor @load="(se) => (editor.sunEditor.value = se)" />
+                    <ContentEditor v-model="buffer.content" />
                   </template>
                   <template #fallback>
                     <div class="flex items-center justify-center h-64">
@@ -133,14 +129,6 @@ const mdEditorVisible = computed({
                 class="px-6 py-2 bg-error/10 border-t border-error/20"
               >
                 <p class="text-error text-sm">{{ errors.content.message }}</p>
-              </div>
-
-              <!-- Stats Footer -->
-              <div
-                class="flex items-center gap-4 px-6 py-3 border-t border-base-200 text-xs text-base-content/60"
-              >
-                <span>{{ wordCount }} words</span>
-                <span>{{ charCount }} chars</span>
               </div>
             </div>
           </div>

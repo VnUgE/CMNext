@@ -1,20 +1,49 @@
 <script setup lang="ts">
-// TODO: suneditor was removed (upstream trust downgrade blocked installs).
-// This is a placeholder until a replacement rich text editor lands. The
-// 'load' and 'mode-change' emits are kept so consumers keep compiling;
-// they are never emitted by the placeholder.
-defineEmits(['load', 'mode-change']);
+import { ref, shallowRef, watch } from 'vue';
+import { tryOnBeforeUnmount, whenever, get, set } from '@vueuse/core';
+import { Jodit } from 'jodit';
+import { defer } from 'lodash-es';
+import 'jodit/es2021/jodit.min.css';
+
+const props = defineProps<{ modelValue: string }>();
+const emit = defineEmits<{ 'update:modelValue': [string] }>();
+
+const el = ref<HTMLTextAreaElement>();
+const editor = shallowRef<ReturnType<typeof Jodit.make>>();
+
+whenever(el, (mount) => {
+  defer(() => {
+    if (!mount.isConnected) return;
+
+    const ed = Jodit.make(mount, { height: 'auto' });
+    ed.value = props.modelValue;
+
+    // User edits -> push up to the buffer.
+    ed.events.on('change', () => {
+      if (ed.value !== props.modelValue) emit('update:modelValue', ed.value);
+    });
+
+    set(editor, ed);
+  });
+});
+
+// External change (e.g. Markdown import writes buffer.content) -> push down.
+watch(
+  () => props.modelValue,
+  (value) => {
+    const ed = get(editor);
+    if (ed && ed.value !== value) ed.value = value;
+  }
+);
+
+// Tear down on unmount
+tryOnBeforeUnmount(() => {
+  editor.value?.destruct();
+  set(editor, undefined);
+});
 </script>
 
 <template>
-  <div
-    class="flex flex-col items-center justify-center gap-2 border border-dashed border-base-300 rounded-lg p-12 text-center"
-  >
-    <fa-icon icon="file-alt" class="w-8 h-8 opacity-40" />
-    <p class="font-medium opacity-70">Rich text editor unavailable</p>
-    <p class="text-sm opacity-50 max-w-md">
-      The content editor was removed and will return in a future update. You can still edit raw
-      content through the Markdown dialog.
-    </p>
-  </div>
+  <!-- Jodit replaces this textarea with its editor UI. Deliberately no v-model. -->
+  <textarea ref="el" class="jodit" aria-label="Post content" />
 </template>
