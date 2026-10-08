@@ -145,7 +145,6 @@ export interface PostEditorState {
   deletePost: () => Promise<void>;
   saveDraft: () => Promise<void>;
   revertChanges: () => void;
-  navigateBack: () => Promise<void>;
   openPreview: () => void;
   refreshPost: () => Promise<void>;
 
@@ -279,23 +278,6 @@ export const usePostEditor = (
     toaster.info('Changes Reverted', 'All changes have been discarded.');
   };
 
-  const navigateBack = async () => {
-    if (!modified.value) {
-      router.back();
-      return;
-    }
-
-    const { isCanceled } = await confirm({
-      title: 'Unsaved Changes',
-      message: 'You have unsaved changes. Are you sure you want to leave?',
-      isWarning: true,
-    });
-
-    if (isCanceled) return;
-
-    router.push(`/channels/${channelIdRef.value}/posts`);
-  };
-
   const openPreview = () => {
     const post = get(postBuffer.raw);
 
@@ -357,7 +339,6 @@ export const usePostEditor = (
     deletePost,
     saveDraft,
     revertChanges,
-    navigateBack,
     openPreview,
     refreshPost,
 

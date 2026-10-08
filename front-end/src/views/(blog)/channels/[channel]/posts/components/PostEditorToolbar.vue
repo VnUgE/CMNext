@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, toRef } from 'vue';
+import { useRouter } from 'vue-router';
+import { confirm } from '../../../../../../lib/confirm';
 import { onClickOutside, useToggle, whenever } from '@vueuse/core';
 import type { PostEditorState } from '../../../../../../lib/usePostEditor';
 
@@ -7,8 +9,10 @@ const props = defineProps<{
   editor: PostEditorState;
 }>();
 
-const { post, savePost, saveDraft, deletePost, revertChanges, navigateBack, openPreview } =
+const { post, savePost, saveDraft, deletePost, revertChanges, openPreview, channelId } =
   props.editor;
+
+const router = useRouter();
 
 const isNew = toRef(props.editor.isNew);
 const waiting = toRef(props.editor.waiting);
@@ -20,6 +24,19 @@ const [optionsOpen, toggleOptions] = useToggle();
 const saveSplitRef = ref<HTMLElement | null>(null);
 
 const closeOptions = () => toggleOptions(false);
+
+const navigateBack = async () => {
+  if (post.modified.value) {
+    const { isCanceled } = await confirm({
+      title: 'Unsaved changes',
+      message: `Are you sure you want to go back without saving your changes?`,
+    });
+
+    if (isCanceled) return;
+  }
+
+  await router.push(`/channels/${channelId.value}/posts`);
+};
 
 onClickOutside(saveSplitRef, closeOptions);
 whenever(waiting, closeOptions);
