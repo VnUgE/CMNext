@@ -84,6 +84,10 @@ import {
   faThumbTackSlash,
   faFolder,
   faLink,
+  faAlignLeft,
+  faDownload,
+  faFileImport,
+  faFileExport,
 } from '@fortawesome/free-solid-svg-icons';
 import { faGithub, faMarkdown } from '@fortawesome/free-brands-svg-icons';
 
@@ -134,7 +138,11 @@ library.add(
   faThumbTack,
   faThumbTackSlash,
   faFolder,
-  faLink
+  faLink,
+  faAlignLeft,
+  faDownload,
+  faFileImport,
+  faFileExport
 );
 
 //Add icons to library

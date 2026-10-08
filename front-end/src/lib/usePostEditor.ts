@@ -1,4 +1,4 @@
-import { computed, ref, type MaybeRef, type Ref, type ComputedRef, shallowRef } from 'vue';
+import { computed, type MaybeRef, type Ref, type ComputedRef, shallowRef } from 'vue';
 import { useToggle, toRef, get, computedAsync } from '@vueuse/core';
 import { defaultTo, filter, isEmpty, join, split, defer } from 'lodash-es';
 import { useRouter } from 'vue-router';
@@ -133,7 +133,6 @@ export interface PostEditorState {
     readonly mode: Ref<boolean>;
     readonly toggle: (value?: boolean) => boolean;
   };
-  readonly imageLoadError: Ref<boolean>;
 
   // TODO: retype when the rich text editor replacement lands (suneditor removed).
   readonly sunEditor: Ref<unknown>;
@@ -177,7 +176,6 @@ export const usePostEditor = (
   // UI State
   const [mdVisible, toggleMdVisible] = useToggle(false);
   const [podcastMode, togglePodcastMode] = useToggle(false);
-  const imageLoadError = ref(false);
   const sunEditor = shallowRef<unknown>();
 
   // Find single post from loaded posts based on postId
@@ -349,7 +347,6 @@ export const usePostEditor = (
       toggle: togglePodcastMode,
     },
 
-    imageLoadError,
     sunEditor,
 
     // Derived State
