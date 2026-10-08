@@ -28,11 +28,11 @@ const { pinnedChannels } = store.preferences;
 const userProfileData = computed(() => store.user.profile || {});
 
 const userEmail = computed(
-  () => userProfileData.value.email || userName.value || 'user@example.com'
+  () => userProfileData.value.email || get(userName) || 'user@example.com'
 );
 
 const userDisplayName = computed(() => {
-  const profile = userProfileData.value;
+  const profile = get(userProfileData);
   const firstName = lodashGet(profile, 'first', '');
   const lastName = lodashGet(profile, 'last', '');
 
@@ -197,14 +197,14 @@ const logout = () => {
             </li>
 
             <li class="menu-title"><span>Account</span></li>
-            <MenuItem v-slot="{ active }" as="li">
-              <router-link to="/account" :class="{ 'bg-base-200': active }">
+            <MenuItem as="li">
+              <router-link to="/account">
                 <fa-icon icon="user" class="mr-2" />
                 Settings
               </router-link>
             </MenuItem>
-            <MenuItem v-slot="{ active }" as="li">
-              <button :class="[{ 'bg-base-200': active }, 'text-error']" @click="logout()">
+            <MenuItem as="li">
+              <button class="text-error" @click="logout()">
                 <fa-icon icon="sign-out-alt" class="mr-2" />
                 Logout
               </button>
@@ -213,22 +213,17 @@ const logout = () => {
             <div class="divider my-1" />
 
             <li class="menu-title"><span>Resources</span></li>
-            <MenuItem v-slot="{ active }" as="li">
+            <MenuItem as="li">
               <a
                 href="https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext"
                 target="_blank"
-                :class="{ 'bg-base-200': active }"
               >
                 <fa-icon icon="book" class="mr-2" />
                 Documentation
               </a>
             </MenuItem>
-            <MenuItem v-slot="{ active }" as="li">
-              <a
-                href="https://github.com/VnUgE/CMNext"
-                target="_blank"
-                :class="{ 'bg-base-200': active }"
-              >
+            <MenuItem as="li">
+              <a href="https://github.com/VnUgE/CMNext" target="_blank">
                 <fa-icon icon="code" class="mr-2" />
                 Source Code
               </a>
