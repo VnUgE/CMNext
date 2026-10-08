@@ -45,5 +45,5 @@ tryOnBeforeUnmount(() => {
 
 <template>
   <!-- Jodit replaces this textarea with its editor UI. Deliberately no v-model. -->
-  <textarea ref="el" class="jodit" aria-label="Post content" />
+  <textarea ref="el" class="jodit post-editor" aria-label="Post content" />
 </template>
