@@ -185,9 +185,9 @@ tasks:
       - task: pb-parallel
 
       #cleanup unnecessary build files that clog up the pipeline
-      # - for: [build]
-      #   cmd: rm -rf "{{ .ITEM }}"
-      #   ignore_error: true
+      - for: [build]
+        cmd: rm -rf "{{ .ITEM }}"
+        ignore_error: true
 
   pb-parallel:
     internal: true
