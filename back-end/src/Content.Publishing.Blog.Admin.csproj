@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -7,42 +6,43 @@
     <RootNamespace>Content.Publishing.Blog.Admin</RootNamespace>
     <AssemblyName>CMNext</AssemblyName>
   </PropertyGroup>
-
   <PropertyGroup>
     <Authors>Vaughn Nugent</Authors>
     <Company>Vaughn Nugent</Company>
     <Product>CMNext.Admin</Product>
     <Description>A VNLib.Plugins.Essentials administration plugin for the CMNext content publishing platform.</Description>
-    <Copyright>Copyright © 2024 Vaughn Nugent</Copyright>
+    <Copyright>Copyright © 2026 Vaughn Nugent</Copyright>
     <PackageProjectUrl>https://www.vaughnnugent.com/resources/software/modules/CMNext.Admin</PackageProjectUrl>
     <RepositoryUrl>https://github.com/VnUgE/CMNext/tree/master/</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Include="..\..\LICENSE.txt">
+    <None Include="..\..\LICENSE">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="50.1.0" />
-    <PackageReference Include="Minio" Version="6.0.3" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.0-ci0064" />
-    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.0-ci0064" />
+    <PackageReference Include="FluentFTP" Version="55.0.0" />
+    <PackageReference Include="Minio" Version="7.0.0" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Loading" Version="0.1.5" />
+    <PackageReference Include="VNLib.Plugins.Extensions.Validation" Version="0.1.5" />
   </ItemGroup>
-
   <ItemGroup>
+    <InternalsVisibleTo Include="Content.Publishing.Blog.Admin.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="CMNext.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="CMNext.sample.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
 </Project>

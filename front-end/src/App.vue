@@ -1,42 +1,78 @@
-<template>
-  <head>
-    <title>{{ metaTile }}</title>
-  </head>
-  <!-- Import environment component top level as the entrypoint -->
-  <Environment @logout="logout()">
-    <template #main>
-      <router-view />
-    </template>
-  </Environment>
-</template>
-
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import { useStore } from './store';
 import { storeToRefs } from 'pinia';
-import { apiCall } from '@vnuge/vnlib.browser';
-import Environment from './bootstrap/Environment.vue';
+import { useTitle, whenever } from '@vueuse/core';
+import { cmnext, toaster } from './main';
+import Sidebar from './components/Sidebar.vue';
+const ConfirmPrompt = defineAsyncComponent(() => import('./components/ConfirmPrompt.vue'));
+const PasswordPrompt = defineAsyncComponent(() => import('./components/PasswordPrompt.vue'));
 
-const store = useStore()
-const { siteTitle, pageTitle } = storeToRefs(store)
+const store = useStore();
+const { pageTitle, loggedIn } = storeToRefs(store);
 
-//Compute meta title from the default site title and the page title
-const metaTile = computed(() => `${pageTitle.value} | ${siteTitle.value}`)
+store.setPageTitle('Home');
 
-const logout = () => {
-  apiCall(async () => {
-    const { logout } = await store.socialOauth()
-    await logout()
-  })
-}
+useTitle(computed(() => `${pageTitle.value} | CMNext Admin`));
 
-store.setSiteTitle('CMNext Admin')
-store.setPageTitle('Blog')
-
-//Set header routes
-store.setHeaderRouteNames(
-  ['Login'],
-  ['Blog', 'Account', 'Login']
-)
-
+// Refresh channels whenever the user logs in
+whenever(loggedIn, () => cmnext.channels.refresh());
+// Surfaces load errors
+whenever(
+  () => store.account.error,
+  (err) => {
+    toaster.error('Load error', err instanceof Error ? err.message : 'Unknown error');
+  }
+);
 </script>
+
+<template>
+  <!-- The drawer chrome only exists for authenticated users; logged-out
+    visitors get a full-width centered auth layout instead of a dead shell -->
+  <div class="drawer" :class="{ 'lg:drawer-open': loggedIn }">
+    <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+    <div ref="content" class="drawer-content flex flex-col min-h-screen">
+      <div
+        v-if="loggedIn"
+        class="lg:hidden sticky top-0 z-40 navbar bg-base-100 border-b border-base-200 min-h-16"
+      >
+        <div class="flex-none">
+          <label
+            for="main-drawer"
+            class="btn btn-ghost btn-square drawer-button"
+            aria-label="Open navigation"
+          >
+            <fa-icon icon="bars" />
+          </label>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-lg font-semibold truncate block">{{ pageTitle }}</span>
+        </div>
+        <div class="flex-none w-10" />
+      </div>
+
+      <!-- Toasts render in a centered, width-capped stack (see style block) -->
+      <notifications
+        class="toast-stack"
+        group="general"
+        position="top center"
+        classes="cmnext-toast"
+        :max="3"
+        :duration="5000"
+      />
+
+      <!-- Main body for router-view -->
+      <div id="env-body" class="grow w-full">
+        <router-view />
+      </div>
+    </div>
+
+    <div v-if="loggedIn" class="drawer-side z-50">
+      <label for="main-drawer" aria-label="Close sidebar" class="drawer-overlay" />
+      <Sidebar />
+    </div>
+  </div>
+
+  <PasswordPrompt />
+  <ConfirmPrompt />
+</template>

@@ -3,59 +3,29 @@
   "version": "0.1.2",
   "author": "Vaughn Nugent",
   "description": "A browser client library for CMNext admin UI development",
-  "copyright": "Copyright \u00A9 2024 Vaughn Nugent",
+  "copyright": "Copyright © 2026 Vaughn Nugent",
   "repository": "https://github.com/VnUgE/CMNext/tree/master/lib/admin",
   "output_dir": "bin",
   "type": "module",
-
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "typings": "./dist/index.d.ts",
-
   "scripts": {
-    "lint": "eslint --ext .js,.ts --ignore-path ../../.gitignore src",
     "build": "tsc",
     "clean": "if exist dist ( rd /S /Q lib)"
   },
-
   "license": "agpl3",
-
   "devDependencies": {
-    "@types/lodash-es": "^4.14.194",
-    "@babel/types":"^7.x",
-    "@typescript-eslint/eslint-plugin": "^7.0.x"
+    "@types/lodash-es": "^4.17.12",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3"
   },
-
-  "peerDependencies": {
-    "@vueuse/core": "^10.x",
-    "lodash-es": "^4.x",
-    "vue": "^3.x",
-    "axios": "^1.x",
-    "jose": "^5.1.x",
-    "universal-cookie": "^7.x",
-    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/451091e93b5feee7a5e01d3a81f5d63efa7ea8be/@vnuge-vnlib.browser/release.tgz"
-  },
-
-  "eslintConfig": {
-    "root": true,
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "project": []
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "rules": {},
-    "ignorePatterns": [
-      "src/**/*.test.ts",
-      "src/frontend/generated/*"
-    ],
-    "env": {
-      "browser": true
-    }
+  "dependencies": {
+    "@vnuge/vnlib.browser": "https://www.vaughnnugent.com/public/resources/software/builds/Plugins.Essentials/0a9eae2835d6a3d0cd7894d81a2c93dea9d5a221/@vnuge-vnlib.browser/release.tgz",
+    "@vueuse/core": "^14.4.0",
+    "axios": "^1.20.0",
+    "jose": "^6.2.12",
+    "lodash-es": "^4.18.1",
+    "vue": "^3.5.43"
   }
 }

@@ -1,0 +1,285 @@
+<script setup lang="ts">
+import { isEmpty } from 'lodash-es';
+import { useOtpApi, type OtpPublicKey } from '@vnuge/vnlib.browser';
+import { useApiCall } from '@vnuge/vnlib.browser/vue';
+import { ref } from 'vue';
+import { useToggle, set, toRefs, refDefault } from '@vueuse/core';
+import { useStore } from '../../../store';
+import { toaster } from '../../../main';
+import { confirm, withPassword } from '../../../lib/confirm';
+import { logError } from '../../../lib/log';
+import * as yup from 'yup';
+import SettingsCard from './SettingsCard.vue';
+
+const store = useStore();
+const { invoke: apiCall } = useApiCall({ toaster });
+
+const pkiConfig = useOtpApi(store.mfa);
+
+const _otpData = store.mfa.getDataFor<{
+  keys: OtpPublicKey[];
+  can_add_keys: boolean;
+  data_size: number;
+  max_size: number;
+}>('pkotp');
+
+const otpData = refDefault(_otpData, { keys: [], can_add_keys: false, data_size: 0, max_size: 0 });
+const {
+  keys: publicKeys,
+  can_add_keys: canAddKeys,
+  data_size: dataSize,
+  max_size,
+} = toRefs(otpData);
+
+const [isOpen, toggleOpen] = useToggle();
+const [showInfo, toggleInfo] = useToggle();
+const keyData = ref('');
+
+const jwkSchema = yup.object({
+  kty: yup.string().required('Key type (kty) is required'),
+  use: yup.string().required('Key use (use) is required'),
+  alg: yup.string().required('Algorithm (alg) is required'),
+  kid: yup.string().required('Key ID (kid) is required'),
+  x: yup.string().required('X coordinate (x) is required'),
+  y: yup.string().required('Y coordinate (y) is required'),
+  crv: yup.string().optional(),
+});
+
+const onRemoveKey = async (single: OtpPublicKey) => {
+  const conf = await confirm({
+    title: 'Are you sure?',
+    message: `This will remove key ${single.kid} from your account.`,
+    isWarning: true,
+  });
+  if (conf.isCanceled) {
+    return;
+  }
+
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const { result, code } = await pkiConfig.removeKey(single, { password });
+
+      if (code === 401) {
+        toaster.error('Error', 'Invalid password provided.');
+        return;
+      }
+
+      toaster.success('Success', result);
+      store.mfa.refresh();
+    });
+  });
+};
+
+const onDisable = async () => {
+  const { isCanceled } = await confirm({
+    title: 'Are you sure?',
+    message: 'This will disable PKI authentication for your account.',
+    isWarning: true,
+  });
+  if (isCanceled) {
+    return;
+  }
+
+  await withPassword(async (password) => {
+    await apiCall(async () => {
+      const { result } = await pkiConfig.disable({ password });
+      toaster.success('Success', result);
+      store.mfa.refresh();
+    });
+  });
+};
+
+const onSubmitKeys = async () => {
+  if (window.crypto.subtle == null) {
+    toaster.error('Your browser does not support PKI authentication.');
+    return;
+  }
+
+  //Validate key data
+  if (isEmpty(keyData.value)) {
+    toaster.error('Please enter key data');
+    return;
+  }
+
+  let jwk: OtpPublicKey;
+  try {
+    //Try to parse as jwk
+    jwk = JSON.parse(keyData.value);
+  } catch (e) {
+    logError('Invalid JWK:', e);
+    toaster.error('Invalid JWK', 'Unable to parse JSON.');
+    return;
+  }
+
+  try {
+    await jwkSchema.validate(jwk, { abortEarly: false });
+  } catch (ve: unknown) {
+    //validate() only throws ValidationError; anything else is unexpected
+    if (!(ve instanceof yup.ValidationError)) {
+      throw ve;
+    }
+    toaster.error('Invalid Key', ve.errors.join(', '));
+    return;
+  }
+
+  toggleOpen(false);
+
+  //Send to server gated on the password step
+  await withPassword(async (password) => {
+    const result = await apiCall(async () => {
+      //init/update the key
+      const { result } = await pkiConfig.addOrUpdate(jwk, { password });
+
+      toaster.success('Success', result);
+
+      set(keyData, '');
+
+      store.mfa.refresh();
+
+      return true;
+    });
+
+    //if the form failed to submit (password error or cancelled), open it again
+    toggleOpen(!result);
+  });
+};
+</script>
+
+<template>
+  <SettingsCard
+    title="OTP Public Keys"
+    :description="
+      publicKeys.length > 0
+        ? `${publicKeys.length} key(s) registered`
+        : 'Use signed JWTs for authentication'
+    "
+  >
+    <template #actions>
+      <div class="flex items-center gap-1">
+        <button
+          class="btn btn-sm btn-ghost tooltip tooltip-left"
+          data-tip="What is an OTP public key?"
+          aria-label="About OTP public keys"
+          @click.prevent="toggleInfo(true)"
+        >
+          <fa-icon icon="info-circle" />
+        </button>
+        <div v-if="publicKeys.length > 0" class="join">
+          <button
+            class="btn btn-sm join-item tooltip tooltip-left"
+            :data-tip="
+              !canAddKeys ? 'Key storage is full or unavailable' : 'Add a new OTP public key'
+            "
+            :disabled="!canAddKeys"
+            @click.prevent="toggleOpen(true)"
+          >
+            <fa-icon icon="plus" />
+            <span class="hidden sm:inline ml-1">Add</span>
+          </button>
+          <button
+            class="btn btn-sm text-error join-item tooltip tooltip-left tooltip-error"
+            data-tip="Remove all keys"
+            @click.prevent="onDisable"
+          >
+            <fa-icon icon="minus-circle" />
+            <span class="hidden sm:inline ml-1">Disable</span>
+          </button>
+        </div>
+        <button
+          v-else
+          class="btn btn-sm btn-primary tooltip tooltip-left"
+          :data-tip="
+            !canAddKeys ? 'Key storage is full or unavailable' : 'Add a new OTP public key'
+          "
+          :disabled="!canAddKeys"
+          @click.prevent="toggleOpen(true)"
+        >
+          <fa-icon icon="plus" />
+          <span class="ml-1">Add Key</span>
+        </button>
+      </div>
+    </template>
+
+    <!-- Keys Table -->
+    <div v-if="publicKeys.length > 0" class="overflow-x-auto -mx-2">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Key ID</th>
+            <th>Algorithm</th>
+            <th class="hidden sm:table-cell">Curve</th>
+            <th class="w-20" />
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="key in publicKeys" :key="key.kid">
+            <td class="max-w-32 truncate" :title="key.kid">{{ key.kid }}</td>
+            <td class="text-xs">{{ key.alg }}</td>
+            <td class="hidden sm:table-cell text-xs">{{ key.crv }}</td>
+            <td class="text-right">
+              <button class="btn btn-xs btn-ghost text-error" @click="onRemoveKey(key)">
+                <fa-icon icon="trash-can" />
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="text-xs text-base-content/50 text-right mt-1">
+        {{ dataSize }}/{{ max_size }} bytes
+      </div>
+    </div>
+
+    <!-- Info when no keys -->
+    <p v-else class="text-sm text-base-content/70">
+      OTP authentication uses signed JWTs from external tools. Add your public key to enable.
+    </p>
+  </SettingsCard>
+
+  <!-- Feature explainer -->
+  <Dialog :open="showInfo" @close="toggleInfo(false)">
+    <template #title>OTP Public Keys</template>
+    <template #description>
+      <div class="max-w-md space-y-3">
+        <p>
+          OTP authentication lets external tools sign in as you by presenting a signed token instead
+          of a password. To use it, register the
+          <strong>public half</strong> of a key here; the private half never leaves your tool.
+        </p>
+        <p>
+          Paste the key as a JSON Web Key (JWK) with
+          <span class="font-mono text-sm">kty</span>, <span class="font-mono text-sm">use</span>,
+          <span class="font-mono text-sm">alg</span>, <span class="font-mono text-sm">kid</span>,
+          <span class="font-mono text-sm">x</span>, and
+          <span class="font-mono text-sm">y</span> fields. You can inspect or craft keys at
+          <a class="link" href="https://jwt.io" target="_blank" rel="noopener">jwt.io</a>.
+        </p>
+        <div class="flex justify-end">
+          <button class="btn btn-sm btn-primary" @click.prevent="toggleInfo(false)">Got it</button>
+        </div>
+      </div>
+    </template>
+  </Dialog>
+
+  <!-- Add Key Dialog -->
+  <Dialog :open="isOpen" @close="toggleOpen(false)">
+    <template #main>
+      <div class="max-w-lg">
+        <h4 class="text-lg font-bold">Add Public Key</h4>
+        <p class="mt-2 text-sm text-base-content/70">
+          Paste your public key as a JSON Web Key (JWK). Must include kid, kty, alg, x, y fields.
+        </p>
+        <div class="form-control mt-4">
+          <textarea
+            v-model="keyData"
+            class="textarea textarea-bordered font-mono text-xs min-h-40"
+            placeholder='{"kty": "EC", "kid": "...", ...}'
+          />
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <button class="btn btn-ghost" @click.prevent="toggleOpen(false)">Cancel</button>
+          <button class="btn btn-primary" @click.prevent="onSubmitKeys">Submit</button>
+        </div>
+      </div>
+    </template>
+  </Dialog>
+</template>

@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -42,6 +42,7 @@ namespace Content.Publishing.Blog.Admin
         const string PODCAST_INDEX_LINK = "https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md";
         const string ATOM_NAMESPACE_LINK = "https://www.w3.org/2005/Atom";
         const string GENERATOR_NAME = "CMNext";
+
 
         public FeedGenerator(PluginBase pbase)
         { }

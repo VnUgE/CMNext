@@ -1,0 +1,219 @@
+# https://taskfile.dev
+
+#Inlcuded taskfile for object cache server that is used to produce
+#ci builds for standalone caching servers
+
+version: '3.45'
+
+vars:
+  TLS_CERT: 'ssl/cert.pem'
+  TLS_PRIVATE_KEY: 'ssl/key.pem'
+  DATA_DIR: 'data'
+  DEFAULT_EC_CURVE: 'secp384r1'
+  PASS_PEPPER_SIZE: 64
+
+  #lib file names
+  RPMALLOC_LIB_NAME: 'vnlib_rpmalloc'
+  COMPRESS_LIB_NAME: 'vnlib_compress'
+  ARGON2_LIB_NAME: 'argon2'
+
+tasks:
+  run:
+    aliases: [default]
+    desc: 'Runs the server in release mode'
+    silent: true
+    interactive: true
+    env:
+      #libraries intentionally do not have extensions, for cross-platform compatibility, the server will load them regardless
+      VNLIB_SHARED_HEAP_FILE_PATH: lib/{{ .RPMALLOC_LIB_NAME }}
+      VNLIB_COMPRESS_DLL_PATH: lib/{{ .COMPRESS_LIB_NAME }}
+      VNLIB_ARGON2_DLL_PATH: lib/{{ .ARGON2_LIB_NAME }}
+    cmds:
+      - cmd: dotnet webserver/VNLib.WebServer.dll --config config/config.json {{ .CLI_ARGS }} {{ .SERVER_ARGS }}
+
+  container-run:
+    desc: 'Runs the server if called from inside a container'
+    interactive: true
+    platforms: [linux]
+    cmds:
+      - defer: rm -rf config/
+
+      #merge user assets
+      - cmd: cp -r 'usr/assets/' 'plugins/assets/'
+        ignore_error: true
+
+      #merge config files from environment
+      - task: merge-config
+
+      #copy routes file from config-templates if it exists
+      - cmd: cp config-templates/routes.xml config/routes.xml
+
+      - cmd: echo "Config merged, starting server"
+        silent: true
+
+      - task: run
+        vars: { SERVER_ARGS: '--input-off {{ env "SERVER_ARGS" }}' }
+
+  setup-apt:
+    desc: 'Performs initial setup on Debian apt amd64 based machines'
+    platforms: [linux]
+    cmds:
+      - cmd: apt update
+      - cmd: apt install -y dotnet-runtime-8.0 build-essential cmake curl git
+      - task: setup
+      - cmd: echo "Setup complete"
+        silent: true
+
+  setup-dnf:
+    desc: 'Performs initial setup on Fedora/Redhat amd (dnf) based machines'
+    platforms: [linux]
+    cmds:
+      - cmd: dnf update
+      - cmd: dnf group install -y c-development development-tools
+      - cmd: dnf install -y dotnet-runtime-8.0 cmake curl git
+      - task: setup
+      - cmd: echo "Setup complete"
+        silent: true
+
+  setup-apk:
+    desc: 'Performs initial setup using the APK package manager for amd64 based machines'
+    platforms: [linux]
+    cmds:
+      - cmd: apk update
+      - cmd: apk add --no-cache dotnet8-runtime build-base cmake curl git
+      - task: setup
+      - cmd: echo "Setup complete"
+        silent: true
+
+  setup:
+    desc: 'Performs platform agnostic setup tasks without installing tools (no sudo needed)'
+    deps:
+      #build rpmalloc lib
+      - task: build-rpmalloc
+      - task: build-argon2
+      - task: build-compress
+    cmds:
+      #setup ssl dir
+      - cmd: mkdir -p ssl/
+        ignore_error: true
+
+      - cmd: echo "SETUP INCOMPLETE - You must create a self-signed certificate, and password pepper file before running the server"
+        silent: true
+        platforms: [windows]
+
+  create-pepper:
+    desc: 'Generates a new pepper for hashing passwords.'
+    vars:
+      PEPPER_FILE: 'secrets/password-pepper.txt'
+    cmds:
+      - cmd: mkdir -p secrets/
+
+      - cmd: openssl rand -base64 {{ .PASS_PEPPER_SIZE }} > {{ .PEPPER_FILE }}
+        platforms: [linux, darwin]
+
+      - cmd: echo "DO NOT EVER LOSE OR UPDATE THIS FILE!"
+        silent: true
+
+  create-cert:
+    desc: 'Generates a new self-signed TLS certificate'
+    interactive: true
+    cmds:
+      - cmd: mkdir -p ssl/
+      - cmd: openssl req
+          -new
+          -x509
+          -days 365
+          -keyout '{{ .TLS_PRIVATE_KEY }}'
+          -out '{{ .TLS_CERT }}'
+          -newkey ec
+          -pkeyopt ec_paramgen_curve:{{ .DEFAULT_EC_CURVE }}
+          --nodes
+          {{ .ADD_ARGS }}
+
+  container-create-cert:
+    vars:
+      HOSTNAME:
+        sh: echo $HOSTNAME
+    cmds:
+      #when setting cn it should not be interactive
+      - task: create-cert
+        vars: { ADD_ARGS: "-subj '/CN={{ .HOSTNAME }}'" }
+
+      - cmd: echo "WARNING Self signed certificate created during build stage, DO NOT COPY THIS IMAGE"
+        silent: true
+
+  build-rpmalloc:
+    internal: true
+    dir: 'lib/'
+    cmds:
+      #build rpmalloc library for linux/mac
+      - cmd: cd vnlib_rpmalloc/ && task && cp build/{{ OS }}/libvn_rpmalloc{{if eq OS "darwin"}}.dylib{{else}}.so{{end}} ../{{ .RPMALLOC_LIB_NAME }}.so
+        platforms: [linux, darwin]
+
+      #for windows just copy the existing dll
+      - cmd: cp vnlib_rpmalloc/vnlib_rpmalloc.dll {{ .RPMALLOC_LIB_NAME }}.dll
+        platforms: [windows/amd64]
+
+  build-argon2:
+    internal: true
+    dir: 'lib/'
+    cmds:
+      #build argon2 library for linux/mac
+      - cmd: cd argon2/ && task && cp build/{{ OS }}/libargon2{{if eq OS "darwin"}}.dylib{{else}}.so{{end}} ../{{ .ARGON2_LIB_NAME }}.so
+        platforms: [linux, darwin]
+
+        #for windows just copy the existing dll
+      - cmd: cp argon2/argon2.dll {{ .ARGON2_LIB_NAME }}.dll
+        platforms: [windows/amd64]
+
+  build-compress:
+    internal: true
+    dir: 'lib/'
+    cmds:
+      #build the native compressor library for linux/mac with rpmalloc support
+      - cmd: cd vnlib_compress/ &&
+          task -- "-DCOMPRESS_RPMALLOC_SOURCE_DIR={{ .USER_WORKING_DIR }}/lib/vnlib_rpmalloc" &&
+          cp build/{{ OS }}/libvn_compress{{if eq OS "darwin"}}.dylib{{else}}.so{{end}} ../{{ .COMPRESS_LIB_NAME }}.so
+        platforms: [linux, darwin]
+
+      #windows now supports pre-compiled libs
+      - cmd: cp vnlib_compress/vnlib_compress.dll {{ .COMPRESS_LIB_NAME }}.dll
+        platforms: [windows/amd64]
+
+  merge-config:
+    internal: true
+    platforms: [linux, darwin]
+    vars:
+      #find all config templates
+      CONFIG_TEMPLATES:
+        sh: 'find config-templates/ -type f -name "*.json"'
+    env:
+      # these variables will be substituted into the configuration when merge-config is run
+      # since the cert is created at build time, we can use the same path for the container
+      TLS_ENABLE: 'true'
+      TLS_CERT: '{{ .TLS_CERT }}'
+      TLS_PRIVATE_KEY: '{{ .TLS_PRIVATE_KEY }}'
+    cmds:
+      - cmd: mkdir -p config
+      - cmd: chmod +x ./compile.sh
+      - for: { var: CONFIG_TEMPLATES }
+        cmd: ./compile.sh '{{ .ITEM }}' 'config/{{ .ITEM | base | replace "-template" "" }}'
+
+  container-set-perms:
+    desc: 'Sets file and folder permissions for container deployment'
+    platforms: [linux]
+    vars:
+      READONLY_FILES: |
+        lib/
+        webserver/
+        usr/
+        dist/
+        config-templates/
+        compile.sh
+        Taskfile.yaml
+
+    cmds:
+      - cmd: mkdir root
+      #set all files to read only
+      - for: { var: READONLY_FILES }
+        cmd: chmod -R 500 {{ .ITEM }}

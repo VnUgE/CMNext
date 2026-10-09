@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -20,18 +20,12 @@
 */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Minio;
-using Minio.Handlers;
-using Minio.DataModel.Tracing;
-
 using VNLib.Hashing;
 using VNLib.Utils.IO;
-using VNLib.Utils.Logging;
 using VNLib.Net.Http;
 using VNLib.Plugins;
 using VNLib.Plugins.Extensions.Loading;
@@ -41,29 +35,17 @@ using Content.Publishing.Blog.Admin.Storage;
 namespace Content.Publishing.Blog.Admin.Model
 {
 
-    internal sealed class PostManager : IBlogPostManager
+    internal sealed class PostManager(PluginBase plugin) : IBlogPostManager
     {
-        private readonly ISimpleFilesystem Storage;
-        private readonly IRssFeedGenerator FeedGenerator;
-        private readonly ContentManager ContentMan;
-
-        public PostManager(PluginBase plugin)
-        {
-            //Get minio client
-            Storage = plugin.GetOrCreateSingleton<ManagedStorage>();
-
-            //Get feed generator
-            FeedGenerator = plugin.GetOrCreateSingleton<FeedGenerator>();
-
-            //Get content manager
-            ContentMan = plugin.GetOrCreateSingleton<ContentManager>();
-        }
+        private readonly ISimpleFilesystem Storage = plugin.GetOrCreateSingleton<ManagedStorage>();
+        private readonly IRssFeedGenerator FeedGenerator = plugin.GetOrCreateSingleton<FeedGenerator>();
+        private readonly ContentManager ContentMan = plugin.GetOrCreateSingleton<ContentManager>();
 
         ///<inheritdoc/>
         public async Task<PostMeta?> GetPostAsync(IChannelContext context, string postId, CancellationToken cancellation)
         {
-            _ = context ?? throw new ArgumentNullException(nameof(context));
-            _ = postId ?? throw new ArgumentNullException(nameof(postId));
+            ArgumentNullException.ThrowIfNull(context);
+            ArgumentException.ThrowIfNullOrEmpty(postId);
 
             //Read the index into memory
             IRecordDb<PostMeta> db = await GetPostIndexAsync(context, cancellation);
@@ -75,20 +57,20 @@ namespace Content.Publishing.Blog.Admin.Model
         ///<inheritdoc/>
         public async Task<PostMeta[]> GetPostsAsync(IChannelContext context, CancellationToken cancellation)
         {
-            _ = context ?? throw new ArgumentNullException(nameof(context));
+            ArgumentNullException.ThrowIfNull(context);
 
             //Read the index into memory
             IRecordDb<PostMeta> db = await GetPostIndexAsync(context, cancellation);
 
             //Return post metas
-            return db.GetRecords().ToArray();
+            return [.. db.GetRecords()];
         }
 
         ///<inheritdoc/>
         public async Task PublishPostAsync(IChannelContext context, PostMeta post, CancellationToken cancellation)
         {
-            _ = context ?? throw new ArgumentNullException(nameof(context));
-            _ = post ?? throw new ArgumentNullException(nameof(post));
+            ArgumentNullException.ThrowIfNull(context);
+            ArgumentNullException.ThrowIfNull(post);
 
             //Read the index into memory
             IRecordDb<PostMeta> db = await GetPostIndexAsync(context, cancellation);
@@ -112,8 +94,8 @@ namespace Content.Publishing.Blog.Admin.Model
         ///<inheritdoc/>
         public async Task DeletePostAsync(IChannelContext context, string postId, CancellationToken cancellation)
         {
-            _ = context ?? throw new ArgumentNullException(nameof(context));
-            _ = postId ?? throw new ArgumentNullException(nameof(postId));
+            ArgumentNullException.ThrowIfNull(context);
+            ArgumentException.ThrowIfNullOrEmpty(postId);            
 
             //Get the index
             IRecordDb<PostMeta> db = await GetPostIndexAsync(context, cancellation);
@@ -138,8 +120,9 @@ namespace Content.Publishing.Blog.Admin.Model
         ///<inheritdoc/>
         public async Task<bool> UpdatePostAsync(IChannelContext context, PostMeta post, CancellationToken cancellation)
         {
-            _ = context ?? throw new ArgumentNullException(nameof(context));
-            _ = post?.Id ?? throw new ArgumentNullException(nameof(post));
+            ArgumentNullException.ThrowIfNull(context);
+            ArgumentNullException.ThrowIfNull(post);
+            ArgumentException.ThrowIfNullOrEmpty(post.Id);           
 
             //Get the index
             IRecordDb<PostMeta> db = await GetPostIndexAsync(context, cancellation);
@@ -147,7 +130,7 @@ namespace Content.Publishing.Blog.Admin.Model
             //Try to get the post by its id
             PostMeta? oldMeta = db.GetRecord(post.Id);
 
-            if (oldMeta == null)
+            if (oldMeta is null)
             {
                 return false;
             }
@@ -176,7 +159,7 @@ namespace Content.Publishing.Blog.Admin.Model
         /// <exception cref="ArgumentNullException"></exception>
         public async Task UpdateFeedForChannelAsync(IChannelContext context, CancellationToken cancellation)
         {
-            _ = context ?? throw new ArgumentNullException(nameof(context));
+            ArgumentNullException.ThrowIfNull(context);          
 
             //Get the index
             IRecordDb<PostMeta> db = await GetPostIndexAsync(context, cancellation);
@@ -191,7 +174,7 @@ namespace Content.Publishing.Blog.Admin.Model
             await Storage.StoreAsync(context, context.IndexPath, index, cancellation);
 
             //Update feed
-            if (context.Feed != null)
+            if (context.Feed is not null)
             {
                 await UpdateRssFeed(context, index.GetRecords(), cancellation);
             }
@@ -208,7 +191,13 @@ namespace Content.Publishing.Blog.Admin.Model
             feedData.Seek(0, System.IO.SeekOrigin.Begin);
 
             //Write the feed to the bucket
-            await Storage.SetObjectDataAsync(context, feedData, context.Feed!.FeedPath, ContentType.Rss, cancellation);
+            await Storage.SetObjectDataAsync(
+                context, 
+                data: feedData, 
+                path: context.Feed!.FeedPath, 
+                ContentType.Rss, 
+                cancellation
+            );
         }
 
         #region Load/Store Db
@@ -233,18 +222,11 @@ namespace Content.Publishing.Blog.Admin.Model
          */
         static void ComputePostId(PostMeta post)
         {
-            post.Id = ManagedHash.ComputeHash($"{post.Title}.{post.Author}.{post.Summary}.{post.Date}", HashAlg.SHA1, HashEncodingMode.Hexadecimal).ToLowerInvariant();
-        }
-
-        internal record class ReqLogger(ILogProvider Log) : IRequestLogger
-        {
-            public void LogRequest(RequestToLog requestToLog, ResponseToLog responseToLog, double durationMs)
-            {
-                Log.Debug("S3 result\n{method} {uri} HTTP {ms}ms\nHTTP {status} {message}\n{content}",
-                    requestToLog.Method, requestToLog.Resource, durationMs,
-                    responseToLog.StatusCode, responseToLog.ErrorMessage, responseToLog.Content
-                    );
-            }
-        }
+            post.Id = ManagedHash.ComputeHash(
+                $"{post.Title}.{post.Author}.{post.Summary}.{post.Date}", 
+                HashAlg.SHA1, 
+                HashEncodingMode.Hexadecimal
+            ).ToLowerInvariant();
+        }       
     }
 }

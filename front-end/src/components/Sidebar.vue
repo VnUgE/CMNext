@@ -1,0 +1,262 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { filter, includes, get as lodashGet } from 'lodash-es';
+import { useStore, themeNames } from '../store';
+import { storeToRefs } from 'pinia';
+import { get } from '@vueuse/core';
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from '@headlessui/vue';
+import { type BlogChannel } from '@vnuge/cmnext-admin';
+import { cmnext } from '../main';
+
+const route = useRoute();
+const store = useStore();
+const { userName, theme, loggedIn } = storeToRefs(store);
+const { all: channels } = cmnext.channels;
+const { pinnedChannels } = store.preferences;
+
+// Get user profile data from store
+const userProfileData = computed(() => store.user.profile || {});
+
+const userEmail = computed(
+  () => userProfileData.value.email || get(userName) || 'user@example.com'
+);
+
+const userDisplayName = computed(() => {
+  const profile = get(userProfileData);
+  const firstName = lodashGet(profile, 'first', '');
+  const lastName = lodashGet(profile, 'last', '');
+
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`;
+  }
+  return firstName || lastName || userEmail.value.split('@')[0];
+});
+
+const pinned = computed<BlogChannel[]>(() => {
+  const pinnedIds = get(pinnedChannels.current);
+  return filter(get(channels), (channel: BlogChannel) => includes(pinnedIds, channel.id));
+});
+
+const logout = () => {
+  store.account.logout();
+};
+</script>
+
+<template>
+  <div class="p-4 w-64 md:w-80 min-h-full bg-base-200 text-base-content flex flex-col">
+    <!-- CMNext Branding -->
+    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
+      <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+        <span class="text-primary-content font-bold text-lg">CM</span>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold">CMNext</h1>
+        <p class="text-xs opacity-70">Admin Dashboard</p>
+      </div>
+    </div>
+    <!-- Navigation Menu -->
+    <div class="grow overflow-y-auto">
+      <ul class="menu w-full">
+        <!-- Theme Section -->
+        <li class="menu-title">
+          <span>Appearance</span>
+        </li>
+        <li>
+          <!-- Overlay listbox: floats above content instead of shifting it.
+            The contents wrapper lets daisyUI style the button as the menu
+            item directly (no double padding), and the panel anchors to the
+            relatively-positioned li at full menu width. -->
+          <Listbox v-model="theme" as="div" class="contents">
+            <!-- btn opts out of the menu-item grid so flex owns alignment -->
+            <ListboxButton class="btn btn-ghost w-full justify-start font-normal">
+              <fa-icon icon="palette" />
+              <span>Theme</span>
+              <span class="badge badge-sm badge-ghost ml-auto">
+                {{ theme }}
+              </span>
+              <fa-icon icon="chevron-down" class="ml-2 opacity-60" />
+            </ListboxButton>
+            <ListboxOptions
+              class="absolute inset-x-0 z-30 mt-1 max-h-60 overflow-auto rounded-box bg-base-100 p-2 shadow-lg"
+            >
+              <ListboxOption
+                v-for="av in themeNames"
+                v-slot="{ active, selected }"
+                :key="av"
+                :value="av"
+                as="template"
+              >
+                <li
+                  :class="[
+                    'flex cursor-pointer items-center rounded px-2 py-1',
+                    { 'bg-base-200': active, 'font-semibold': selected },
+                  ]"
+                >
+                  {{ av }}
+                </li>
+              </ListboxOption>
+            </ListboxOptions>
+          </Listbox>
+        </li>
+        <li class="menu-title">
+          <span>Navigation</span>
+        </li>
+        <li>
+          <router-link
+            to="/channels"
+            :class="{ active: route.path === '/channels' || route.path.startsWith('/channels/') }"
+          >
+            <fa-icon icon="folder" class="mr-2" />
+            Channels
+          </router-link>
+          <router-link v-if="!loggedIn" to="/login" :class="{ active: route.path === '/login' }">
+            <fa-icon icon="sign-in-alt" class="mr-2" />
+            Login
+          </router-link>
+        </li>
+        <li class="menu-title mt-4">
+          <span>Pinned Channels</span>
+        </li>
+        <li
+          v-for="channel in pinned"
+          :key="channel.id"
+          class="flex flex-row flex-nowrap items-center gap-1"
+        >
+          <router-link :to="`/channels/${channel.id}`" class="grow min-w-0 truncate">
+            <fa-icon icon="bullhorn" class="mr-2" />
+            {{ channel.name }}
+          </router-link>
+          <button
+            class="btn btn-xs btn-ghost shrink-0 text-error/30 hover:text-error"
+            title="Unpin channel"
+            :aria-label="`Unpin ${channel.name}`"
+            @click="pinnedChannels.remove(channel.id)"
+          >
+            <fa-icon icon="thumbtack-slash" />
+          </button>
+        </li>
+        <li class="mt-2">
+          <router-link to="/channels" class="text-sm opacity-70 hover:opacity-100">
+            <fa-icon icon="eye" class="mr-2" />
+            View All Channels
+          </router-link>
+        </li>
+      </ul>
+    </div>
+
+    <!-- User Profile Menu -->
+    <div class="mt-auto pt-4 border-t border-base-300">
+      <!-- User Avatar/Name Section with Popover -->
+      <div v-show="loggedIn" class="relative">
+        <Menu as="div">
+          <MenuButton
+            class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-300 cursor-pointer w-full transition-colors text-left"
+          >
+            <div class="avatar placeholder">
+              <div
+                class="bg-neutral text-neutral-content w-10 rounded-full flex items-center justify-center"
+              >
+                <fa-icon icon="user" class="text-sm" />
+              </div>
+            </div>
+            <div class="flex-1 text-left min-w-0">
+              <div class="text-sm font-semibold truncate">{{ userDisplayName }}</div>
+              <div class="text-xs opacity-70 truncate">{{ userEmail }}</div>
+            </div>
+            <fa-icon icon="ellipsis-h" class="text-xs opacity-50 shrink-0" />
+          </MenuButton>
+
+          <MenuItems
+            as="ul"
+            class="absolute bottom-full left-0 z-30 mb-2 w-64 menu bg-base-100 rounded-box p-2 shadow-lg border border-base-300"
+          >
+            <li>
+              <div class="flex items-center gap-3 px-2 py-1 cursor-default">
+                <div class="avatar placeholder">
+                  <div
+                    class="bg-neutral text-neutral-content w-8 rounded-full flex items-center justify-center"
+                  >
+                    <fa-icon icon="user" class="text-xs" />
+                  </div>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold truncate">{{ userDisplayName }}</div>
+                  <div class="text-xs opacity-70 truncate">{{ userEmail }}</div>
+                </div>
+              </div>
+            </li>
+
+            <li class="menu-title"><span>Account</span></li>
+            <MenuItem as="li">
+              <router-link to="/account">
+                <fa-icon icon="user" class="mr-2" />
+                Settings
+              </router-link>
+            </MenuItem>
+            <MenuItem as="li">
+              <button class="text-error" @click="logout()">
+                <fa-icon icon="sign-out-alt" class="mr-2" />
+                Logout
+              </button>
+            </MenuItem>
+
+            <div class="divider my-1" />
+
+            <li class="menu-title"><span>Resources</span></li>
+            <MenuItem as="li">
+              <a
+                href="https://www.vaughnnugent.com/resources/software/articles?tags=_cmnext"
+                target="_blank"
+              >
+                <fa-icon icon="book" class="mr-2" />
+                Documentation
+              </a>
+            </MenuItem>
+            <MenuItem as="li">
+              <a href="https://github.com/VnUgE/CMNext" target="_blank">
+                <fa-icon icon="code" class="mr-2" />
+                Source Code
+              </a>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="mt-4 pt-3 border-t border-base-300">
+        <p class="text-xs opacity-70 text-center mb-2">CMNext - AGPL3 licensed</p>
+        <div class="flex justify-center gap-2">
+          <a
+            href="https://github.com/VnUgE/CMNext"
+            target="_blank"
+            class="text-xs opacity-50 hover:opacity-100"
+            title="GitHub"
+          >
+            <fa-icon :icon="['fab', 'github']" />
+          </a>
+          <a
+            href="https://www.vaughnnugent.com"
+            target="_blank"
+            class="text-xs opacity-50 hover:opacity-100"
+            title="Website"
+          >
+            <fa-icon icon="globe" />
+          </a>
+          <!-- Nostr icon placeholder - to be added later -->
+          <span class="text-xs opacity-30" title="Nostr (coming soon)"> ₦ </span>
+        </div>
+        <p class="text-xs opacity-50 text-center mt-2">© 2025 Vaughn Nugent</p>
+      </div>
+    </div>
+  </div>
+</template>

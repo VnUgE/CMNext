@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,122 +13,193 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// TODO: Remove @headlessui/vue dependency - it has been deprecated for Vue.js
+// Replace all HeadlessUI components with DaisyUI equivalents:
+// - Switch → DaisyUI toggle (<input type="checkbox" class="toggle" />)
+// - Dialog → DaisyUI modal
+// Account settings components have been migrated to use DaisyUI toggles and form controls.
+// TODO: Migrate to vue-sonner for modern toast notifications
+// Replace @kyvg/vue3-notification with vue-sonner for better UX and smaller bundle size
 
 //Get the create app from boostrap dir
-import { createVnApp } from './bootstrap'
-import { configureApi } from '@vnuge/vnlib.browser'
+import App from './App.vue';
+import { createApiConfig } from '@vnuge/vnlib.browser';
+import { createToaster } from '@vnuge/vnlib.browser/vue';
+import Notifications, { notify } from '@kyvg/vue3-notification';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import Axios from 'axios';
 
 //Import all styles
-import './bootstrap/style/all.scss'
-//Import your main style file
-import './assets/main.scss'
+import './assets/main.css';
 
 //Import font data
-import "@fontsource/source-sans-pro"
+import '@fontsource/source-sans-pro';
 
 /* FONT AWESOME CONFIG */
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { faBullhorn, faCertificate, faCheck, faChevronLeft, faChevronRight, faCode, faComment, faCopy, faFile, faFileDownload, faFileZipper, faFolderOpen, faHeadphones, faImage, faKey, faLink, faMinusCircle, faPencil, faPhotoFilm, faPlus, faRotateLeft, faSignInAlt, faSpinner, faSync, faTrash, faUser, faVideo } from '@fortawesome/free-solid-svg-icons'
-import { faGithub, faDiscord, faMarkdown } from '@fortawesome/free-brands-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import {
+  faBars,
+  faLock,
+  faBullhorn,
+  faCheck,
+  faCode,
+  faComment,
+  faCopy,
+  faFolderOpen,
+  faKey,
+  faMinusCircle,
+  faPlus,
+  faSignInAlt,
+  faSync,
+  faTrash,
+  faUser,
+  faTrashCan,
+  faTriangleExclamation,
+  faEllipsisH,
+  faBook,
+  faCog,
+  faSignOutAlt,
+  faGlobe,
+  faEye,
+  faBolt,
+  faClock,
+  faEdit,
+  faChevronDown,
+  faPalette,
+  faInfoCircle,
+  faBlog,
+  faArrowLeft,
+  faArrowDown,
+  faArrowUp,
+  faArrowRight,
+  faRss,
+  faSave,
+  faRefresh,
+  faFileAlt,
+  faFileUpload,
+  faQuestionCircle,
+  faThumbTack,
+  faThumbTackSlash,
+  faFolder,
+  faLink,
+  faAlignLeft,
+  faDownload,
+  faFileImport,
+  faFileExport,
+} from '@fortawesome/free-solid-svg-icons';
+import { faGithub, faMarkdown } from '@fortawesome/free-brands-svg-icons';
 
 //Add required icons for the app
-library.add(faSignInAlt, faGithub, faDiscord, faSpinner, faCertificate, faKey, faSync, faPlus, faMinusCircle, faUser, faCheck, faTrash, faCopy, 
-    faPencil, faLink, faPhotoFilm, faRotateLeft, faMarkdown, faBullhorn, faFolderOpen, faComment, faChevronLeft, faChevronRight, faFileDownload,
-    faCode, faFile, faVideo, faImage, faHeadphones, faFileZipper
+library.add(
+  faTrashCan,
+  faTriangleExclamation,
+  faBars,
+  faLock,
+  faSignInAlt,
+  faGithub,
+  faKey,
+  faSync,
+  faPlus,
+  faMinusCircle,
+  faUser,
+  faCheck,
+  faTrash,
+  faCopy,
+  faMarkdown,
+  faBullhorn,
+  faFolderOpen,
+  faComment,
+  faCode,
+  faEllipsisH,
+  faBook,
+  faCog,
+  faSignOutAlt,
+  faGlobe,
+  faEye,
+  faBolt,
+  faClock,
+  faEdit,
+  faChevronDown,
+  faPalette,
+  faInfoCircle,
+  faBlog,
+  faArrowLeft,
+  faArrowDown,
+  faArrowUp,
+  faArrowRight,
+  faRss,
+  faSave,
+  faRefresh,
+  faFileAlt,
+  faFileUpload,
+  faQuestionCircle,
+  faThumbTack,
+  faThumbTackSlash,
+  faFolder,
+  faLink,
+  faAlignLeft,
+  faDownload,
+  faFileImport,
+  faFileExport
 );
 
 //Add icons to library
-import router, { guardRoutes } from './router'
+import router from './router';
 
 //Import nav components
-import FooterNav1 from './components/FooterNav1.vue'
-import FooterNav2 from './components/FooterNav2.vue'
-import SiteLogo from './components/Site-Logo.vue'
-import DynamicFormVue from './components/DynamicForm.vue'
+import Dialog from './components/Dialog.vue';
 
-import { globalStatePlugin } from './store/globalState'
-import { oauth2AppsPlugin } from './store/oauthAppsPlugin'
-import { profilePlugin } from './store/userProfile'
-import { mfaSettingsPlugin } from './store/mfaSettingsPlugin'
-import { socialMfaPlugin } from './store/socialMfaPlugin'
-import { cmnextAdminPlugin } from './store/cmnextAdminPlugin'
+import { profilePlugin } from './store/userProfilePlugin';
+import { mfaSettingsPlugin } from './store/mfaSettingsPlugin';
+import { pageGuardPlugin } from './store/routeGuard';
+import { accountStatePlugin } from './store/accountStatePlugin';
+import { userPreferencesPlugin } from './store/preferencesPlugin';
+import { useCmnextAdmin } from './lib/blog';
 
-//Setup the vnlib api
-configureApi({
-    session: {
-        //The identifier of the login cookie, see Essentials.Accounts docs
-        loginCookieName: import.meta.env.VITE_LOGIN_COOKIE_ID,
-        browserIdSize: 32,
-    },
-    user: {
-        accountBasePath: '/account',
-    },
-    axios: {
-        //The base url to make api requests against
-        baseURL: import.meta.env.VITE_API_URL,
-        withCredentials: false,
-        //See Essentials.Accounts docs
-        tokenHeader: 'X-Web-Token',
-    },
-    storage: localStorage
-})
+export const vnlib = createApiConfig({
+  account: {
+    endpointUrl: '/api/account',
+  },
+  axios: Axios.create({
+    withCredentials: true,
+  }),
+  session: {},
+  // storage auto-detected: uses wrapped localStorage in browser/jsdom
+});
 
-createVnApp({
-    //The app mount point
-    mountElement: '#app',
+const createToastAdapter = (group: string) => {
+  return createToaster({
+    show: (type, { title, message }) => notify({ type, group, text: message, title }),
+    close: () => notify({ group, clean: true }),
+  });
+};
 
-    //Enable dark mode support
-    useDarkMode: true,
+// Export toaster for application-wide use
+export const toaster = createToastAdapter('general');
 
-    //Add the font awesome library
-    faLibrary: library,
+// Setup CMNext Admin blog state
+export const cmnext = useCmnextAdmin(vnlib, '/api/blog');
 
-    //Called when the app is created for you to add custom elements
-    onCreate(app, store) {
+const store = createPinia();
 
-        //Add the router
-        app.use(router)
+store
+  .use(accountStatePlugin(vnlib, 15000))
+  .use(pageGuardPlugin(router))
+  .use(profilePlugin(vnlib))
+  .use(mfaSettingsPlugin(vnlib))
+  .use(userPreferencesPlugin(vnlib, '/api/app-data', 'cmnext-preferences'));
 
-        store.use(globalStatePlugin)
-        //User-profile plugin
-        .use(profilePlugin('/account/profile'))
-        //Enable mfa with totp settings plugin (optional pki config)
-        .use(mfaSettingsPlugin('/account/mfa', '/account/pki'))
-        //Setup social oauth
-        .use(socialMfaPlugin("/login/social/portals"))
-        //Setup blog state
-        .use(cmnextAdminPlugin(router, 'https://cdn.ckeditor.com/ckeditor5/40.0.0/super-build/ckeditor.js', 15))
-        //Use the oauth2 plugin store (disabled for now)
-        //.use(oauth2AppsPlugin('/oauth/apps', '/oauth/scopes'))
-        
-        //Add the home-page component
-        router.addRoute({
-            path: '/',
-            name: 'Home',
-            redirect: { path: '/' }
-        })
+const app = createApp(App);
 
-        //Configure account page redirect to profile
-        router.addRoute({
-            path: '/account',
-            name: 'Account',
-            redirect: { path: '/account/profile' }
-        })
+app
+  .use(Notifications)
+  .use(store)
+  .use(router)
+  .component('Dialog', Dialog)
+  //Add the footer nav components
+  .component('fa-icon', FontAwesomeIcon)
 
-        /**
-         * An array of named routes to protect from 
-         * unauthenticated access.
-         */
-        guardRoutes(router, ['Account', 'account/:comp', 'Blog'])
-      
-        //Add the footer nav components
-        app.component('FooterNav1', FooterNav1)
-        app.component('FooterNav2', FooterNav2)
-
-        //Register site-logo component
-        app.component('SiteLogo', SiteLogo)
-
-        //Register the dynamic form component
-        app.component('dynamic-form', DynamicFormVue)
-    },
-})
+  //MOUNT
+  .mount('#app');

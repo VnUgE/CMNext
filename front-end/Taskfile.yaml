@@ -1,41 +1,53 @@
-
 #taskfile for building the libraries for admin and clients and creating their packages
 
-version: '3'
+version: '3.45'
 
 tasks:
+  default:
+    desc: 'Builds dependencies and the front-end app'
+    summary: |
+      Developers can use this command to build the front-end app and its dependencies.
+    cmds:
+      - cmd: cd ../lib/admin && task
+      - cmd: pnpm run build
 
   package-update:
-    dir: '{{.USER_WORKING_DIR}}'
+    dir: '{{ .USER_WORKING_DIR }}'
     cmds:
-     - npm update
+      - cmd: pnpm update
 
   build:
+    desc: 'DO NOT USE. For ci vnbuild only'
+    requires:
+      vars: [BUILD_VERSION]
     cmds:
-    - cmd: npm version {{ .BUILD_VERSION }}
-      ignore_error: true #error if run when version is not updated
-    - task: ci-build
+      - cmd: pnpm version {{ .BUILD_VERSION }}
+        ignore_error: true #error if run when version is not updated
+      - task: ci-build
 
   ci-build:
+    desc: 'DO NOT USE. For ci vnbuild only'
     cmds:
-     - cmd: powershell rm dist/ -Recurse -Force
-       ignore_error: true
-    #build admin first
-     - cd ../lib/admin && npm install && npm run build
-     #install deps and run main build
-     - npm install 
-     - npm run build
-    
+      - cmd: rm -rf dist/
+        ignore_error: true
+      #build admin first
+      - cmd: cd ../lib/admin && pnpm install --frozen-lockfile && pnpm run build
+      #install deps and run main build
+      - cmd: pnpm install --frozen-lockfile
+      - cmd: pnpm run build
+
   #copy artifacts to temp directory
   postbuild_success:
+    desc: 'DO NOT USE. For ci vnbuild only'
     cmds:
-    - powershell mkdir bin -Force
-    #tar the dist output and put it in the output dir
-    - cd dist/ && tar -czf '../bin/release.tgz' .
+      - cmd: mkdir -p bin
+      #tar the dist output and put it in the output dir
+      - cmd: cd dist/ && tar{{ if eq OS "windows" }}.exe{{ end }} -czf '../bin/release.tgz' .
 
   #clean hook
   clean:
+    desc: 'Cleans the front-end directories and artifacts'
     ignore_error: true
     cmds:
-    - for: [ node_modules/, dist/, bin/ ]
-      cmd: powershell -Command "Remove-Item -Recurse -Force {{.ITEM}}"
+      - for: [node_modules/, dist/, bin/]
+        cmd: rm -rf "{{ .ITEM }}"

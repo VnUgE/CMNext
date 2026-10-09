@@ -1,0 +1,40 @@
+# CMNext — development overlay (dev/)
+#
+
+min_version = "2024.9.5"
+
+[tools]
+process-compose = "1.122"
+
+[tools."http:minio"]
+version = "RELEASE.2025-09-07T16-13-09Z"
+
+[tools."http:minio".platforms]
+windows-x64 = { url = "https://dl.min.io/server/minio/release/windows-amd64/minio.exe", checksum = "sha256:af709e6ba68488404e85acdd22a3030d0f5e56a108d4b27d744f18ceb50861b4" }
+linux-x64 = { url = "https://dl.min.io/server/minio/release/linux-amd64/minio", checksum = "sha256:7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f" }
+linux-arm64 = { url = "https://dl.min.io/server/minio/release/linux-arm64/minio", checksum = "sha256:5c83cd2cf151717ba0243f73e1c7802ff36e272b67144bdd7f1f7d684fd6f03d" }
+osx-x64 = { url = "https://dl.min.io/server/minio/release/darwin-amd64/minio", checksum = "sha256:4759080aeef7385aaceaac1131c30aaeb99605921553967dc6d3ef4e16ac64f9" }
+osx-arm64 = { url = "https://dl.min.io/server/minio/release/darwin-arm64/minio", checksum = "sha256:7c3b3039b76e55a1b80935848ed83998d5e8d317374f87851f46a019ff5c0aa4" }
+
+[env]
+MINIO_DATA_DIR = "{{ config_root }}/minio"
+DEV_SERVER_DIR = "{{ config_root }}/server"
+_.file = "{{ config_root }}/dev.env"
+# CMNEXT_* dirs inherited from ../mise.toml (same resolved paths).
+
+[hooks]
+postinstall = "task mise-postinstall"
+
+[tasks.setup]
+description = "Pull dependencies and build the server package (first-time setup)"
+run = "task mise-setup"
+
+[tasks.dev]
+description = "Start dev environment, skip initial setup (for when build already exists)"
+run = "process-compose up"
+
+[tasks.dev-debug-server]
+run = "task debug-server"
+
+[tasks.clean]
+run = "task clean"

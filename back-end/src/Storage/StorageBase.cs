@@ -40,18 +40,24 @@ namespace Content.Publishing.Blog.Admin.Storage
         public abstract Task ConfigureServiceAsync(PluginBase plugin);
 
         ///<inheritdoc/>
-        public abstract Task DeleteFileAsync(string filePath, CancellationToken cancellation);
+        public abstract ValueTask DeleteFileAsync(string filePath, CancellationToken cancellation);
 
         ///<inheritdoc/>
-        public abstract Task<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation);
+        public abstract ValueTask<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation);
 
         ///<inheritdoc/>
-        public abstract Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation);
+        public abstract ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation);
 
         ///<inheritdoc/>
         public virtual string GetExternalFilePath(string filePath)
         {
             return string.IsNullOrWhiteSpace(BasePath) ? filePath : $"{BasePath}/{filePath}";
+        }
+
+        ///<inheritdoc/>
+        public ValueTask<Stream?> OpenFileAsync(string filePath, FileAccess options, CancellationToken cancellation)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

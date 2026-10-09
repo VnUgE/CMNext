@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,56 +13,124 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useSession } from "@vnuge/vnlib.browser";
-import { set } from "@vueuse/core";
-import { defineStore } from "pinia";
-import { computed, shallowRef, type UnwrapNestedRefs } from "vue";
+import { set, get, useLocalStorage, toRefs, type DeepMaybeRef } from '@vueuse/core';
+import { defineStore } from 'pinia';
+import { defaultsDeep } from 'lodash-es';
+import { shallowRef, watchEffect, type UnwrapNestedRefs } from 'vue';
 
-export { SortType, QueryType } from './sharedTypes'
+export const storeExport = <T>(val: DeepMaybeRef<T>): UnwrapNestedRefs<T> =>
+  val as UnwrapNestedRefs<T>;
 
-export const storeExport = <T>(val: T): UnwrapNestedRefs<T> => val as UnwrapNestedRefs<T>;
+export type ThemeNameDark =
+  | 'dark'
+  | 'forest'
+  | 'black'
+  | 'luxury'
+  | 'dracula'
+  | 'business'
+  | 'night'
+  | 'coffee'
+  | 'dim'
+  | 'sunset'
+  | 'abyss';
+
+export type ThemeNameLight =
+  | 'light'
+  | 'cupcake'
+  | 'emerald'
+  | 'corporate'
+  | 'retro'
+  | 'garden'
+  | 'lofi'
+  | 'pastel'
+  | 'fantasy'
+  | 'cmyk'
+  | 'autumn'
+  | 'acid'
+  | 'lemonade'
+  | 'winter'
+  | 'nord'
+  | 'caramellatte'
+  | 'silk';
+
+export type ThemeNameComplex = 'synthwave' | 'aqua' | 'luxury' | 'coffee';
+
+export type ThemeName = ThemeNameDark | ThemeNameLight | ThemeNameComplex;
+
+type GlobalState = {
+  autoHeartbeat: boolean;
+  theme: string;
+  loggedIn: boolean;
+  userName: string | undefined;
+  isLocalAccount: boolean;
+};
+const defaultState: GlobalState = {
+  autoHeartbeat: false,
+  theme: '',
+  loggedIn: false,
+  userName: undefined,
+  isLocalAccount: false,
+};
+
+export const themeNames: ThemeName[] = [
+  'light',
+  'dark',
+  'forest',
+  'cupcake',
+  'dracula',
+  'winter',
+  'nord',
+  'silk',
+  'emerald',
+  'corporate',
+  'retro',
+  'night',
+  'sunset',
+  'garden',
+  'lofi',
+  'pastel',
+  'fantasy',
+  'cmyk',
+  'autumn',
+  'acid',
+  'lemonade',
+  'caramellatte',
+  'aqua',
+  'black',
+  'luxury',
+  'business',
+  'coffee',
+  'dim',
+  'abyss',
+  'synthwave',
+];
 
 /**
  * Loads the main store for the application
  */
 export const useStore = defineStore('main', () => {
+  //MANAGED STATE
+  const pageTitle = shallowRef('');
+  const htmlRef = shallowRef<HTMLElement>(document.documentElement);
 
-    const { loggedIn, isLocalAccount } = useSession();
+  //Get shared global state storage.
+  const mainState = useLocalStorage('vn-state', defaultState);
+  defaultsDeep(mainState.value, defaultState);
 
-    //MANAGED STATE
-    const headerRoutes = shallowRef(Array<string>());
-    const authRoutes = shallowRef(Array<string>());
-    const siteTitle = shallowRef("");
-    const pageTitle = shallowRef("");
-    const showCookieWarning = shallowRef(!navigator.cookieEnabled); //Default to current cookie status
+  const stateRefs = toRefs<GlobalState>(mainState);
 
-    /**
-     * The current routes to display in the header depending on the 
-     * user's login status
-     */
-    const currentRoutes = computed(() => loggedIn.value ? authRoutes.value : headerRoutes.value);
+  const setPageTitle = (title: string) => set(pageTitle, title);
 
-    const setHeaderRouteNames = (routeNames: string[], authRouteNames: string[]) => {
-        set(headerRoutes, [...routeNames]);
-        set(authRoutes, [...authRouteNames]);
-    }
+  watchEffect(() => {
+    const html = get(htmlRef);
+    if (!html) return;
+    html.setAttribute('data-theme', stateRefs.theme.value);
+  });
 
-    const setSiteTitle = (title: string) => set(siteTitle, title);
-    const setPageTitle = (title: string) => set(pageTitle, title);
-    const setCookieWarning = (show: boolean) => set(showCookieWarning, show);
-
-    return{
-        loggedIn,
-        isLocalAccount,
-        headerRoutes,
-        authRoutes,
-        siteTitle,
-        pageTitle,
-        showCookieWarning,
-        setCookieWarning,
-        setPageTitle,
-        currentRoutes,
-        setHeaderRouteNames,
-        setSiteTitle
-    }
-})
+  return {
+    pageTitle,
+    setPageTitle,
+    ...stateRefs,
+    themeNames,
+  };
+});

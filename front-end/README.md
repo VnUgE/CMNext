@@ -30,7 +30,7 @@ npm run build
 
 Finally, copy the output (dist) directory into the root of your webserver and configure routing according to the vue-router.
 
-## Static front end hosting  
+## Static front end hosting
 
 If you choose to host this front-end outside of the VNLib.Webserver backend, follow the instructions from the [vue-router documentation](https://router.vuejs.org/guide/essentials/history-mode.html#example-server-configurations)
 
@@ -38,7 +38,7 @@ If you choose to host the static site outside of the server hosting the API, you
 
 The backend plugin has a configuration file that allows you to adjust these api paths/routes. These endpoints must match the 'VITE*API*URL' set in your .env file.
 
-## Third party library info  
+## Third party library info
 
 This project injects a remote CDN script from [CKEditor](https://ckeditor.com/) (their superbuild package) to provide a robust rich text editing experience. It is quite a large package, but it is one of the best editors I have come across.
 

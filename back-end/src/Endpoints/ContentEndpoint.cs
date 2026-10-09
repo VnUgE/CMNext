@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2023 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -36,38 +36,33 @@ using VNLib.Plugins.Essentials.Endpoints;
 using VNLib.Plugins.Essentials.Extensions;
 using VNLib.Plugins.Extensions.Loading;
 using VNLib.Plugins.Extensions.Validation;
+using VNLib.Plugins.Extensions.Loading.Routing.Mvc;
+
+using static VNLib.Plugins.Essentials.Endpoints.ResourceEndpointBase;
 
 using Content.Publishing.Blog.Admin.Model;
 
 namespace Content.Publishing.Blog.Admin.Endpoints
 {
 
-    [ConfigurationName("content_endpoint")]
-    internal sealed class ContentEndpoint : ProtectedWebEndpoint
+    [ConfigurationName("api")]
+    internal sealed class ContentEndpoint(PluginBase plugin, IConfigScope config) : IHttpController
     {
         private static readonly IValidator<ContentMeta> MetaValidator = ContentMeta.GetValidator();
         private static readonly IValidator<string[]> MultiDeleteValidator = GetMultiDeleteValidator();
 
-        private readonly ContentManager _content;
-        private readonly IChannelContextManager _blogContextManager;
+        private readonly ContentManager _content = plugin.GetOrCreateSingleton<ContentManager>();
+        private readonly IChannelContextManager _blogContextManager = plugin.GetOrCreateSingleton<ChannelManager>();
 
-        private readonly int MaxContentLength;
+        private readonly int MaxContentLength = config.GetValueOrDefault("max_content_length", 1048576);
 
-        public ContentEndpoint(PluginBase plugin, IConfigScope config)
-        {
-            string? path = config["path"].GetString();
-
-            InitPathAndLog(path, plugin.Log);
-
-            //Get the max content length
-            MaxContentLength = (int)config["max_content_length"].GetUInt32();
-
-            _content = plugin.GetOrCreateSingleton<ContentManager>();
-            _blogContextManager = plugin.GetOrCreateSingleton<ChannelManager>();
-        }
+        ///<inheritdoc/>
+        public ProtectionSettings GetProtectionSettings() => default;
 
 
-        protected override async ValueTask<VfReturnType> GetAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.GET)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnGetContentAsync(HttpEntity entity)
         {
             if (!entity.Session.CanRead())
             {
@@ -149,7 +144,10 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         /*
          * Patch allows updating content meta data without having to upload the content again
          */
-        protected override async ValueTask<VfReturnType> PatchAsync(HttpEntity entity)
+
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.PATCH)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnUpdateMetaAsync(HttpEntity entity)
         {
 
             //Get channel id
@@ -158,7 +156,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VfReturnType.NotFound;
             }
 
-            ValErrWebMessage webm = new();
+            WebMessage webm = new();
 
             if (webm.Assert(entity.Session.CanWrite(), "You do not have permissions to update content"))
             {
@@ -216,7 +214,9 @@ namespace Content.Publishing.Blog.Admin.Endpoints
         /*
          * Put adds or updates content
          */
-        protected override async ValueTask<VfReturnType> PutAsync(HttpEntity entity)
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.PUT)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnUploadAsync(HttpEntity entity)
         {
             //Get channel id
             if (!entity.QueryArgs.TryGetNonEmptyValue("channel", out string? channelId))
@@ -224,7 +224,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 return VfReturnType.NotFound;
             }
 
-            ValErrWebMessage webm = new();
+            WebMessage webm = new();
 
             if (webm.Assert(entity.Session.CanWrite(), "You do not have permissions to update content"))
             {
@@ -301,7 +301,10 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             return VirtualOk(entity, webm);
         }
 
-        protected override async ValueTask<VfReturnType> DeleteAsync(HttpEntity entity)
+
+        [HttpStaticRoute("{{ path }}/content", HttpMethod.DELETE)]
+        [HttpRouteProtection(AuthorzationCheckLevel.Critical)]
+        public async ValueTask<VfReturnType> OnDeleteAsync(HttpEntity entity)
         {
             if (!entity.Session.CanRead())
             {
@@ -333,7 +336,7 @@ namespace Content.Publishing.Blog.Admin.Endpoints
             //Check for bulk delete
             if (entity.QueryArgs.TryGetNonEmptyValue("ids", out string? multiIds))
             {
-                ValErrWebMessage webm = new();
+                WebMessage webm = new();
 
                 string[] allIds = multiIds.Split(',');
 
@@ -373,7 +376,6 @@ namespace Content.Publishing.Blog.Admin.Endpoints
                 .AlphaNumericOnly();
 
             return val;
-        } 
+        }
     }
-
 }

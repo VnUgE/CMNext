@@ -13,174 +13,172 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-export interface CMNextAutoConfig{
-    /**
-     * The url to the global channel catalog index
-     */
-    readonly cmsChannelIndexPath: string;
-    /**
-     * The id of the channel to load
-     */
-    readonly channelId: string;
+export interface CMNextAutoConfig {
+  /**
+   * The url to the global channel catalog index
+   */
+  readonly cmsChannelIndexPath: string;
+  /**
+   * The id of the channel to load
+   */
+  readonly channelId: string;
 
-    /**
-     * Optional url prefix to use for the channel
-     */
-    readonly urlPrefix?: string
+  /**
+   * Optional url prefix to use for the channel
+   */
+  readonly urlPrefix?: string;
 }
-
 
 /**
  * Represents a 1:1 mapping of a blog index to
  * the CMS representation of the index
  */
-export interface CMNextIndex<T>{
-    /**
-     * The collection of records in the index
-     */
-    readonly records: T[];
-    /**
-     * The date the index was last modified in unix seconds
-     */
-    readonly date: number;
-    /**
-     * The version of the index
-     */
-    readonly version: string;
+export interface CMNextIndex<T> {
+  /**
+   * The collection of records in the index
+   */
+  readonly records: T[];
+  /**
+   * The date the index was last modified in unix seconds
+   */
+  readonly date: number;
+  /**
+   * The version of the index
+   */
+  readonly version: string;
 }
 
 /**
  * A base blog entity that has a globally unique id and a date
  */
 export interface CMNextEntity {
-    /**
-     * The globally unique id of the entity
-     */
-    readonly id: string;
-    /**
-     * The date the entity was last modified in unix seconds
-     */
-    readonly date: number;
+  /**
+   * The globally unique id of the entity
+   */
+  readonly id: string;
+  /**
+   * The date the entity was last modified in unix seconds
+   */
+  readonly date: number;
 }
 
 /**
  * A uniform api for the CMNext cms
  */
 export interface CMNextApi<T> {
-    /**
-     * Gets the index file from the configured endpoint
-     */
-    getIndex(): Promise<CMNextIndex<T>>;
+  /**
+   * Gets the index file from the configured endpoint
+   */
+  getIndex(): Promise<CMNextIndex<T>>;
 }
-
 
 /**
  * A channel configuration entity
  */
 export interface ChannelMeta extends CMNextEntity {
-    /**
-     * The name of the channel
-     */
-    readonly name: string;
-    /**
-     * The base path of the channel
-     */
-    readonly path: string;
-    /**
-     * The realtive path of the channel's index file
-     */
-    readonly index: string;
-    /**
-     * The realtive directory within the channel to the channel's content
-     */
-    readonly content: string;
-    /**
-     * Optiona channel feed configuration
-     */
-    readonly feed?: ChannelFeed;
+  /**
+   * The name of the channel
+   */
+  readonly name: string;
+  /**
+   * The base path of the channel
+   */
+  readonly path: string;
+  /**
+   * The relative path of the channel's index file
+   */
+  readonly index: string;
+  /**
+   * The relative directory within the channel to the channel's content
+   */
+  readonly content: string;
+  /**
+   * Optional channel feed configuration
+   */
+  readonly feed?: ChannelFeed;
 }
 
 /**
  * A channel's feed configuration
  */
 export interface ChannelFeed {
-    /**
-     * The public url the feed points to, aka the public url to this channel
-     */
-    readonly url: string;
-    /**
-     * The realtive path to the channel's rss feed xml file within the channel
-     */
-    readonly path: string;
-    /**
-     * The url to the image for this channel
-     */
-    readonly image?: string;
-    /**
-     * The description of the channel
-     */
-    readonly description?: string;
-    /**
-     * The author of the channel
-     */
-    readonly author?: string;
-    /**
-     * The webmaster contact email for the channel
-     */
-    readonly contact?: string;
+  /**
+   * The public url the feed points to, aka the public url to this channel
+   */
+  readonly url: string;
+  /**
+   * The realtive path to the channel's rss feed xml file within the channel
+   */
+  readonly path: string;
+  /**
+   * The url to the image for this channel
+   */
+  readonly image?: string;
+  /**
+   * The description of the channel
+   */
+  readonly description?: string;
+  /**
+   * The author of the channel
+   */
+  readonly author?: string;
+  /**
+   * The webmaster contact email for the channel
+   */
+  readonly contact?: string;
 }
 
 /**
  * A blog post entity and its metadata
  */
 export interface PostMeta extends CMNextEntity {
-    /**
-     * The title of the post
-     */
-    readonly title?: string;
-    /**
-     * The summary of the post
-     */
-    readonly summary?: string;
-    /**
-     * The author of the post
-     */
-    readonly author?: string;
-    /**
-     * The date the post was created in unix seconds
-     */
-    readonly created?: number;
-    /**
-     * The post tags for categorization
-     */
-    readonly tags: string[];
-    /**
-     * The post's image, assumed to be an absolute url
-     */
-    readonly image?: string;
-    /**
-     * Optional html description stored directly on the entity, this 
-     * is only available if the post was published in podcast mode. 
-     */
-    readonly html_description?: string;
+  /**
+   * The title of the post
+   */
+  readonly title?: string;
+  /**
+   * The summary of the post
+   */
+  readonly summary?: string;
+  /**
+   * The author of the post
+   */
+  readonly author?: string;
+  /**
+   * The date the post was created in unix seconds
+   */
+  readonly created?: number;
+  /**
+   * The post tags for categorization
+   */
+  readonly tags: string[];
+  /**
+   * The post's image, assumed to be an absolute url
+   */
+  readonly image?: string;
+  /**
+   * Optional html description stored directly on the entity, this
+   * is only available if the post was published in podcast mode.
+   */
+  readonly html_description?: string;
 }
 
 export interface ContentMeta extends CMNextEntity {
-    /**
-     * The relative path to the content file within the 
-     * content directory of the channel
-     */
-    readonly path: string;
-    /**
-     * The name of the content file
-     */
-    readonly name: string;
-    /**
-     * The content type of the content file
-     */
-    readonly content_type: string;
-    /**
-     * The length of the content file in bytes
-     */
-    readonly length: number;
+  /**
+   * The relative path to the content file within the
+   * content directory of the channel
+   */
+  readonly path: string;
+  /**
+   * The name of the content file
+   */
+  readonly name: string;
+  /**
+   * The content type of the content file
+   */
+  readonly content_type: string;
+  /**
+   * The length of the content file in bytes
+   */
+  readonly length: number;
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2026 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,53 +13,84 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import postcss from './postcss.config.js'
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
+import mkcert from 'vite-plugin-mkcert';
+import { realpathSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 //Pages setup
-import VueRouter from 'unplugin-vue-router/vite'
+import VueRouter from 'unplugin-vue-router/vite';
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => { 
-
-  let server = {};
-
-  try {
-    //try to import the local config for development
-    server = await import('./vite.config.local.ts')
-  }
-  catch { }
-
+export default defineConfig(() => {
   return {
-    build: {
-      cssCodeSplit: true,
-      rollupOptions: {
-        plugins: [],
-        output: {
-        
-        }
-      },
+    // Fix for Windows path resolution issues with symlinks/subst drives
+    // Only apply in build mode to avoid dev server issues
+    // See: https://github.com/vitejs/vite/issues/20420
+    root: realpathSync(resolve('./')),
+
+    // Fix for CommonJS dependencies that need ESM interop
+    // tiny-case (used by yup) uses CommonJS exports, needs conversion to ESM
+    // needsInterop is experimental in Vite 7 for forcing ESM interop
+    optimizeDeps: {
+      include: ['tiny-case', 'yup'],
+      needsInterop: ['tiny-case'],
     },
-    css: {
-      postcss: postcss
+
+    // Only apply build config in production mode
+    build: {
+      // Optimized for self-hosted, single-user/small-team deployment
+      // Fewer chunks = fewer HTTP requests, better for local/private networks
+      cssCodeSplit: false,
+
+      // Suppress chunk size warnings - not critical for self-hosted apps
+      chunkSizeWarningLimit: 2000,
+
+      rollupOptions: {
+        output: {
+          // Consolidate chunks for better caching in self-hosted scenario
+          manualChunks: {
+            // Group vendor libraries together
+            vendor: ['vue', 'vue-router', 'pinia', '@vueuse/core', '@vueuse/router', 'axios'],
+            // Keep large editors separate for optional lazy loading
+            editors: ['json-editor-vue'],
+          },
+        },
+      },
     },
     plugins: [
       //Setup the vite pages plugin
       VueRouter({
-        extensions: ['vue'],
+        extensions: ['.vue'],
         routesFolder: 'src/views',
         exclude: ['**/components/**'],
         logs: true,
-        getRouteName:(node) => {
-          const trimSlashes = /^\/|\/$/g
-          const name = node.fullPath.replace(trimSlashes, '')
-          return name
-        },
         importMode: 'async',
       }),
-      vue(), 
+      vue(),
+      tailwindcss(),
+      mkcert(),
     ],
-    server
-  }
-})
+    server: {
+      host: '0.0.0.0',
+      port: 3000,
+      strictPort: true,
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:8089',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, '/api'),
+          headers: {
+            'sec-fetch-mode': 'cors',
+            referer: null,
+            origin: 'https://127.0.0.1:8089',
+            Connection: 'keep-alive',
+          },
+        },
+      },
+    },
+  };
+});

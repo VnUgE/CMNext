@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Vaughn Nugent
+// Copyright (C) 2025 Vaughn Nugent
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -15,25 +15,23 @@
 
 //Export apis and types
 
-export * from './ordering'
-export * from './feedProperties'
-export { usePosts } from './posts'
-export { useContent } from './content'
-export { useChannels } from './channels'
+export * from './ordering';
+export * from './feedProperties';
+export { usePosts } from './posts';
+export { useContent } from './content';
+export { useChannels } from './channels';
 
 export type * from './types';
 
-import { get } from '@vueuse/core'
-import type { MaybeRef } from "vue";
-import type { BlogAdminContext } from "./types";
+import { get } from '@vueuse/core';
+import type { MaybeRef } from 'vue';
+import type { BlogAdminContext } from './types';
 import type { Axios } from 'axios';
 
 export interface BlogAdminConfig {
-    readonly axios: Axios;
-    readonly postUrl: MaybeRef<string>;
-    readonly contentUrl: MaybeRef<string>;
-    readonly channelUrl: MaybeRef<string>;
-    readonly defaultPageSize?: number;
+  readonly axios: Axios;
+  readonly baseUrl: MaybeRef<string>;
+  readonly defaultPageSize?: number;
 }
 
 /**
@@ -41,20 +39,9 @@ export interface BlogAdminConfig {
  * @param param0 The blog configuration object
  * @returns A blog context object to pass to the blog admin components
  */
-export const createBlogContext = ({ channelUrl, postUrl, contentUrl, axios }: BlogAdminConfig): BlogAdminContext => {
-
-    const getAxios = (): Axios => axios;
-
-    const getPostUrl = (): string => get(postUrl)
-
-    const getContentUrl = (): string => get(contentUrl)
-
-    const getChannelUrl = (): string => get(channelUrl)
-
-    return{
-        getAxios,
-        getPostUrl,
-        getChannelUrl,
-        getContentUrl,
-    }
-}
+export const createBlogContext = ({ baseUrl, axios }: BlogAdminConfig): BlogAdminContext => {
+  return {
+    getAxios: () => axios,
+    baseUrl: () => get(baseUrl),
+  };
+};

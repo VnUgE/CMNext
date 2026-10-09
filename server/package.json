@@ -1,0 +1,11 @@
+{
+  "name": "CMNext",
+  "version": "0.1.0",
+  "type": "module",
+  "copyright": "Copyright © 2026 Vaughn Nugent",
+  "author": "Vaughn Nugent",
+  "description": "The project contains a ready-to-run, CMNext admin server installation for Windows, Unix, and MacOS for .NET/8.0 Runtime.",
+  "repository": "https://github.com/VnUgE/CMNext/tree/master/ci",
+  "output_dir": "bin",
+  "artifacts": "windows-x86_64-release.tgz,linux-x86_64-release.tgz,osx-x86_64-release.tgz,portable-release.tgz"
+}

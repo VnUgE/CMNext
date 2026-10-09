@@ -1,34 +1,123 @@
-
 #This allows the Task build system to run commands to build components of the project
 #You must install Task before executing this file, https://taskfile.dev
 
-version: '3'
+version: "3.45"
+
+vars:
+  ARCHIVE_FILE_NAME: '{{ .ARCHIVE_FILE_NAME | default "archive.tgz" }}'
 
 tasks:
+  default:
+    desc: "Builds a single managed library when run from a project root"
+    dir: "{{ .USER_WORKING_DIR }}/back-end/src"
+    vars:
+      CONFIGURATION: '{{ .CONFIGURATION | default "release" }}'
+    cmds:
+      - cmd: dotnet build -c {{ .CONFIGURATION }} {{ .CLI_ARGS }}
 
   package-update:
     cmds:
-     - for: [ front-end/, lib/admin/, lib/client/ ]
-       cmd: cd {{.ITEM}} && task package-update
+      - for: [front-end/, lib/admin/, lib/client/]
+        cmd: cd {{ .ITEM }} && task package-update
 
   #update project source code
   update:
     cmds:
-     - git reset --hard  
-     - git remote update
-     - git pull origin {{.BRANCH_NAME}} --verify-signatures
-      #re-write semver for back-end after hard reset
-     - dotnet-gitversion.exe /updateprojectfiles
+      - cmd: git reset --hard
+      - cmd: git remote update
+      - cmd: git pull origin {{.BRANCH_NAME}} --verify-signatures
 
+  #called by build pipeline to build module
   build:
+    desc: "WARNING: For vnbuild use only. Do not run manually."
+    vars:
+      PACK_OUT: "{{ .OUTPUT_DIR }}/{{ .HEAD_SHA }}/pkg"
+      INT_DIR: "{{ .SCRATCH_DIR }}/obj/{{ .MODULE_NAME }}/"
+      MS_ARGS: '
+        --nologo
+        /p:UseCommonOutputDirectory=true
+        /p:IntermediateOutputPath="{{ .INT_DIR }}"'
     cmds:
-    
-  #copy artifacts to temp directory
-  postbuild_success:
-    cmds:
-     #git archive in the module directory
-     - git archive --format {{.ARCHIVE_FILE_FORMAT}} --output {{.ARCHIVE_FILE_NAME}} HEAD
+      - cmd: echo "building module {{ .MODULE_NAME }}"
+        silent: true
 
-  #clean hook
-  clean:
+      #re-write semver after hard reset
+      - cmd: dotnet gitversion /updateprojectfiles
+
+      #build debug mode first
+      - cmd: dotnet publish -c debug {{ .MS_ARGS }}
+      - cmd: dotnet publish -c release {{ .MS_ARGS }}
+
+      # ONLY Pack release config with debug symbols
+      # pack can be run without build or restore because the previous commands build it
+      - cmd: dotnet pack
+          --no-build
+          --no-restore
+          --include-symbols
+          --configuration release
+          --output "{{ .PACK_OUT }}/release/"
+          {{ .MS_ARGS }}
+
+  #copy artifacts to temp directory
+  publish:
+    desc: "WARNING: For vnbuild use only. Do not run manually."
     cmds:
+      #git archive in the module directory
+      - cmd: git archive --format {{ .ARCHIVE_FILE_FORMAT }} --output {{ .ARCHIVE_FILE_NAME }} HEAD
+
+  #called by build pipeline to clean module
+  clean:
+    desc: "WARNING: For vnbuild use only. Do not run manually."
+    ignore_error: true
+    cmds:
+      #clean solution
+      - cmd: dotnet clean
+      - cmd: powershell rm '{{ .ARCHIVE_FILE_NAME }}' --Force
+
+  dev-init:
+    desc: "Initializes the development environment"
+    summary: |
+      This task sets up the development environment by installing necessary
+      dependencies and preparing the project for development.
+    cmds:
+      - cmd: pnpm install
+      - cmd: dotnet restore back-end/src
+
+  dev-backend:
+    desc: "Builds backend plugins during development"
+    summary: |
+      Can be used with the --watch flag to automatically build the backend
+      when files change. This is useful for development.
+    sources:
+      - back-end/src/**
+      - back-end/src/**/*.*
+    cmds:
+      - task: default
+        vars:
+          CONFIGURATION: debug
+
+  dev-frontend:
+    desc: "Builds the front-end app during development"
+    summary: |
+      Can be used with the --watch flag to automatically build the front-end
+      when files change. This is useful for development.
+    sources:
+      - front-end/src/**
+      - front-end/src/**/.*
+    cmds:
+      - cmd: pnpm --filter @vnuge/cmnext-front-end run build
+
+  dev-libs:
+    desc: "Builds the front-end libraries during development"
+    summary: |
+      Can be used with the --watch flag to automatically build the libraries
+      when files change. This is useful for development.
+    sources:
+      - lib/admin/src/**
+      - lib/admin/src/**/.*
+      - lib/client/src/**
+      - lib/client/src/**/.*
+
+    cmds:
+      - cmd: pnpm --filter @vnuge/cmnext-admin run build
+      - cmd: pnpm --filter @vnuge/cmnext-client run build

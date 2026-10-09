@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright (c) 2024 Vaughn Nugent
+* Copyright (c) 2025 Vaughn Nugent
 * 
 * Library: CMNext
 * Package: Content.Publishing.Blog.Admin
@@ -39,30 +39,30 @@ namespace Content.Publishing.Blog.Admin.Storage
         {
             string type = config.GetRequiredProperty("type", p => p.GetString()!);
 
-            //try to get custom storage assembly
-            if (config.TryGetProperty("custom_storage_assembly", p => p.GetString(), out string? storageAssembly) 
-                && !string.IsNullOrWhiteSpace(storageAssembly))
+            switch (type)
             {
-                _backingStorage = plugin.CreateServiceExternal<ISimpleFilesystem>(storageAssembly!);
-            }
-            else if (string.Equals(type, "s3", StringComparison.OrdinalIgnoreCase))
-            {
-                //Use minio storage
-                _backingStorage = plugin.GetOrCreateSingleton<MinioClientManager>();
-            }
-            else if (string.Equals(type, "ftp", StringComparison.OrdinalIgnoreCase))
-            {
-                //Use ftp storage
-                _backingStorage = plugin.GetOrCreateSingleton<FtpStorageManager>();
-            }
-            else
-            {
-                throw new ArgumentException("No storage providers were found, cannot continue!");
-            }
+                // User can specify a custom storage assembly to load externally
+                case "custom":
+                    string assemnbly = config.GetRequiredProperty("custom_storage_assembly", p => p.GetString()!);
+                    _backingStorage = plugin.CreateServiceExternal<ISimpleFilesystem>(assemnbly);
+                    break;
+
+                case "ftp":
+                    _backingStorage = plugin.GetOrCreateSingleton<FtpStorageManager>();
+                    break;
+
+                case "s3":
+                    _backingStorage = plugin.GetOrCreateSingleton<MinioClientManager>();
+                    break;
+
+                default:
+                    throw new ConfigurationException($"Invalid storage type: {type}, allowed types are: 'custom' | 'ftp' | 's3'");
+            }           
+          
         }
 
         ///<inheritdoc/>
-        public Task DeleteFileAsync(string filePath, CancellationToken cancellation)
+        public ValueTask DeleteFileAsync(string filePath, CancellationToken cancellation)
         {
             return _backingStorage.DeleteFileAsync(filePath, cancellation);
         }
@@ -74,7 +74,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public async Task<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
+        public async ValueTask<long> ReadFileAsync(string filePath, Stream output, CancellationToken cancellation)
         {
             //Read the file from backing storage
             long result = await _backingStorage.ReadFileAsync(filePath, output, cancellation);
@@ -90,7 +90,7 @@ namespace Content.Publishing.Blog.Admin.Storage
         }
 
         ///<inheritdoc/>
-        public Task WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
+        public ValueTask WriteFileAsync(string filePath, Stream data, string ct, CancellationToken cancellation)
         {
             //Try to reset the stream if allowed
             if (data.CanSeek)
@@ -100,6 +100,12 @@ namespace Content.Publishing.Blog.Admin.Storage
             }
 
             return _backingStorage.WriteFileAsync(filePath, data, ct, cancellation);
+        }
+      
+        ///<inheritdoc/>
+        ValueTask<Stream?> ISimpleFilesystem.OpenFileAsync(string filePath, FileAccess options, CancellationToken cancellation)
+        {
+            return _backingStorage.OpenFileAsync(filePath, options, cancellation);
         }
     }
 }
