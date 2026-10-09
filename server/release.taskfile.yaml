@@ -6,7 +6,8 @@
 version: '3.45'
 
 vars:
-  SSL_DIR: 'ssl'
+  TLS_CERT: 'ssl/cert.pem'
+  TLS_PRIVATE_KEY: 'ssl/key.pem'
   DATA_DIR: 'data'
   DEFAULT_EC_CURVE: 'secp384r1'
   PASS_PEPPER_SIZE: 64
@@ -15,13 +16,6 @@ vars:
   RPMALLOC_LIB_NAME: 'vnlib_rpmalloc'
   COMPRESS_LIB_NAME: 'vnlib_compress'
   ARGON2_LIB_NAME: 'argon2'
-
-env:
-  # these variables will be substituted into the configuration when merge-config is run
-  # since the cert is created at build time, we can use the same path for the container
-  TLS_ENABLE: 'true'
-  TLS_CERT: '{{ .SSL_DIR }}/cert.pem'
-  TLS_PRIVATE_KEY: '{{ .SSL_DIR }}/key.pem'
 
 tasks:
   run:
@@ -58,7 +52,7 @@ tasks:
         silent: true
 
       - task: run
-        vars: { SERVER_ARGS: '{{ env "SERVER_ARGS" }}' }
+        vars: { SERVER_ARGS: '--input-off {{ env "SERVER_ARGS" }}' }
 
   setup-apt:
     desc: 'Performs initial setup on Debian apt amd64 based machines'
@@ -124,12 +118,13 @@ tasks:
     desc: 'Generates a new self-signed TLS certificate'
     interactive: true
     cmds:
+      - cmd: mkdir -p ssl/
       - cmd: openssl req
           -new
           -x509
           -days 365
-          -keyout {{ .SSL_DIR }}/key.pem
-          -out {{ .SSL_DIR }}/cert.pem
+          -keyout '{{ .TLS_PRIVATE_KEY }}'
+          -out '{{ .TLS_CERT }}'
           -newkey ec
           -pkeyopt ec_paramgen_curve:{{ .DEFAULT_EC_CURVE }}
           --nodes
@@ -156,7 +151,7 @@ tasks:
         platforms: [linux, darwin]
 
       #for windows just copy the existing dll
-      - cmd: powershell cp vnlib_rpmalloc/vnlib_rpmalloc.dll {{ .RPMALLOC_LIB_NAME }}.dll
+      - cmd: cp vnlib_rpmalloc/vnlib_rpmalloc.dll {{ .RPMALLOC_LIB_NAME }}.dll
         platforms: [windows/amd64]
 
   build-argon2:
@@ -168,7 +163,7 @@ tasks:
         platforms: [linux, darwin]
 
         #for windows just copy the existing dll
-      - cmd: powershell cp argon2/argon2.dll {{ .ARGON2_LIB_NAME }}.dll
+      - cmd: cp argon2/argon2.dll {{ .ARGON2_LIB_NAME }}.dll
         platforms: [windows/amd64]
 
   build-compress:
@@ -182,7 +177,7 @@ tasks:
         platforms: [linux, darwin]
 
       #windows now supports pre-compiled libs
-      - cmd: powershell cp vnlib_compress/vnlib_compress.dll {{ .COMPRESS_LIB_NAME }}.dll
+      - cmd: cp vnlib_compress/vnlib_compress.dll {{ .COMPRESS_LIB_NAME }}.dll
         platforms: [windows/amd64]
 
   merge-config:
@@ -192,6 +187,12 @@ tasks:
       #find all config templates
       CONFIG_TEMPLATES:
         sh: 'find config-templates/ -type f -name "*.json"'
+    env:
+      # these variables will be substituted into the configuration when merge-config is run
+      # since the cert is created at build time, we can use the same path for the container
+      TLS_ENABLE: 'true'
+      TLS_CERT: '{{ .TLS_CERT }}'
+      TLS_PRIVATE_KEY: '{{ .TLS_PRIVATE_KEY }}'
     cmds:
       - cmd: mkdir -p config
       - cmd: chmod +x ./compile.sh

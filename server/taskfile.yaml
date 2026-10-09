@@ -13,26 +13,27 @@ vars:
   SQLITE_OUT_DIR: 'plugins/assets/vnlib.plugins.extensions.loading.sql.sqlite'
 
   # vnlip_compress only supports amd64 platforms
-  TARGET_ARCHES: ['windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'posix']
+  TARGET_ARCHES: ['windows-x86_64', 'linux-x86_64', 'osx-x86_64', 'portable']
 
   RM: '{{ if eq OS "windows" }}powershell rm -Recurse -Force{{ else }}rm -rf{{ end }}'
 
 tasks:
   build:
     desc: 'WARNING: For vnbuild use only. Do not run manually.'
-    deps:
+    cmds:
+      - cmd: mkdir build/ && cd build/ && vnbuild deps install -f '{{ .USER_WORKING_DIR }}/deps.json'
       - task: build-front-end
       - task: build-server-package
 
   build-server-package:
     desc: 'Build server package for all target environments'
+    internal: true
     deps:
       - compile-config
       - build-plugin
       - prune-plugin-libs
     cmds:
       - cmd: cd build/ && {{ .RM }} **/package.json
-      - cmd: mkdir -p build/dist/
 
         #remove runtime-shared libs before they are copied
       - task: prune-plugin-libs
@@ -44,11 +45,10 @@ tasks:
       - cmd: echo "Server package build complete"
 
   build-front-end:
-    internal: false
+    internal: true
     cmds:
       - cmd: cd ../front-end && task build
-      - cmd: mkdir -p "build/dist/"
-      - cmd: cp -rf "../front-end/dist/" "build/dist/"
+      - cmd: cp -rf "../front-end/dist" "build/dist"
 
   build-plugin:
     internal: true
@@ -185,9 +185,9 @@ tasks:
       - task: pb-parallel
 
       #cleanup unnecessary build files that clog up the pipeline
-      - for: [build]
-        cmd: rm -rf "{{ .ITEM }}"
-        ignore_error: true
+      # - for: [build]
+      #   cmd: rm -rf "{{ .ITEM }}"
+      #   ignore_error: true
 
   pb-parallel:
     internal: true
@@ -196,24 +196,25 @@ tasks:
     deps:
       - for: { var: TARGET_ARCHES }
         task: pack
-        vars: { TARGET_OS: '{{ .ITEM }}' }
+        vars: { TARGET_ARCH: '{{ .ITEM }}' }
 
       # container is built separately
       - task: pack
-        vars: { TARGET_OS: 'container' }
+        vars: { TARGET_ARCH: 'container' }
     cmds:
       - echo "Packing complete"
 
   pack:
     internal: true
     requires:
-      vars: [TARGET_OS]
+      vars: [TARGET_ARCH]
     vars:
     cmds:
-      - cmd: mkdir -p "build/arch/{{ .TARGET_OS }}/"
+      - cmd: mkdir -p "build/arch/{{ .TARGET_ARCH }}/"
         ignore_error: true
-      - cmd: cd build/arch/{{ .TARGET_OS }} &&
-          tar{{ if eq OS "windows" }}.exe{{ end }} -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_OS }}-release.tgz" .
+      - cmd: tar{{ if eq OS "windows" }}.exe{{ end }}
+          -C "build/arch/{{ .TARGET_ARCH }}"
+          -czf "{{ .TASKFILE_DIR }}/bin/{{ .TARGET_ARCH }}-release.tgz" .
 
   clean:
     ignore_error: true

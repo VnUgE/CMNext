@@ -34,3 +34,9 @@ CMNEXT_FRONTEND_DIR = "{{ config_root }}/front-end"
 CMNEXT_BACKEND_DIR = "{{ config_root }}/back-end"
 CMNEXT_SERVER_DIR = "{{ config_root }}/server"
 CMNEXT_LIB_DIR = "{{ config_root }}/lib"
+
+[tasks]
+
+[tasks.vnbuild]
+dir = '.'
+run = 'vnbuild'

@@ -19,7 +19,6 @@ COPY app/Taskfile.yaml Taskfile.yaml
 
 #installs required dependencies and builds the native libraries and creates self-signed certs
 RUN task setup-apt 
-RUN task container-create-cert
 
 #APP CONTAINER
 #move into a clean dotnet ubuntu lean image
@@ -44,9 +43,6 @@ ADD --checksum=sha256:9e842e2480e1dee9f0cd482701ba89ee85b3d9c2ca249d38b6c0f49733
   /usr/local/bin/dumb-init.deb
 RUN dpkg -i /usr/local/bin/dumb-init.deb && rm /usr/local/bin/dumb-init.deb
 
-#copy self signed ssl certs for first startup
-COPY --from=native-cont /build/ssl /app/ssl
-
 #copy local artifacts again in run container
 COPY app/ /app
 
@@ -65,8 +61,9 @@ ENV SQL_LIB_PATH=VNLib.Plugins.Extensions.Sql.SQLite.dll \
   CACHE_ASM_PATH=VNLib.Data.Caching.Providers.VNCache.dll \
   COMPRESSOR_ASM_PATH=lib/vnlib.net.compression/VNLib.Net.Compression.dll
 
-#run permissions setup 
-RUN task container-set-perms
+#setup cert and perms
+RUN task container-create-cert && \
+  task container-set-perms
 
 #run the init script within dumb-init
 ENTRYPOINT ["dumb-init", "--"]
