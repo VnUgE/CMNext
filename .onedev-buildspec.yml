@@ -1,4 +1,5 @@
-version: 46
+version: 53
+
 jobs:
   - name: Git Mirror Push
     steps:
@@ -8,7 +9,15 @@ jobs:
         userName: VnUgE
         passwordSecret: github-access-token
         force: true
-        condition: SUCCESSFUL
+        condition: ALWAYS
+        optional: false
+      - type: PushRepository
+        name: Codeberg push sync
+        remoteUrl: https://codeberg.org/VnUgE/CMNext.git
+        userName: VnUgE
+        passwordSecret: codeberg-access-token
+        force: true
+        condition: ALWAYS
         optional: false
     triggers:
       - type: TagCreateTrigger
@@ -17,54 +26,150 @@ jobs:
     retryCondition: never
     maxRetries: 3
     retryDelay: 30
+    includeUpstreamWhenRebuild: false
+    includeDownstreamWhenRebuild: false
     timeout: 3600
-  - name: Windows Tests
+
+  - name: Unit Testing
+    jobExecutor: windows
     steps:
+      - type: UseTemplateStep
+        name: mise setup-windows
+        templateName: mise setup-windows
+        condition: SUCCESSFUL
+        optional: false
       - type: CommandStep
-        name: Clone and test
+        name: run unit tests
         runInContainer: false
         interpreter:
-          type: DefaultInterpreter
+          type: PowerShellInterpreter
+          powershell: powershell.exe
           commands: |
-            git clone @server_url@/@project_path@ --branch @branch@ @project_name@
-            vnbuild test --verbose --task-verbose
+            cd @project_name@
+            mise ci-vnbuild test --verbose
         useTTY: true
         condition: SUCCESSFUL
         optional: false
-    jobExecutor: windows
+    triggers:
+      - type: BranchUpdateTrigger
+        branches: '** -master'
+        userMatch: anyone
     retryCondition: never
     maxRetries: 3
     retryDelay: 30
+    includeUpstreamWhenRebuild: false
+    includeDownstreamWhenRebuild: false
     timeout: 14400
+
   - name: Staging build
+    jobExecutor: windows
     steps:
+      - type: UseTemplateStep
+        name: mise setup-windows
+        templateName: mise setup-windows
+        condition: SUCCESSFUL
+        optional: false
       - type: CommandStep
-        name: Clone and build
+        name: mock build
         runInContainer: false
         interpreter:
-          type: DefaultInterpreter
+          type: PowerShellInterpreter
+          powershell: powershell.exe
           commands: |
-            git clone @server_url@/@project_path@ --branch @branch@ @project_name@
-            vnbuild build --no-delay --verbose --task-verbose
-            vnbuild publish --verbose
+            cd @project_name@
+            mise ci-vnbuild build --no-delay --verbose
         useTTY: true
         condition: SUCCESSFUL
         optional: false
-      - type: PublishArtifactStep
-        name: publish server artifacts
-        sourcePath: "@project_name@/server/bin"
-        artifacts: "*"
+      - type: CommandStep
+        name: mock publish
+        runInContainer: false
+        interpreter:
+          type: PowerShellInterpreter
+          powershell: powershell.exe
+          commands: |
+            cd @project_name@
+            mise ci-vnbuild publish -i @project_name@
+        useTTY: true
         condition: SUCCESSFUL
         optional: false
-    jobExecutor: windows
     triggers:
       - type: BranchUpdateTrigger
         branches: develop
         userMatch: anyone
     jobDependencies:
-      - jobName: Windows Tests
+      - jobName: Unit Testing
         requireSuccessful: true
     retryCondition: never
     maxRetries: 3
     retryDelay: 30
-    timeout: 3600
+    includeUpstreamWhenRebuild: false
+    includeDownstreamWhenRebuild: false
+    timeout: 14400
+
+  - name: Publish master
+    jobExecutor: publish-agents
+    steps:
+      - type: UseTemplateStep
+        name: mise setup-windows
+        templateName: mise setup-windows
+        condition: SUCCESSFUL
+        optional: false
+      - type: CommandStep
+        name: VNBuild build
+        runInContainer: false
+        interpreter:
+          type: PowerShellInterpreter
+          powershell: powershell.exe
+          commands: |
+            cd @project_name@
+            mise ci-vnbuild build --no-delay
+        useTTY: true
+        condition: SUCCESSFUL
+        optional: false
+      - type: CommandStep
+        name: VNBuild publish
+        runInContainer: false
+        interpreter:
+          type: PowerShellInterpreter
+          powershell: powershell.exe
+          commands: |
+            cd @project_name@
+            mise ci-vnbuild publish --ftp "@secret:ftp_server_address@" --sign
+        envVars:
+          - name: FTP_USERNAME
+            value: '@secret:ftp_username@'
+          - name: FTP_PASSWORD
+            value: '@secret:ftp_password@'
+        useTTY: true
+        condition: SUCCESSFUL
+        optional: false
+    triggers:
+      - type: BranchUpdateTrigger
+        branches: master
+        userMatch: anyone
+    retryCondition: never
+    maxRetries: 3
+    retryDelay: 30
+    includeUpstreamWhenRebuild: false
+    includeDownstreamWhenRebuild: false
+    timeout: 14400
+
+stepTemplates:
+  - name: mise setup-windows
+    steps:
+      - type: CommandStep
+        name: init local deps
+        runInContainer: false
+        interpreter:
+          type: PowerShellInterpreter
+          powershell: powershell.exe
+          commands: |
+            git clone @server_url@/@project_path@ --branch @branch@ @project_name@
+
+            cd @project_name@
+            mise trust mise.toml
+            mise bootstrap
+        useTTY: true
+        condition: SUCCESSFUL
+        optional: false

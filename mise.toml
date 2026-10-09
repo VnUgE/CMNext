@@ -1,5 +1,9 @@
 min_version = "2024.9.5"
 
+# Experimental features (bootstrap package managers) enabled
+[settings]
+experimental = true
+
 [bootstrap.packages]
 "apt:build-essential" = "latest"
 "apt:libicu-dev" = "latest"
@@ -37,6 +41,6 @@ CMNEXT_LIB_DIR = "{{ config_root }}/lib"
 
 [tasks]
 
-[tasks.vnbuild]
+[tasks.ci-vnbuild]
 dir = '.'
 run = 'vnbuild'
