@@ -15,7 +15,6 @@
 
 import type { UseOffsetPaginationReturn } from '@vueuse/core';
 import type { Axios, AxiosRequestConfig } from 'axios';
-import type { Dictionary } from 'lodash';
 import type { Ref } from 'vue';
 
 /**
@@ -50,7 +49,7 @@ export interface FeedProperty {
   name: string;
   value?: string;
   namespace?: string;
-  attributes?: Dictionary<string>;
+  attributes?: Record<string, string>;
   properties?: FeedProperty[];
 }
 

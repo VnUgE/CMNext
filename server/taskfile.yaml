@@ -21,7 +21,7 @@ tasks:
   build:
     desc: 'WARNING: For vnbuild use only. Do not run manually.'
     cmds:
-      - cmd: mkdir build/ && cd build/ && vnbuild deps install -f '{{ .USER_WORKING_DIR }}/deps.json'
+      - cmd: mkdir -p build/ && cd build/ && vnbuild deps install -f '{{ .USER_WORKING_DIR }}/deps.json'
       - task: build-front-end
       - task: build-server-package
 
