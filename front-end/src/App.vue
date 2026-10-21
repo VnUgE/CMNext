@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue';
+import { useRoute } from 'vue-router';
 import { useStore } from './store';
 import { storeToRefs } from 'pinia';
 import { useTitle, whenever } from '@vueuse/core';
@@ -10,6 +11,7 @@ const PasswordPrompt = defineAsyncComponent(() => import('./components/PasswordP
 
 const store = useStore();
 const { pageTitle, loggedIn } = storeToRefs(store);
+const route = useRoute();
 
 store.setPageTitle('Home');
 
@@ -63,7 +65,7 @@ whenever(
 
       <!-- Main body for router-view -->
       <div id="env-body" class="grow w-full">
-        <router-view />
+        <router-view :key="route.path" />
       </div>
     </div>
 
