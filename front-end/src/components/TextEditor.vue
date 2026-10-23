@@ -15,7 +15,10 @@ whenever(el, (mount) => {
   defer(() => {
     if (!mount.isConnected) return;
 
-    const ed = Jodit.make(mount, { height: 'auto' });
+    const ed = Jodit.make(mount, {
+      height: 'auto',
+      className: 'post-editor', // assign jodit container class name to apply custom styles
+    });
     ed.value = props.modelValue;
 
     // User edits -> push up to the buffer.
@@ -44,6 +47,6 @@ tryOnBeforeUnmount(() => {
 </script>
 
 <template>
-  <!-- Jodit replaces this textarea with its editor UI. Deliberately no v-model. -->
+  <!-- Jodit mounts and replaces the textarea -->
   <textarea ref="el" class="jodit post-editor" aria-label="Post content" />
 </template>
